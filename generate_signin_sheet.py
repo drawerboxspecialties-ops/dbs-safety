@@ -47,7 +47,6 @@ DEPT_ORDER = [
     "Trucking",
     "Maintenance",
     "Manufacturing",
-    "Other / extra",
 ]
 
 
@@ -117,10 +116,9 @@ class SignIn:
         y = top - bar_h - 0.14 * inch
         if first:
             labels = [
-                ("Date", 1.7 * inch),
-                ("Topic", 2.6 * inch),
-                ("Facilitator", 2.15 * inch),
-                ("Shift", 1.15 * inch),
+                ("Date", 2.2 * inch),
+                ("Topic", 3.1 * inch),
+                ("Facilitator", 2.4 * inch),
             ]
             x = MARGIN
             c.setFont("Inter-Semi", 7.4)
@@ -225,7 +223,6 @@ def build_rows(employees: list[tuple[str, str]]) -> list[tuple]:
         for name in names:
             n += 1
             items.append(("person", n, name, dept, False))
-    items.append(("dept", "Other / extra", EXTRA_BLANKS))
     for _ in range(EXTRA_BLANKS):
         n += 1
         items.append(("person", n, "", "", True))
@@ -260,12 +257,14 @@ def main() -> None:
             y = sheet.dept_band(y, item[1], item[2])
             alt = False
         else:
+            _, num, name, dept, extra = item
+            if extra:
+                current_dept = ""
             if y - row_h < floor:
                 y = sheet.new_page(first=False)
                 alt = False
                 if current_dept:
                     y = sheet.dept_band(y, f"{current_dept} (continued)", 0)
-            _, num, name, dept, extra = item
             y = sheet.name_row(y, num, name, dept, extra, alt)
             alt = not alt
 

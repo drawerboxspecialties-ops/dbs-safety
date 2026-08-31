@@ -6,11 +6,12 @@ Two separate letter-size PDFs for a 5–10 minute crew talk, plus a sign-in shee
 | --- | --- |
 | [OSHA_Safety_Meeting_PPE.pdf](OSHA_Safety_Meeting_PPE.pdf) | Personal protective equipment |
 | [OSHA_Safety_Meeting_Material_Handling.pdf](OSHA_Safety_Meeting_Material_Handling.pdf) | Material handling |
-| [Safety_Meeting_Sign_In.pdf](Safety_Meeting_Sign_In.pdf) | Sign-in for the current crew, plus extra blank lines |
+| [signin/index.html](signin/index.html) | Fillable employee sign-in (date picker, auto-save) |
+| [Safety_Meeting_Sign_In.pdf](Safety_Meeting_Sign_In.pdf) | Printable sign-in for the current crew |
 
 Written for this floor: saws, CNC, sanding, edgebanding, assembly, sheet stock, drawer boxes, and doors. OSHA references on each sheet are 1910.132–138 and 1910.95 (PPE / hearing), 1910.213 (no gloves at woodworking cutters), 1910.176 (materials), and 1910.178 (forklifts / pallet jacks).
 
-Print one-sided. Fill date, facilitator, department, and headcount. Keep the signed copy with your meeting records. Each sheet has talking points, do/don’t, a stop-work line, and attendance.
+Open `signin/index.html` in a browser to fill the sheet: pick the meeting date, type topic and facilitator, then have each person sign. The page saves on this computer and can print to PDF. Printable one-pagers are still the two OSHA topic PDFs.
 
 These are toolbox talks, not a written PPE program or forklift course.
 

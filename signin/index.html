@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Employee sign-in — Drawer Box Specialties</title>
+  <style>
+    :root {
+      --ink: #14181c;
+      --muted: #4a545e;
+      --header: #1b232c;
+      --amber: #e6a100;
+      --paper: #f6f1e6;
+      --card: #fffdf8;
+      --rule: #d2c8b4;
+      --band: #efe6d4;
+      --line: #c8bfae;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      align-items: center;
+      justify-content: space-between;
+      padding: .7rem 1rem;
+      background: var(--header);
+      color: #fff;
+    }
+    .toolbar p { margin: 0; color: var(--amber); font-size: .72rem; letter-spacing: .06em; }
+    .toolbar h1 { margin: .1rem 0 0; font-size: 1.05rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: .5rem .8rem;
+      font: 650 13px/1 Inter, system-ui, sans-serif;
+      cursor: pointer;
+      background: var(--amber);
+      color: var(--header);
+    }
+    button.ghost { background: #2c3640; color: #e8d9b0; }
+    .sheet { max-width: 980px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1.1fr auto;
+      gap: .7rem;
+      background: var(--card);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: .85rem;
+      margin-bottom: .8rem;
+    }
+    label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; color: var(--muted); margin-bottom: .25rem; }
+    input, select {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      font: 500 15px/1.3 Inter, system-ui, sans-serif;
+      color: var(--ink);
+      padding: .25rem 0;
+    }
+    input:focus { outline: none; border-bottom-color: var(--amber); }
+    .count { min-width: 5.5rem; align-self: end; color: var(--muted); font-size: .85rem; padding-bottom: .2rem; }
+    table { width: 100%; border-collapse: collapse; background: var(--card); }
+    th {
+      background: var(--header);
+      color: var(--amber);
+      font-size: .7rem;
+      letter-spacing: .05em;
+      text-align: left;
+      padding: .45rem .4rem;
+    }
+    td { padding: .28rem .35rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+    tr.dept td {
+      background: var(--band);
+      font-weight: 700;
+      font-size: .78rem;
+      letter-spacing: .04em;
+      padding: .4rem .4rem;
+    }
+    tr.alt td { background: #f3eee3; }
+    .num { width: 2.2rem; color: var(--muted); font-size: .8rem; }
+    .dept-cell { width: 8.2rem; color: var(--muted); font-size: .82rem; }
+    .sig, .time, .blank-name, .blank-dept { width: 100%; font-size: 14px; }
+    .time { width: 7.2rem; }
+    .status { color: #9aa4ae; font-size: .75rem; }
+    @media (max-width: 720px) {
+      .meta { grid-template-columns: 1fr 1fr; }
+      .dept-cell { width: 5.5rem; }
+      table { font-size: .9rem; }
+    }
+    @media print {
+      .toolbar { display: none; }
+      body { background: #fff; }
+      .sheet { max-width: none; padding: 0; }
+      .meta, table { break-inside: avoid; }
+      input { border-bottom-color: #bbb; }
+      th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tr.dept td, tr.alt td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div>
+      <p>DRAWER BOX SPECIALTIES</p>
+      <h1>Safety meeting sign-in</h1>
+    </div>
+    <div class="actions">
+      <span class="status" id="status">Saved on this computer</span>
+      <button type="button" class="ghost" id="clear">Clear signatures</button>
+      <button type="button" id="print">Print / save PDF</button>
+    </div>
+  </div>
+
+  <main class="sheet">
+    <form id="form" autocomplete="off">
+      <div class="meta">
+        <div>
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" required />
+        </div>
+        <div>
+          <label for="topic">Topic</label>
+          <input id="topic" name="topic" type="text" placeholder="PPE or material handling" />
+        </div>
+        <div>
+          <label for="facilitator">Facilitator</label>
+          <input id="facilitator" name="facilitator" type="text" />
+        </div>
+        <div class="count" id="count">0 signed</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Name</th>
+            <th>Dept</th>
+            <th>Signature</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </form>
+  </main>
+
+  <script>
+    const DEPT_ORDER = [
+      "Rough Mill", "Mill", "CNC", "Custom", "Pre Assembly",
+      "Assembly", "Shipping", "Trucking", "Maintenance", "Manufacturing"
+    ];
+    const EMPLOYEES = [
+      ["AGUILAR VILLANUEVA, MIGUEL", "Rough Mill"],
+      ["LUCERO MENDEZ, MANUEL", "Rough Mill"],
+      ["PATRICK, JACOB", "Rough Mill"],
+      ["PEREZ, RAMIRO H", "Rough Mill"],
+      ["VASQUEZ, FRANCISCO", "Rough Mill"],
+      ["CLIMACO BELLO, PEDRO", "Mill"],
+      ["CLIMACO, MARCO", "Mill"],
+      ["LACY, ANTHONY", "Mill"],
+      ["MAYORGA, JOEL SANCHEZ", "Mill"],
+      ["OLIVAREZ, STEVEN", "Mill"],
+      ["OLMOS, JORGE", "Mill"],
+      ["PINEDO, GONZALO", "Mill"],
+      ["ROMERO FLORES, JAVIER", "Mill"],
+      ["MALDONADO, HENRY", "CNC"],
+      ["VILLAFAN SUAREZ, JOSE A", "CNC"],
+      ["CORTEZ, EUGENIO", "Custom"],
+      ["FLORES, KAREN", "Custom"],
+      ["BONILLA, NELSON E", "Pre Assembly"],
+      ["BULFRANO, ANGEL", "Pre Assembly"],
+      ["ESPINOZA, JESUS", "Pre Assembly"],
+      ["GARCIA, ROGELIO", "Pre Assembly"],
+      ["JIMENEZ, VICENTE", "Pre Assembly"],
+      ["ORTIZ PINEDA, TOMAS", "Pre Assembly"],
+      ["PATINO-RODRIGUEZ, JOSE", "Pre Assembly"],
+      ["SOLORZANO VELIZ, FRANCISCO", "Pre Assembly"],
+      ["BARRERA CABRERA, ENRIQUE", "Assembly"],
+      ["BEATRIZ, HELADIA", "Assembly"],
+      ["CARRANZA, RUBEN", "Assembly"],
+      ["CUYUCH, ROMEO", "Assembly"],
+      ["GONZALEZ, DANIEL", "Assembly"],
+      ["MARTINEZ RESENDIZ, MARCELO", "Assembly"],
+      ["MARTINEZ TORRES, ALFREDO", "Assembly"],
+      ["RESENDIZ MUNOZ, JUAN", "Assembly"],
+      ["ROSAS, VICTOR", "Assembly"],
+      ["VENTURA JIMENEZ, DANIEL", "Assembly"],
+      ["CARRENO TRUJILLO, DANIEL", "Shipping"],
+      ["ELIZARRARAZ, JOSE R", "Shipping"],
+      ["ARELLANO, NOEL", "Trucking"],
+      ["CEJA, RODOLFO S", "Trucking"],
+      ["SOPONRATH, JAMIE TONY", "Trucking"],
+      ["MAGDALENO DIAZ, CRISTIAN", "Maintenance"],
+      ["VORN, TONY", "Maintenance"],
+      ["RODRIGUEZ, CALIXTO", "Manufacturing"]
+    ];
+    const EXTRA = 6;
+    const STORAGE = "dbs-signin";
+
+    const dateEl = document.getElementById("date");
+    const topicEl = document.getElementById("topic");
+    const facilitatorEl = document.getElementById("facilitator");
+    const rowsEl = document.getElementById("rows");
+    const countEl = document.getElementById("count");
+    const statusEl = document.getElementById("status");
+
+    function todayISO() {
+      const d = new Date();
+      const off = d.getTimezoneOffset();
+      return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+    }
+
+    function grouped() {
+      const map = new Map(DEPT_ORDER.map((d) => [d, []]));
+      for (const [name, dept] of EMPLOYEES) {
+        if (!map.has(dept)) map.set(dept, []);
+        map.get(dept).push(name);
+      }
+      return DEPT_ORDER.filter((d) => map.get(d).length).map((d) => [d, map.get(d)]);
+    }
+
+    function renderRows() {
+      const frag = document.createDocumentFragment();
+      let n = 0;
+      for (const [dept, names] of grouped()) {
+        const band = document.createElement("tr");
+        band.className = "dept";
+        band.innerHTML = `<td colspan="5">${dept} · ${names.length}</td>`;
+        frag.appendChild(band);
+        names.forEach((name, i) => {
+          n += 1;
+          frag.appendChild(personRow(n, name, dept, false, i % 2 === 1));
+        });
+      }
+      for (let i = 0; i < EXTRA; i += 1) {
+        n += 1;
+        frag.appendChild(personRow(n, "", "", true, i % 2 === 1));
+      }
+      rowsEl.replaceChildren(frag);
+    }
+
+    function personRow(n, name, dept, extra, alt) {
+      const tr = document.createElement("tr");
+      if (alt) tr.classList.add("alt");
+      tr.dataset.n = String(n);
+      const nameCell = extra
+        ? `<input class="blank-name" data-field="name" placeholder="Name" />`
+        : `<strong>${name}</strong>`;
+      const deptCell = extra
+        ? `<input class="blank-dept" data-field="dept" placeholder="Dept" />`
+        : dept;
+      tr.innerHTML = `
+        <td class="num">${n}</td>
+        <td>${nameCell}</td>
+        <td class="dept-cell">${deptCell}</td>
+        <td><input class="sig" data-field="sig" placeholder="Sign" /></td>
+        <td><input class="time" data-field="time" type="time" /></td>
+      `;
+      return tr;
+    }
+
+    function key() {
+      return `${STORAGE}:${dateEl.value || todayISO()}`;
+    }
+
+    function collect() {
+      const rows = [...rowsEl.querySelectorAll("tr[data-n]")].map((tr) => ({
+        n: tr.dataset.n,
+        name: tr.querySelector("[data-field=name]")?.value || "",
+        dept: tr.querySelector("[data-field=dept]")?.value || "",
+        sig: tr.querySelector("[data-field=sig]").value,
+        time: tr.querySelector("[data-field=time]").value,
+      }));
+      return {
+        date: dateEl.value,
+        topic: topicEl.value,
+        facilitator: facilitatorEl.value,
+        rows,
+      };
+    }
+
+    function apply(data) {
+      if (!data) return;
+      if (data.topic != null) topicEl.value = data.topic;
+      if (data.facilitator != null) facilitatorEl.value = data.facilitator;
+      const byN = new Map((data.rows || []).map((r) => [String(r.n), r]));
+      rowsEl.querySelectorAll("tr[data-n]").forEach((tr) => {
+        const row = byN.get(tr.dataset.n);
+        if (!row) return;
+        const name = tr.querySelector("[data-field=name]");
+        const dept = tr.querySelector("[data-field=dept]");
+        if (name) name.value = row.name || "";
+        if (dept) dept.value = row.dept || "";
+        tr.querySelector("[data-field=sig]").value = row.sig || "";
+        tr.querySelector("[data-field=time]").value = row.time || "";
+      });
+      updateCount();
+    }
+
+    function save() {
+      localStorage.setItem(key(), JSON.stringify(collect()));
+      statusEl.textContent = "Saved on this computer";
+    }
+
+    function load() {
+      const raw = localStorage.getItem(key());
+      apply(raw ? JSON.parse(raw) : { topic: "", facilitator: "", rows: [] });
+    }
+
+    function updateCount() {
+      const signed = [...rowsEl.querySelectorAll("[data-field=sig]")].filter((el) => el.value.trim()).length;
+      countEl.textContent = `${signed} signed`;
+    }
+
+    function stampTime(input) {
+      if (input.dataset.field !== "sig" || !input.value.trim()) return;
+      const time = input.closest("tr").querySelector("[data-field=time]");
+      if (time && !time.value) {
+        const now = new Date();
+        time.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      }
+    }
+
+    dateEl.value = todayISO();
+    renderRows();
+    load();
+
+    document.getElementById("form").addEventListener("input", (e) => {
+      if (e.target.id === "date") {
+        load();
+        return;
+      }
+      stampTime(e.target);
+      updateCount();
+      save();
+    });
+    document.getElementById("print").addEventListener("click", () => window.print());
+    document.getElementById("clear").addEventListener("click", () => {
+      rowsEl.querySelectorAll("[data-field=sig], [data-field=time]").forEach((el) => { el.value = ""; });
+      updateCount();
+      save();
+    });
+  </script>
+</body>
+</html>
