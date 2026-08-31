@@ -36,6 +36,7 @@ LINE = HexColor("#C8BFAE")
 PAGE_W, PAGE_H = letter
 MARGIN = 0.44 * inch
 INNER = PAGE_W - 2 * MARGIN
+COMPANY = "Drawer Box Specialties"
 SHOP = "Drawer boxes · Cabinets · Doors"
 
 
@@ -60,8 +61,8 @@ class Sheet:
     def __init__(self, path: Path, title: str) -> None:
         self.c = canvas.Canvas(str(path), pagesize=letter)
         self.c.setTitle(title)
-        self.c.setAuthor("Shop safety meeting")
-        self.c.setSubject("OSHA toolbox talk for drawer, cabinet, and door manufacturing")
+        self.c.setAuthor("Drawer Box Specialties")
+        self.c.setSubject("OSHA toolbox talk for Drawer Box Specialties")
 
     def finish(self) -> None:
         self.c.save()
@@ -81,10 +82,10 @@ class Sheet:
 
         c.setFillColor(AMBER)
         c.setFont("Inter-Semi", 8)
-        c.drawString(MARGIN, top - 0.24 * inch, "SAFETY MEETING  ·  ONE PAGE")
+        c.drawString(MARGIN, top - 0.24 * inch, COMPANY.upper())
         c.setFillColor(HexColor("#9AA4AE"))
         c.setFont("Inter-Med", 8)
-        c.drawRightString(PAGE_W - MARGIN, top - 0.24 * inch, "5–10 MINUTES")
+        c.drawRightString(PAGE_W - MARGIN, top - 0.24 * inch, "SAFETY MEETING  ·  5–10 MIN")
 
         c.setFillColor(white)
         c.setFont("Inter-Bold", 17)
@@ -252,7 +253,7 @@ class Sheet:
         c.drawString(
             MARGIN,
             0.12 * inch,
-            "Toolbox talk for this shop. Follow your written programs and OSHA rules. Not a substitute for a hazard assessment.",
+            "Drawer Box Specialties toolbox talk. Follow your written programs and OSHA rules. Not a substitute for a hazard assessment.",
         )
 
 
@@ -469,11 +470,11 @@ def main() -> None:
     ppe = out / "OSHA_Safety_Meeting_PPE.pdf"
     material = out / "OSHA_Safety_Meeting_Material_Handling.pdf"
 
-    s = Sheet(ppe, "PPE safety meeting — drawer, cabinet, and door shop")
+    s = Sheet(ppe, "PPE safety meeting — Drawer Box Specialties")
     draw_ppe(s)
     s.finish()
 
-    s = Sheet(material, "Material handling safety meeting — drawer, cabinet, and door shop")
+    s = Sheet(material, "Material handling safety meeting — Drawer Box Specialties")
     draw_material(s)
     s.finish()
 

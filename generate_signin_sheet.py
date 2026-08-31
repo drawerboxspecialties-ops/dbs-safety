@@ -169,7 +169,7 @@ class SignIn:
         c.drawString(
             MARGIN,
             0.11 * inch,
-            "Keep this signed sheet with the safety-meeting record. Extra lines are for new hires, temps, or visitors.",
+            "Drawer Box Specialties safety-meeting record. Extra lines are for new hires, temps, or visitors.",
         )
 
     def dept_band(self, y: float, dept: str, count: int) -> float:

@@ -1,6 +1,6 @@
-# Shop safety meeting one-pagers
+# Drawer Box Specialties safety meeting sheets
 
-Two separate letter-size PDFs for a 5–10 minute crew talk in a **drawer box, cabinet, and door** shop.
+Two separate letter-size PDFs for a 5–10 minute crew talk, plus a sign-in sheet.
 
 | File | Topic |
 | --- | --- |
