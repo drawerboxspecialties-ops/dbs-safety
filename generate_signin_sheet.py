@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Printable safety-meeting sign-in sheet from the shop employee roster."""
+"""OSHA-style training attendance PDF (29 CFR 1910.132(f)(4))."""
 
 from __future__ import annotations
 
@@ -7,34 +7,24 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
-from reportlab.lib.colors import HexColor, white
+from reportlab.lib.colors import HexColor, black, white
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
-FONT_DIR = Path("/usr/share/fonts/truetype/macos")
-pdfmetrics.registerFont(TTFont("Inter", str(FONT_DIR / "Inter-Regular.ttf")))
-pdfmetrics.registerFont(TTFont("Inter-Med", str(FONT_DIR / "Inter-Medium.ttf")))
-pdfmetrics.registerFont(TTFont("Inter-Semi", str(FONT_DIR / "Inter-SemiBold.ttf")))
-pdfmetrics.registerFont(TTFont("Inter-Bold", str(FONT_DIR / "Inter-Bold.ttf")))
-
-INK = HexColor("#14181C")
-MUTED = HexColor("#4A545E")
-RULE = HexColor("#D2C8B4")
-PAPER = HexColor("#F6F1E6")
-HEADER = HexColor("#1B232C")
-AMBER = HexColor("#E6A100")
-LINE = HexColor("#C8BFAE")
-BAND = HexColor("#EFE6D4")
-ALT = HexColor("#FFFDF8")
-EXTRA_FILL = HexColor("#F3EEE3")
+INK = black
+MUTED = HexColor("#222222")
+BAND = HexColor("#E6E6E6")
+ALT = HexColor("#F3F3F3")
+HEAD = HexColor("#003366")
 
 PAGE_W, PAGE_H = letter
-MARGIN = 0.42 * inch
+MARGIN = 0.5 * inch
 INNER = PAGE_W - 2 * MARGIN
 EXTRA_BLANKS = 6
+ROW_H = 0.36 * inch
+BAND_H = 0.28 * inch
+FOOT = 0.48 * inch
 
 DEPT_ORDER = [
     "Rough Mill",
@@ -75,147 +65,154 @@ def grouped(rows: list[tuple[str, str]]) -> list[tuple[str, list[str]]]:
 class SignIn:
     def __init__(self, path: Path) -> None:
         self.c = canvas.Canvas(str(path), pagesize=letter)
-        self.c.setTitle("Safety meeting sign-in")
+        self.c.setTitle("Certification of training — Drawer Box Specialties")
         self.c.setAuthor("Drawer Box Specialties")
-        self.c.setSubject("Employee sign-in for shop safety meeting")
+        self.c.setSubject("29 CFR 1910.132(f)(4) training attendance record")
         self.page = 0
 
     def finish(self) -> None:
         self.c.save()
+
+    def footer(self) -> None:
+        c = self.c
+        c.setStrokeColor(black)
+        c.setLineWidth(1)
+        c.line(MARGIN, FOOT, PAGE_W - MARGIN, FOOT)
+        c.setFillColor(black)
+        c.setFont("Helvetica", 9)
+        c.drawString(
+            MARGIN,
+            FOOT - 14,
+            "Keep this record with the safety-meeting file. 29 CFR 1910.132(f)(4).",
+        )
+        c.drawRightString(PAGE_W - MARGIN, FOOT - 14, f"Page {self.page}")
 
     def new_page(self, first: bool) -> float:
         if self.page:
             self.c.showPage()
         self.page += 1
         c = self.c
-        c.setFillColor(PAPER)
-        c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
-
-        bar_h = 0.88 * inch if first else 0.58 * inch
-        top = PAGE_H
-        c.setFillColor(HEADER)
-        c.rect(0, top - bar_h, PAGE_W, bar_h, fill=1, stroke=0)
-        c.setFillColor(AMBER)
-        c.rect(0, top - bar_h, 0.16 * inch, bar_h, fill=1, stroke=0)
-
-        c.setFillColor(AMBER)
-        c.setFont("Inter-Semi", 8)
-        c.drawString(MARGIN, top - 0.22 * inch, "SAFETY MEETING  ·  SIGN-IN")
-        c.setFillColor(HexColor("#9AA4AE"))
-        c.setFont("Inter-Med", 8)
-        c.drawRightString(PAGE_W - MARGIN, top - 0.22 * inch, f"PAGE {self.page}")
-
         c.setFillColor(white)
-        c.setFont("Inter-Bold", 16)
-        c.drawString(MARGIN, top - 0.48 * inch, "Employee sign-in")
-        if first:
-            c.setFillColor(HexColor("#E6D3A2"))
-            c.setFont("Inter-Med", 8.5)
-            c.drawString(MARGIN, top - 0.70 * inch, "Drawer Box Specialties  ·  Drawer boxes · Cabinets · Doors")
+        c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+        y = PAGE_H - MARGIN
 
-        y = top - bar_h - 0.14 * inch
         if first:
-            labels = [
-                ("Date", 2.2 * inch),
-                ("Topic", 3.1 * inch),
-                ("Facilitator", 2.4 * inch),
-            ]
+            c.setStrokeColor(black)
+            c.setLineWidth(2)
+            box_h = 1.28 * inch
+            c.rect(MARGIN, y - box_h, INNER, box_h, fill=0, stroke=1)
+            c.setFont("Helvetica-Bold", 10)
+            c.drawString(MARGIN + 10, y - 16, "DRAWER BOX SPECIALTIES  ·  DRAWER BOXES, CABINETS, DOORS")
+            c.setFont("Helvetica-Bold", 16)
+            c.drawString(MARGIN + 10, y - 38, "Certification of training")
+            c.setFont("Helvetica", 12)
+            c.drawString(MARGIN + 10, y - 56, "Employee attendance and written certification")
+            c.setFont("Helvetica", 9)
+            line1 = "This document is a written certification of training under 29 CFR 1910.132(f)(4) (PPE)."
+            line2 = "It lists each employee, the training date, and the subject."
+            c.drawString(MARGIN + 10, y - 76, line1)
+            c.drawString(MARGIN + 10, y - 88, line2)
+            y -= box_h + 12
+
+            c.setFont("Helvetica-Bold", 10)
+            c.setFillColor(black)
+            fields = [("Date of training", 2.15 * inch), ("Subject of certification", 3.15 * inch), ("Trainer / certifying person", 2.2 * inch)]
             x = MARGIN
-            c.setFont("Inter-Semi", 7.4)
-            c.setFillColor(MUTED)
-            for label, width in labels:
-                c.drawString(x, y, label.upper())
-                c.setStrokeColor(LINE)
-                c.setLineWidth(0.7)
-                c.line(
-                    x + c.stringWidth(label.upper(), "Inter-Semi", 7.4) + 6,
-                    y - 1,
-                    x + width,
-                    y - 1,
-                )
-                x += width + 0.12 * inch
-            y -= 0.22 * inch
+            for label, width in fields:
+                c.drawString(x, y, label)
+                c.setStrokeColor(black)
+                c.setLineWidth(1)
+                c.line(x, y - 16, x + width - 10, y - 16)
+                x += width
+            y -= 28
+        else:
+            c.setFont("Helvetica-Bold", 12)
+            c.drawString(MARGIN, y - 2, "Certification of training (continued)")
+            c.setFont("Helvetica", 10)
+            c.drawRightString(PAGE_W - MARGIN, y - 2, "Drawer Box Specialties")
+            y -= 18
 
-        self.draw_col_headers(y)
+        self.col_headers(y)
         self.footer()
-        return y - 0.26 * inch
+        return y - 22
 
-    def draw_col_headers(self, y: float) -> None:
+    def col_headers(self, y: float) -> None:
         c = self.c
-        c.setFillColor(HEADER)
-        c.rect(MARGIN, y - 0.22 * inch, INNER, 0.22 * inch, fill=1, stroke=0)
-        c.setFillColor(AMBER)
-        c.setFont("Inter-Bold", 7)
-        heads = [
-            (MARGIN + 6, "#"),
-            (MARGIN + 0.38 * inch, "NAME"),
-            (MARGIN + 3.55 * inch, "DEPT"),
-            (MARGIN + 5.05 * inch, "SIGNATURE"),
-            (MARGIN + 7.15 * inch, "TIME"),
-        ]
-        for x, text in heads:
-            c.drawString(x, y - 0.15 * inch, text)
-
-    def footer(self) -> None:
-        c = self.c
-        c.setFillColor(HEADER)
-        c.rect(0, 0, PAGE_W, 0.30 * inch, fill=1, stroke=0)
-        c.setFillColor(AMBER)
-        c.rect(0, 0, PAGE_W, 0.045 * inch, fill=1, stroke=0)
-        c.setFillColor(HexColor("#E8D9B0"))
-        c.setFont("Inter", 6.5)
-        c.drawString(
-            MARGIN,
-            0.11 * inch,
-            "Drawer Box Specialties safety-meeting record. Blank lines are for new hires, temps, or visitors.",
-        )
+        c.setFillColor(black)
+        c.rect(MARGIN, y - 18, INNER, 18, fill=1, stroke=0)
+        c.setFillColor(white)
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(MARGIN + 6, y - 13, "No.")
+        c.drawString(MARGIN + 0.42 * inch, y - 13, "Employee name")
+        c.drawString(MARGIN + 3.35 * inch, y - 13, "Department")
+        c.drawString(MARGIN + 4.85 * inch, y - 13, "Employee signature")
+        c.drawString(MARGIN + 6.85 * inch, y - 13, "Time")
 
     def dept_band(self, y: float, dept: str, count: int) -> float:
         c = self.c
-        h = 0.22 * inch
         c.setFillColor(BAND)
-        c.rect(MARGIN, y - h, INNER, h, fill=1, stroke=0)
-        c.setFillColor(HEADER)
-        c.setFont("Inter-Bold", 8)
-        c.drawString(MARGIN + 6, y - 0.15 * inch, dept.upper())
-        c.setFillColor(MUTED)
-        c.setFont("Inter-Med", 7)
+        c.rect(MARGIN, y - BAND_H, INNER, BAND_H, fill=1, stroke=0)
+        c.setStrokeColor(black)
+        c.setLineWidth(0.6)
+        c.rect(MARGIN, y - BAND_H, INNER, BAND_H, fill=0, stroke=1)
+        c.setFillColor(black)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(MARGIN + 6, y - 18, dept)
+        c.setFont("Helvetica", 10)
         if count:
-            label = f"{count} employee{'s' if count != 1 else ''}"
-            c.drawRightString(PAGE_W - MARGIN - 6, y - 0.15 * inch, label)
-        return y - h
+            c.drawRightString(PAGE_W - MARGIN - 6, y - 18, f"{count} employees")
+        return y - BAND_H
 
-    def name_row(self, y: float, num: int | None, name: str, dept: str, extra: bool, alt: bool) -> float:
+    def name_row(self, y: float, num: int, name: str, dept: str, extra: bool, alt: bool) -> float:
         c = self.c
-        h = 0.275 * inch
-        c.setFillColor(EXTRA_FILL if extra else (BAND if alt else ALT))
-        c.rect(MARGIN, y - h, INNER, h, fill=1, stroke=0)
-        c.setStrokeColor(RULE)
-        c.setLineWidth(0.4)
-        c.line(MARGIN, y - h, MARGIN + INNER, y - h)
+        c.setFillColor(ALT if alt or extra else white)
+        c.rect(MARGIN, y - ROW_H, INNER, ROW_H, fill=1, stroke=0)
+        c.setStrokeColor(black)
+        c.setLineWidth(0.6)
+        c.line(MARGIN, y - ROW_H, MARGIN + INNER, y - ROW_H)
+        c.line(MARGIN, y, MARGIN, y - ROW_H)
+        c.line(MARGIN + INNER, y, MARGIN + INNER, y - ROW_H)
 
-        c.setFillColor(MUTED)
-        c.setFont("Inter", 7)
-        if num is not None:
-            c.drawRightString(MARGIN + 0.28 * inch, y - 0.18 * inch, str(num))
+        c.setFillColor(black)
+        c.setFont("Helvetica", 10)
+        c.drawRightString(MARGIN + 0.32 * inch, y - 16, str(num))
+        c.setFont("Helvetica", 12)
+        c.drawString(MARGIN + 0.42 * inch, y - 16, name)
+        c.setFont("Helvetica", 12)
+        c.drawString(MARGIN + 3.35 * inch, y - 16, dept)
+        c.setLineWidth(0.8)
+        c.line(MARGIN + 4.85 * inch, y - 18, MARGIN + 6.75 * inch, y - 18)
+        c.line(MARGIN + 6.85 * inch, y - 18, MARGIN + INNER - 6, y - 18)
+        return y - ROW_H
 
-        c.setFillColor(INK)
-        c.setFont("Inter-Med", 8.2)
-        c.drawString(MARGIN + 0.38 * inch, y - 0.18 * inch, name)
-
-        c.setFillColor(MUTED)
-        c.setFont("Inter", 7.2)
-        c.drawString(MARGIN + 3.55 * inch, y - 0.18 * inch, dept)
-
-        c.setStrokeColor(LINE)
-        c.setLineWidth(0.7)
-        c.line(MARGIN + 5.05 * inch, y - 0.20 * inch, MARGIN + 7.05 * inch, y - 0.20 * inch)
-        c.line(MARGIN + 7.15 * inch, y - 0.20 * inch, MARGIN + INNER - 6, y - 0.20 * inch)
+    def certification(self, y: float) -> float:
+        c = self.c
+        h = 1.15 * inch
+        if y - h < FOOT + 8:
+            y = self.new_page(first=False)
+        c.setStrokeColor(black)
+        c.setLineWidth(2)
+        c.rect(MARGIN, y - h, INNER, h, fill=0, stroke=1)
+        c.setFillColor(black)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(MARGIN + 8, y - 16, "TRAINER CERTIFICATION — 29 CFR 1910.132(f)(4)")
+        c.setFont("Helvetica", 11)
+        c.drawString(
+            MARGIN + 8,
+            y - 34,
+            "I certify that each employee named above has received and understood the training on the subject listed.",
+        )
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(MARGIN + 8, y - 56, "Trainer signature")
+        c.drawString(MARGIN + 4.4 * inch, y - 56, "Title")
+        c.setStrokeColor(black)
+        c.setLineWidth(1)
+        c.line(MARGIN + 8, y - 78, MARGIN + 4.15 * inch, y - 78)
+        c.line(MARGIN + 4.4 * inch, y - 78, MARGIN + INNER - 8, y - 78)
         return y - h
 
 
 def build_rows(employees: list[tuple[str, str]]) -> list[tuple]:
-    """Return a list of ('dept', name, count) or ('person', n, name, dept, extra)."""
     items: list[tuple] = []
     n = 0
     for dept, names in grouped(employees):
@@ -237,20 +234,17 @@ def main() -> None:
     sheet = SignIn(out)
     items = build_rows(employees)
     y = sheet.new_page(first=True)
-    floor = 0.42 * inch
+    floor = FOOT + 6
     alt = False
     current_dept = ""
-    row_h = 0.275 * inch
-    band_h = 0.22 * inch
 
     for item in items:
         if item[0] == "dept":
-            block = band_h + row_h * item[2]
-            # Keep a department on one page when the whole group fits on a fresh page.
-            if y - block < floor and block <= PAGE_H - 1.7 * inch - floor:
+            block = BAND_H + ROW_H * item[2]
+            if y - block < floor and block <= PAGE_H - 2.2 * inch - floor:
                 y = sheet.new_page(first=False)
                 alt = False
-            elif y - band_h < floor:
+            elif y - BAND_H < floor:
                 y = sheet.new_page(first=False)
                 alt = False
             current_dept = item[1]
@@ -260,7 +254,7 @@ def main() -> None:
             _, num, name, dept, extra = item
             if extra:
                 current_dept = ""
-            if y - row_h < floor:
+            if y - ROW_H < floor:
                 y = sheet.new_page(first=False)
                 alt = False
                 if current_dept:
@@ -268,9 +262,11 @@ def main() -> None:
             y = sheet.name_row(y, num, name, dept, extra, alt)
             alt = not alt
 
+    y -= 10
+    sheet.certification(y)
     sheet.c.showPage()
     sheet.finish()
-    print(f"Wrote {out.name}  ({len(employees)} employees + {EXTRA_BLANKS} extra lines, {sheet.page} pages)")
+    print(f"Wrote {out.name}  ({len(employees)} employees + {EXTRA_BLANKS} blank lines, {sheet.page} pages)")
 
 
 if __name__ == "__main__":

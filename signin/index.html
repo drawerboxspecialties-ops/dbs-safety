@@ -3,25 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Employee sign-in — Drawer Box Specialties</title>
+  <title>Certification of training — Drawer Box Specialties</title>
   <style>
+    /* Printable OSHA training record.
+       29 CFR 1910.132(f)(4) requires name, date(s), and subject.
+       Type sizes follow OSHA/federal print practice: 12-pt body, 0.5-in margins,
+       high-contrast black on white. OSHA does not mandate a typeface. */
+    @page { size: letter; margin: 0.5in; }
     :root {
-      --ink: #14181c;
-      --muted: #4a545e;
-      --header: #1b232c;
-      --amber: #e6a100;
-      --paper: #f6f1e6;
-      --card: #fffdf8;
-      --rule: #d2c8b4;
-      --band: #efe6d4;
-      --line: #c8bfae;
+      --ink: #000;
+      --muted: #222;
+      --rule: #000;
+      --band: #e6e6e6;
+      --alt: #f3f3f3;
+      --head: #003366;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; }
     body {
-      font-family: Inter, "Segoe UI", system-ui, sans-serif;
-      background: var(--paper);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      line-height: 1.25;
       color: var(--ink);
+      background: #d8d8d8;
     }
     .toolbar {
       position: sticky;
@@ -32,82 +36,147 @@
       gap: .5rem;
       align-items: center;
       justify-content: space-between;
-      padding: .7rem 1rem;
-      background: var(--header);
+      padding: .6rem 1rem;
+      background: var(--head);
       color: #fff;
     }
-    .toolbar p { margin: 0; color: var(--amber); font-size: .72rem; letter-spacing: .06em; }
-    .toolbar h1 { margin: .1rem 0 0; font-size: 1.05rem; }
-    .actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .toolbar p { margin: 0; font-size: 10pt; letter-spacing: .04em; }
+    .toolbar h1 { margin: .1rem 0 0; font-size: 14pt; }
+    .actions { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
     button {
-      border: 0;
-      border-radius: 6px;
-      padding: .5rem .8rem;
-      font: 650 13px/1 Inter, system-ui, sans-serif;
+      border: 1px solid #fff;
+      border-radius: 2px;
+      padding: .4rem .75rem;
+      font: 700 12pt/1 Arial, Helvetica, sans-serif;
       cursor: pointer;
-      background: var(--amber);
-      color: var(--header);
+      background: #fff;
+      color: var(--head);
     }
-    button.ghost { background: #2c3640; color: #e8d9b0; }
-    .sheet { max-width: 980px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+    button.ghost { background: transparent; color: #fff; }
+    .status { color: #dbe7f3; font-size: 10pt; }
+    .sheet {
+      width: 8.5in;
+      max-width: 100%;
+      margin: 0.75rem auto 2rem;
+      padding: 0.5in;
+      background: #fff;
+      color: #000;
+      box-shadow: 0 0 0 1px #bbb;
+    }
+    .banner {
+      border: 2px solid #000;
+      padding: 8pt 10pt;
+      margin-bottom: 10pt;
+    }
+    .banner .kicker {
+      font-size: 10pt;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin: 0 0 2pt;
+    }
+    .banner h2 {
+      margin: 0;
+      font-size: 16pt;
+      line-height: 1.15;
+    }
+    .banner .sub {
+      margin: 4pt 0 0;
+      font-size: 12pt;
+    }
+    .legal {
+      font-size: 10pt;
+      margin: 8pt 0 0;
+    }
     .meta {
       display: grid;
-      grid-template-columns: 1fr 1.3fr 1.1fr auto;
-      gap: .7rem;
-      background: var(--card);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      padding: .85rem;
-      margin-bottom: .8rem;
+      grid-template-columns: 1.4in 1fr 1.6in;
+      gap: 10pt;
+      margin: 10pt 0;
     }
-    label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; color: var(--muted); margin-bottom: .25rem; }
+    label {
+      display: block;
+      font-size: 10pt;
+      font-weight: 700;
+      margin-bottom: 2pt;
+    }
     input, select {
       width: 100%;
       border: 0;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1pt solid #000;
+      border-radius: 0;
       background: transparent;
-      font: 500 15px/1.3 Inter, system-ui, sans-serif;
-      color: var(--ink);
-      padding: .25rem 0;
+      font: 12pt/1.2 Arial, Helvetica, sans-serif;
+      color: #000;
+      padding: 3pt 0;
+      min-height: 18pt;
     }
-    input:focus { outline: none; border-bottom-color: var(--amber); }
-    .count { min-width: 5.5rem; align-self: end; color: var(--muted); font-size: .85rem; padding-bottom: .2rem; }
-    table { width: 100%; border-collapse: collapse; background: var(--card); }
+    input:focus { outline: 2px solid var(--head); outline-offset: 1px; }
+    .count { font-size: 12pt; align-self: end; padding-bottom: 4pt; font-weight: 700; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5pt solid #000;
+    }
+    thead { display: table-header-group; }
     th {
-      background: var(--header);
-      color: var(--amber);
-      font-size: .7rem;
-      letter-spacing: .05em;
+      background: #000;
+      color: #fff;
+      font-size: 10pt;
+      font-weight: 700;
       text-align: left;
-      padding: .45rem .4rem;
+      padding: 6pt 5pt;
     }
-    td { padding: .28rem .35rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+    td {
+      padding: 5pt 5pt;
+      border-bottom: 0.75pt solid #000;
+      vertical-align: middle;
+      font-size: 12pt;
+    }
     tr.dept td {
       background: var(--band);
       font-weight: 700;
-      font-size: .78rem;
-      letter-spacing: .04em;
-      padding: .4rem .4rem;
+      font-size: 12pt;
+      padding: 5pt;
     }
-    tr.alt td { background: #f3eee3; }
-    .num { width: 2.2rem; color: var(--muted); font-size: .8rem; }
-    .dept-cell { width: 8.2rem; color: var(--muted); font-size: .82rem; }
-    .sig, .time, .blank-name, .blank-dept { width: 100%; font-size: 14px; }
-    .time { width: 7.2rem; }
-    .status { color: #9aa4ae; font-size: .75rem; }
+    tr.alt td { background: var(--alt); }
+    tr.person { page-break-inside: avoid; }
+    .num { width: 0.4in; font-size: 10pt; }
+    .dept-cell { width: 1.45in; font-size: 12pt; }
+    .sig-cell { width: 2.15in; }
+    .time-cell { width: 1.05in; }
+    .sig, .time, .blank-name, .blank-dept { width: 100%; font-size: 12pt; min-height: 16pt; }
+    .cert {
+      margin-top: 12pt;
+      border: 2px solid #000;
+      padding: 8pt 10pt;
+      page-break-inside: avoid;
+    }
+    .cert h3 { margin: 0 0 6pt; font-size: 12pt; text-transform: uppercase; }
+    .cert p { margin: 0 0 8pt; font-size: 12pt; }
+    .signoff {
+      display: grid;
+      grid-template-columns: 1fr 1.4in;
+      gap: 12pt;
+    }
     @media (max-width: 720px) {
-      .meta { grid-template-columns: 1fr 1fr; }
-      .dept-cell { width: 5.5rem; }
-      table { font-size: .9rem; }
+      .sheet { padding: 0.6rem; box-shadow: none; }
+      .meta, .signoff { grid-template-columns: 1fr 1fr; }
     }
     @media print {
-      .toolbar { display: none; }
+      .toolbar { display: none !important; }
       body { background: #fff; }
-      .sheet { max-width: none; padding: 0; }
-      .meta, table { break-inside: avoid; }
-      input { border-bottom-color: #bbb; }
-      th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      tr.dept td, tr.alt td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .sheet {
+        width: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      input { border-bottom: 1pt solid #000; }
+      th, tr.dept td, tr.alt td {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
     }
   </style>
 </head>
@@ -115,7 +184,7 @@
   <div class="toolbar">
     <div>
       <p>DRAWER BOX SPECIALTIES</p>
-      <h1>Safety meeting sign-in</h1>
+      <h1>OSHA training attendance record</h1>
     </div>
     <div class="actions">
       <span class="status" id="status">Saved on this computer</span>
@@ -126,33 +195,67 @@
 
   <main class="sheet">
     <form id="form" autocomplete="off">
+      <header class="banner">
+        <p class="kicker">Drawer Box Specialties · Drawer boxes · Cabinets · Doors</p>
+        <h2>Certification of training</h2>
+        <p class="sub">Employee attendance and written certification</p>
+        <p class="legal">
+          This document is a written certification of training under
+          29 CFR 1910.132(f)(4) (PPE). It also records attendance for other
+          safety talks, including material handling. It lists each employee,
+          the training date, and the subject.
+        </p>
+      </header>
+
       <div class="meta">
         <div>
-          <label for="date">Date</label>
+          <label for="date">Date of training</label>
           <input id="date" name="date" type="date" required />
         </div>
         <div>
-          <label for="topic">Topic</label>
+          <label for="topic">Subject of certification</label>
           <input id="topic" name="topic" type="text" placeholder="PPE or material handling" />
         </div>
         <div>
-          <label for="facilitator">Facilitator</label>
+          <label for="facilitator">Trainer / certifying person</label>
           <input id="facilitator" name="facilitator" type="text" />
         </div>
-        <div class="count" id="count">0 signed</div>
       </div>
+
+      <p class="count" id="count">0 employees signed</p>
+
       <table>
         <thead>
           <tr>
-            <th class="num">#</th>
-            <th>Name</th>
-            <th>Dept</th>
-            <th>Signature</th>
+            <th class="num">No.</th>
+            <th>Employee name</th>
+            <th>Department</th>
+            <th>Employee signature</th>
             <th>Time</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
+
+      <section class="cert">
+        <h3>Trainer certification — 29 CFR 1910.132(f)(4)</h3>
+        <p>
+          I certify that each employee named above has received and understood
+          the training on the subject listed, including when PPE is necessary,
+          what PPE is required, how to use and care for it, its limits, and
+          (for material handling) safe lifting, stacking, and powered equipment rules.
+        </p>
+        <div class="signoff">
+          <div>
+            <label for="trainerSig">Trainer signature</label>
+            <input id="trainerSig" name="trainerSig" type="text" />
+          </div>
+          <div>
+            <label for="trainerTitle">Title</label>
+            <input id="trainerTitle" name="trainerTitle" type="text" />
+          </div>
+        </div>
+      </section>
     </form>
   </main>
 
@@ -207,11 +310,13 @@
       ["RODRIGUEZ, CALIXTO", "Manufacturing"]
     ];
     const EXTRA = 6;
-    const STORAGE = "dbs-signin";
+    const STORAGE = "dbs-signin-osha";
 
     const dateEl = document.getElementById("date");
     const topicEl = document.getElementById("topic");
     const facilitatorEl = document.getElementById("facilitator");
+    const trainerSigEl = document.getElementById("trainerSig");
+    const trainerTitleEl = document.getElementById("trainerTitle");
     const rowsEl = document.getElementById("rows");
     const countEl = document.getElementById("count");
     const statusEl = document.getElementById("status");
@@ -237,7 +342,7 @@
       for (const [dept, names] of grouped()) {
         const band = document.createElement("tr");
         band.className = "dept";
-        band.innerHTML = `<td colspan="5">${dept} · ${names.length}</td>`;
+        band.innerHTML = `<td colspan="5">${dept} — ${names.length} employees</td>`;
         frag.appendChild(band);
         names.forEach((name, i) => {
           n += 1;
@@ -253,20 +358,20 @@
 
     function personRow(n, name, dept, extra, alt) {
       const tr = document.createElement("tr");
-      if (alt) tr.classList.add("alt");
+      tr.className = "person" + (alt ? " alt" : "");
       tr.dataset.n = String(n);
       const nameCell = extra
-        ? `<input class="blank-name" data-field="name" placeholder="Name" />`
-        : `<strong>${name}</strong>`;
+        ? `<input class="blank-name" data-field="name" placeholder="Employee name" />`
+        : name;
       const deptCell = extra
-        ? `<input class="blank-dept" data-field="dept" placeholder="Dept" />`
+        ? `<input class="blank-dept" data-field="dept" placeholder="Department" />`
         : dept;
       tr.innerHTML = `
         <td class="num">${n}</td>
         <td>${nameCell}</td>
         <td class="dept-cell">${deptCell}</td>
-        <td><input class="sig" data-field="sig" placeholder="Sign" /></td>
-        <td><input class="time" data-field="time" type="time" /></td>
+        <td class="sig-cell"><input class="sig" data-field="sig" /></td>
+        <td class="time-cell"><input class="time" data-field="time" type="time" /></td>
       `;
       return tr;
     }
@@ -287,24 +392,36 @@
         date: dateEl.value,
         topic: topicEl.value,
         facilitator: facilitatorEl.value,
+        trainerSig: trainerSigEl.value,
+        trainerTitle: trainerTitleEl.value,
         rows,
       };
     }
 
     function apply(data) {
-      if (!data) return;
-      if (data.topic != null) topicEl.value = data.topic;
-      if (data.facilitator != null) facilitatorEl.value = data.facilitator;
+      if (!data) {
+        topicEl.value = "";
+        facilitatorEl.value = "";
+        trainerSigEl.value = "";
+        trainerTitleEl.value = "";
+        updateCount();
+        return;
+      }
+      topicEl.value = data.topic || "";
+      facilitatorEl.value = data.facilitator || "";
+      trainerSigEl.value = data.trainerSig || "";
+      trainerTitleEl.value = data.trainerTitle || "";
       const byN = new Map((data.rows || []).map((r) => [String(r.n), r]));
       rowsEl.querySelectorAll("tr[data-n]").forEach((tr) => {
         const row = byN.get(tr.dataset.n);
-        if (!row) return;
         const name = tr.querySelector("[data-field=name]");
         const dept = tr.querySelector("[data-field=dept]");
-        if (name) name.value = row.name || "";
-        if (dept) dept.value = row.dept || "";
-        tr.querySelector("[data-field=sig]").value = row.sig || "";
-        tr.querySelector("[data-field=time]").value = row.time || "";
+        const sig = tr.querySelector("[data-field=sig]");
+        const time = tr.querySelector("[data-field=time]");
+        if (name) name.value = row?.name || "";
+        if (dept) dept.value = row?.dept || "";
+        sig.value = row?.sig || "";
+        time.value = row?.time || "";
       });
       updateCount();
     }
@@ -316,12 +433,12 @@
 
     function load() {
       const raw = localStorage.getItem(key());
-      apply(raw ? JSON.parse(raw) : { topic: "", facilitator: "", rows: [] });
+      apply(raw ? JSON.parse(raw) : null);
     }
 
     function updateCount() {
       const signed = [...rowsEl.querySelectorAll("[data-field=sig]")].filter((el) => el.value.trim()).length;
-      countEl.textContent = `${signed} signed`;
+      countEl.textContent = `${signed} employees signed`;
     }
 
     function stampTime(input) {
@@ -349,6 +466,7 @@
     document.getElementById("print").addEventListener("click", () => window.print());
     document.getElementById("clear").addEventListener("click", () => {
       rowsEl.querySelectorAll("[data-field=sig], [data-field=time]").forEach((el) => { el.value = ""; });
+      trainerSigEl.value = "";
       updateCount();
       save();
     });
