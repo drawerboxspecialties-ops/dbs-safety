@@ -9,7 +9,7 @@ Two separate letter-size PDFs for a 5–10 minute crew talk in a **drawer box, c
 
 Written for this floor: saws, CNC, sanding, edgebanding, assembly, sheet stock, drawer boxes, and doors. OSHA references on each sheet are 1910.132–138 and 1910.95 (PPE / hearing), 1910.213 (no gloves at woodworking cutters), 1910.176 (materials), and 1910.178 (forklifts / pallet jacks).
 
-Print one-sided. Fill date, facilitator, department, and headcount. Keep the signed copy with your meeting records.
+Print one-sided. Fill date, facilitator, department, and headcount. Keep the signed copy with your meeting records. Each sheet has talking points, do/don’t, a stop-work line, and attendance.
 
 These are toolbox talks, not a written PPE program or forklift course.
 

@@ -272,12 +272,12 @@ def draw_ppe(sheet: Sheet) -> None:
     col_gap = 0.12 * inch
     left_w = INNER * 0.56
     right_w = INNER - left_w - col_gap
-    col_h = 3.05 * inch
+    col_h = 3.55 * inch
 
     sheet.card(MARGIN, y, left_w, col_h)
     sheet.card(MARGIN + left_w + col_gap, y, right_w, col_h, fill=BLUE_TINT, stroke=HexColor("#C5D0D8"))
 
-    ly = sheet.section_label(MARGIN + 8, y - 14, "Talking points")
+    ly = sheet.section_label(MARGIN + 8, y - 16, "Talking points")
     sheet.numbered(
         MARGIN + 8,
         ly,
@@ -289,12 +289,12 @@ def draw_ppe(sheet: Sheet) -> None:
             "Cracked glasses, torn gloves, or a dirty respirator do not protect you. Turn them in before you start.",
         ],
         left_w - 18,
-        size=8.3,
-        leading=10.6,
-        gap=3.6,
+        size=8.8,
+        leading=11.4,
+        gap=5.0,
     )
 
-    ry = sheet.section_label(MARGIN + left_w + col_gap + 8, y - 14, "In this shop, wear")
+    ry = sheet.section_label(MARGIN + left_w + col_gap + 8, y - 16, "In this shop, wear")
     sheet.bullets(
         MARGIN + left_w + col_gap + 8,
         ry,
@@ -307,70 +307,52 @@ def draw_ppe(sheet: Sheet) -> None:
             "Chemicals: gloves and eye protection on the SDS for glue, stain, and cleaner.",
         ],
         right_w - 18,
-        size=8.0,
-        leading=10.2,
-        gap=3.4,
+        size=8.5,
+        leading=11.0,
+        gap=4.4,
         bullet_color=HEADER,
     )
 
-    y = y - col_h - 0.12 * inch
+    y = y - col_h - 0.14 * inch
     half = (INNER - col_gap) / 2
-    box_h = 1.52 * inch
+    box_h = 1.72 * inch
     sheet.card(MARGIN, y, half, box_h, fill=GREEN_TINT, stroke=HexColor("#B7CFC0"))
     sheet.card(MARGIN + half + col_gap, y, half, box_h, fill=RED_TINT, stroke=HexColor("#E0C4C0"))
 
-    sheet.section_label(MARGIN + 8, y - 13, "Do", GREEN)
+    sheet.section_label(MARGIN + 8, y - 14, "Do", GREEN)
     sheet.bullets(
         MARGIN + 8,
-        y - 28,
+        y - 30,
         [
             "Put glasses on before you walk into machining.",
             "Store clean PPE so the next shift can use it.",
             "Ask if the glue, finish, or machine setup changed.",
         ],
         half - 18,
-        size=8.4,
-        leading=10.8,
-        gap=3.2,
+        size=8.8,
+        leading=11.4,
+        gap=4.0,
         bullet_color=GREEN,
     )
 
-    sheet.section_label(MARGIN + half + col_gap + 8, y - 13, "Don't", RED)
+    sheet.section_label(MARGIN + half + col_gap + 8, y - 14, "Don't", RED)
     sheet.bullets(
         MARGIN + half + col_gap + 8,
-        y - 28,
+        y - 30,
         [
             "Do not take side shields off your glasses.",
             "Do not run a saw or sander with glasses around your neck.",
             "Do not share earplugs or a sweaty respirator.",
         ],
         half - 18,
-        size=8.4,
-        leading=10.8,
-        gap=3.2,
+        size=8.8,
+        leading=11.4,
+        gap=4.0,
         bullet_color=RED,
     )
 
-    y = y - box_h - 0.12 * inch
-    q_h = 1.22 * inch
-    sheet.card(MARGIN, y, INNER, q_h)
-    qy = sheet.section_label(MARGIN + 8, y - 14, "Ask the crew")
-    sheet.numbered(
-        MARGIN + 8,
-        qy,
-        [
-            "At your station today — saw, CNC, sanding, assembly, or finish — what PPE is required?",
-            "Where do people take glasses off when they should stay on?",
-            "If your glasses or gloves fail mid-shift, where do you get a new pair?",
-        ],
-        INNER - 20,
-        size=8.6,
-        leading=11.0,
-        gap=3.2,
-    )
-
     y = sheet.stop_work(
-        y - q_h - 0.11 * inch,
+        y - box_h - 0.14 * inch,
         "Required PPE is missing or damaged, or someone says to skip glasses or hearing protection “just for this cut.” Get a supervisor.",
     )
     sheet.attendance(y)
@@ -394,12 +376,12 @@ def draw_material(sheet: Sheet) -> None:
     col_gap = 0.12 * inch
     left_w = INNER * 0.56
     right_w = INNER - left_w - col_gap
-    col_h = 3.05 * inch
+    col_h = 3.55 * inch
 
     sheet.card(MARGIN, y, left_w, col_h)
     sheet.card(MARGIN + left_w + col_gap, y, right_w, col_h, fill=BLUE_TINT, stroke=HexColor("#C5D0D8"))
 
-    ly = sheet.section_label(MARGIN + 8, y - 14, "Talking points")
+    ly = sheet.section_label(MARGIN + 8, y - 16, "Talking points")
     sheet.numbered(
         MARGIN + 8,
         ly,
@@ -411,12 +393,12 @@ def draw_material(sheet: Sheet) -> None:
             "Forklifts and powered pallet jacks: trained operators only. Stop, make eye contact, stay out from under the forks (1910.178).",
         ],
         left_w - 18,
-        size=8.3,
-        leading=10.6,
-        gap=3.6,
+        size=8.8,
+        leading=11.4,
+        gap=5.0,
     )
 
-    ry = sheet.section_label(MARGIN + left_w + col_gap + 8, y - 14, "Before you move it")
+    ry = sheet.section_label(MARGIN + left_w + col_gap + 8, y - 16, "Before you move it")
     sheet.bullets(
         MARGIN + left_w + col_gap + 8,
         ry,
@@ -429,70 +411,52 @@ def draw_material(sheet: Sheet) -> None:
             "Exits, panels, and fire gear still open?",
         ],
         right_w - 18,
-        size=8.1,
-        leading=10.3,
-        gap=3.6,
+        size=8.5,
+        leading=11.0,
+        gap=4.6,
         bullet_color=HEADER,
     )
 
-    y = y - col_h - 0.12 * inch
+    y = y - col_h - 0.14 * inch
     half = (INNER - col_gap) / 2
-    box_h = 1.52 * inch
+    box_h = 1.72 * inch
     sheet.card(MARGIN, y, half, box_h, fill=GREEN_TINT, stroke=HexColor("#B7CFC0"))
     sheet.card(MARGIN + half + col_gap, y, half, box_h, fill=RED_TINT, stroke=HexColor("#E0C4C0"))
 
-    sheet.section_label(MARGIN + 8, y - 13, "Do", GREEN)
+    sheet.section_label(MARGIN + 8, y - 14, "Do", GREEN)
     sheet.bullets(
         MARGIN + 8,
-        y - 28,
+        y - 30,
         [
             "Bend at the knees. Keep the load close. Turn with your feet.",
             "Team-lift long doors and sheets. Say who walks backward.",
             "Set the brake on a cart before you load boxes or doors.",
         ],
         half - 18,
-        size=8.4,
-        leading=10.8,
-        gap=3.2,
+        size=8.8,
+        leading=11.4,
+        gap=4.0,
         bullet_color=GREEN,
     )
 
-    sheet.section_label(MARGIN + half + col_gap + 8, y - 13, "Don't", RED)
+    sheet.section_label(MARGIN + half + col_gap + 8, y - 14, "Don't", RED)
     sheet.bullets(
         MARGIN + half + col_gap + 8,
-        y - 28,
+        y - 30,
         [
             "Do not twist or throw parts onto a stack.",
             "Do not block aisles with sheet stock or door carts.",
             "Do not ride a pallet jack or walk under raised forks.",
         ],
         half - 18,
-        size=8.4,
-        leading=10.8,
-        gap=3.2,
+        size=8.8,
+        leading=11.4,
+        gap=4.0,
         bullet_color=RED,
     )
 
-    y = y - box_h - 0.12 * inch
-    q_h = 1.22 * inch
-    sheet.card(MARGIN, y, INNER, q_h)
-    qy = sheet.section_label(MARGIN + 8, y - 14, "Ask the crew")
-    sheet.numbered(
-        MARGIN + 8,
-        qy,
-        [
-            "What do we still carry by hand that should go on a cart — sheets, drawer boxes, or doors?",
-            "Where do leaning doors or sheet stacks create a tip or trip hazard on this floor?",
-            "How do we call it out when carrying a long door or sheet around a corner?",
-        ],
-        INNER - 20,
-        size=8.6,
-        leading=11.0,
-        gap=3.2,
-    )
-
     y = sheet.stop_work(
-        y - q_h - 0.11 * inch,
+        y - box_h - 0.14 * inch,
         "The sheet or door load is unstable, the aisle is blocked, the cart or jack is damaged, or you were not trained on that equipment. Stop and get help.",
     )
     sheet.attendance(y)
