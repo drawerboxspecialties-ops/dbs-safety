@@ -1,16 +1,17 @@
-# OSHA safety meeting one-pagers
+# Shop safety meeting one-pagers
 
-Printable one-page toolbox talks for a 5–10 minute crew meeting.
+Two separate letter-size PDFs for a 5–10 minute crew talk in a **drawer box, cabinet, and door** shop.
 
-| File | Use |
+| File | Topic |
 | --- | --- |
-| [OSHA_Safety_Meeting_PPE.pdf](OSHA_Safety_Meeting_PPE.pdf) | Personal protective equipment (OSHA 1910.132–138) |
-| [OSHA_Safety_Meeting_Material_Handling.pdf](OSHA_Safety_Meeting_Material_Handling.pdf) | Material handling (OSHA 1910.176, 1910.178) |
-| [OSHA_Safety_Meeting_PPE_and_Material_Handling.pdf](OSHA_Safety_Meeting_PPE_and_Material_Handling.pdf) | Both sheets, two pages |
+| [OSHA_Safety_Meeting_PPE.pdf](OSHA_Safety_Meeting_PPE.pdf) | Personal protective equipment |
+| [OSHA_Safety_Meeting_Material_Handling.pdf](OSHA_Safety_Meeting_Material_Handling.pdf) | Material handling |
 
-Each page has talking points, do/don’t, three crew questions, a stop-work line, and eight attendance lines. Print letter size, one-sided. Fill date, facilitator, department, and headcount at the top. Keep the signed copy with your meeting records.
+Written for this floor: saws, CNC, sanding, edgebanding, assembly, sheet stock, drawer boxes, and doors. OSHA references on each sheet are 1910.132–138 and 1910.95 (PPE / hearing), 1910.213 (no gloves at woodworking cutters), 1910.176 (materials), and 1910.178 (forklifts / pallet jacks).
 
-These are training aids. They are not a written PPE program, hazard assessment, or forklift training course. Follow your site rules and current OSHA text.
+Print one-sided. Fill date, facilitator, department, and headcount. Keep the signed copy with your meeting records.
+
+These are toolbox talks, not a written PPE program or forklift course.
 
 ## Reprint
 

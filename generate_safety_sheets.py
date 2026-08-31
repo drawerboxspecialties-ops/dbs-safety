@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Generate one-page OSHA safety-meeting PDFs for PPE and material handling."""
+"""One-page OSHA safety-meeting PDFs for a drawer, cabinet, and door shop."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from reportlab.lib.colors import HexColor, Color, white
+from reportlab.lib.colors import Color, HexColor, white
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
@@ -34,8 +34,9 @@ BLUE_TINT = HexColor("#E8EEF3")
 LINE = HexColor("#C8BFAE")
 
 PAGE_W, PAGE_H = letter
-MARGIN = 0.42 * inch
+MARGIN = 0.44 * inch
 INNER = PAGE_W - 2 * MARGIN
+SHOP = "Drawer boxes · Cabinets · Doors"
 
 
 def wrap(text: str, font: str, size: float, width: float) -> list[str]:
@@ -56,11 +57,11 @@ def wrap(text: str, font: str, size: float, width: float) -> list[str]:
 
 
 class Sheet:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, title: str) -> None:
         self.c = canvas.Canvas(str(path), pagesize=letter)
-        self.c.setTitle(path.stem.replace("_", " "))
-        self.c.setAuthor("Shop safety meeting one-pager")
-        self.c.setSubject("OSHA general-industry toolbox talk")
+        self.c.setTitle(title)
+        self.c.setAuthor("Shop safety meeting")
+        self.c.setSubject("OSHA toolbox talk for drawer, cabinet, and door manufacturing")
 
     def finish(self) -> None:
         self.c.save()
@@ -69,15 +70,10 @@ class Sheet:
         self.c.setFillColor(PAPER)
         self.c.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
 
-    def header(
-        self,
-        title: str,
-        standard: str,
-        minutes: str,
-    ) -> float:
+    def header(self, title: str, standard: str) -> float:
         c = self.c
         top = PAGE_H
-        bar_h = 0.92 * inch
+        bar_h = 1.02 * inch
         c.setFillColor(HEADER)
         c.rect(0, top - bar_h, PAGE_W, bar_h, fill=1, stroke=0)
         c.setFillColor(AMBER)
@@ -85,18 +81,21 @@ class Sheet:
 
         c.setFillColor(AMBER)
         c.setFont("Inter-Semi", 8)
-        c.drawString(MARGIN, top - 0.26 * inch, "SAFETY MEETING  ·  ONE-PAGE TALK")
+        c.drawString(MARGIN, top - 0.24 * inch, "SAFETY MEETING  ·  ONE PAGE")
         c.setFillColor(HexColor("#9AA4AE"))
         c.setFont("Inter-Med", 8)
-        c.drawRightString(PAGE_W - MARGIN, top - 0.26 * inch, minutes)
+        c.drawRightString(PAGE_W - MARGIN, top - 0.24 * inch, "5–10 MINUTES")
 
         c.setFillColor(white)
-        c.setFont("Inter-Bold", 16.5)
-        c.drawString(MARGIN, top - 0.52 * inch, title)
-        c.setFillColor(HexColor("#D5C39A"))
-        c.setFont("Inter", 8)
-        c.drawString(MARGIN, top - 0.74 * inch, standard)
-        return top - bar_h - 0.12 * inch
+        c.setFont("Inter-Bold", 17)
+        c.drawString(MARGIN, top - 0.50 * inch, title)
+        c.setFillColor(HexColor("#E6D3A2"))
+        c.setFont("Inter-Med", 8.5)
+        c.drawString(MARGIN, top - 0.70 * inch, SHOP)
+        c.setFillColor(HexColor("#9AA4AE"))
+        c.setFont("Inter", 7.6)
+        c.drawString(MARGIN, top - 0.88 * inch, standard)
+        return top - bar_h - 0.14 * inch
 
     def blanks(self, y: float) -> float:
         c = self.c
@@ -107,41 +106,41 @@ class Sheet:
             ("Headcount", 1.15 * inch),
         ]
         x = MARGIN
-        c.setFont("Inter-Semi", 7.2)
+        c.setFont("Inter-Semi", 7.4)
         c.setFillColor(MUTED)
         for label, width in labels:
             c.drawString(x, y, label.upper())
             c.setStrokeColor(LINE)
             c.setLineWidth(0.7)
-            c.line(x + c.stringWidth(label.upper(), "Inter-Semi", 7.2) + 6, y - 1, x + width, y - 1)
+            c.line(x + c.stringWidth(label.upper(), "Inter-Semi", 7.4) + 6, y - 1, x + width, y - 1)
             x += width + 0.14 * inch
-        return y - 0.22 * inch
+        return y - 0.24 * inch
 
     def purpose(self, y: float, text: str) -> float:
         c = self.c
-        width = INNER
-        lines = wrap(text, "Inter", 8.4, width)
-        box_h = 0.28 * inch + len(lines) * 11
+        width = INNER - 16
+        lines = wrap(text, "Inter", 9.2, width)
+        box_h = 0.32 * inch + len(lines) * 12.2
         c.setFillColor(CARD)
         c.setStrokeColor(RULE)
         c.setLineWidth(0.8)
         c.roundRect(MARGIN, y - box_h, INNER, box_h, 4, fill=1, stroke=1)
         c.setFillColor(AMBER_DEEP)
-        c.setFont("Inter-Bold", 7)
-        c.drawString(MARGIN + 8, y - 12, "WHY THIS MEETING")
+        c.setFont("Inter-Bold", 7.2)
+        c.drawString(MARGIN + 8, y - 13, "WHY THIS MEETING")
         c.setFillColor(INK)
-        c.setFont("Inter", 8.4)
-        ty = y - 25
+        c.setFont("Inter", 9.2)
+        ty = y - 28
         for line in lines:
             c.drawString(MARGIN + 8, ty, line)
-            ty -= 11
-        return y - box_h - 0.12 * inch
+            ty -= 12.2
+        return y - box_h - 0.13 * inch
 
     def section_label(self, x: float, y: float, text: str, color: Color = INK) -> float:
         self.c.setFillColor(color)
-        self.c.setFont("Inter-Bold", 7.4)
+        self.c.setFont("Inter-Bold", 7.6)
         self.c.drawString(x, y, text.upper())
-        return y - 0.14 * inch
+        return y - 0.16 * inch
 
     def bullets(
         self,
@@ -149,21 +148,22 @@ class Sheet:
         y: float,
         items: list[str],
         width: float,
-        size: float = 8.0,
-        leading: float = 10.2,
+        size: float = 8.6,
+        leading: float = 11.0,
+        gap: float = 4.0,
         bullet_color: Color = AMBER_DEEP,
     ) -> float:
         c = self.c
         for item in items:
-            lines = wrap(item, "Inter", size, width - 11)
+            lines = wrap(item, "Inter", size, width - 12)
             c.setFillColor(bullet_color)
-            c.circle(x + 3, y + 2.2, 2.0, fill=1, stroke=0)
+            c.circle(x + 3.2, y + 2.4, 2.1, fill=1, stroke=0)
             c.setFillColor(INK)
             c.setFont("Inter", size)
-            for i, line in enumerate(lines):
-                c.drawString(x + 11, y, line)
+            for line in lines:
+                c.drawString(x + 12, y, line)
                 y -= leading
-            y -= 2.6
+            y -= gap
         return y
 
     def numbered(
@@ -172,21 +172,22 @@ class Sheet:
         y: float,
         items: list[str],
         width: float,
-        size: float = 8.0,
-        leading: float = 10.2,
+        size: float = 8.6,
+        leading: float = 11.0,
+        gap: float = 4.4,
     ) -> float:
         c = self.c
         for n, item in enumerate(items, start=1):
-            lines = wrap(item, "Inter", size, width - 14)
+            lines = wrap(item, "Inter", size, width - 16)
             c.setFillColor(HEADER)
-            c.setFont("Inter-Bold", 7.2)
+            c.setFont("Inter-Bold", 8)
             c.drawString(x, y, f"{n}.")
             c.setFillColor(INK)
             c.setFont("Inter", size)
             for line in lines:
-                c.drawString(x + 13, y, line)
+                c.drawString(x + 15, y, line)
                 y -= leading
-            y -= 3.0
+            y -= gap
         return y
 
     def card(
@@ -203,6 +204,43 @@ class Sheet:
         self.c.setLineWidth(0.8)
         self.c.roundRect(x, y - h, w, h, 4, fill=1, stroke=1)
 
+    def stop_work(self, y: float, text: str) -> float:
+        c = self.c
+        stop_h = 0.62 * inch
+        lines = wrap(text, "Inter", 8.8, INNER - 22)
+        c.setFillColor(HexColor("#3A1212"))
+        c.roundRect(MARGIN, y - stop_h, INNER, stop_h, 4, fill=1, stroke=0)
+        c.setFillColor(AMBER)
+        c.setFont("Inter-Bold", 7.4)
+        c.drawString(MARGIN + 10, y - 15, "STOP WORK IF")
+        c.setFillColor(white)
+        c.setFont("Inter", 8.8)
+        ty = y - 32
+        for line in lines:
+            c.drawString(MARGIN + 10, ty, line)
+            ty -= 11.4
+        return y - stop_h - 0.14 * inch
+
+    def attendance(self, y: float) -> None:
+        c = self.c
+        c.setFillColor(MUTED)
+        c.setFont("Inter-Bold", 7.4)
+        c.drawString(MARGIN, y, "ATTENDANCE  ·  PRINT NAME AND INITIAL")
+        y -= 0.10 * inch
+        rows, cols = 4, 2
+        col_w = INNER / cols
+        row_h = 0.30 * inch
+        for r in range(rows):
+            for col in range(cols):
+                x = MARGIN + col * col_w
+                yy = y - r * row_h
+                c.setStrokeColor(LINE)
+                c.setLineWidth(0.6)
+                c.line(x, yy, x + col_w - 12, yy)
+                c.setFillColor(HexColor("#B7AFA0"))
+                c.setFont("Inter", 6.2)
+                c.drawString(x, yy + 3, f"{r * cols + col + 1}.")
+
     def footer(self) -> None:
         c = self.c
         c.setFillColor(HEADER)
@@ -210,11 +248,11 @@ class Sheet:
         c.setFillColor(AMBER)
         c.rect(0, 0, PAGE_W, 0.045 * inch, fill=1, stroke=0)
         c.setFillColor(HexColor("#E8D9B0"))
-        c.setFont("Inter", 6.5)
+        c.setFont("Inter", 6.6)
         c.drawString(
             MARGIN,
             0.12 * inch,
-            "Training aid for a toolbox talk. Follow your written programs and site hazard assessment. Not a substitute for OSHA compliance review.",
+            "Toolbox talk for this shop. Follow your written programs and OSHA rules. Not a substitute for a hazard assessment.",
         )
 
 
@@ -222,130 +260,120 @@ def draw_ppe(sheet: Sheet) -> None:
     c = sheet.c
     sheet.page_background()
     y = sheet.header(
-        "Personal Protective Equipment (PPE)",
-        "OSHA 29 CFR 1910.132–138  ·  Eye/face, head, foot, hand, electrical, respirator rules",
-        "5–10 MINUTES",
+        "Personal Protective Equipment",
+        "OSHA 29 CFR 1910.132–138  ·  Hearing 1910.95  ·  Woodworking machines 1910.213",
     )
     y = sheet.blanks(y)
     y = sheet.purpose(
         y,
-        "PPE is the last line of defense after guards, ventilation, and safe work practices. "
-        "Today covers what to wear for the job, how to inspect it, and when damaged gear comes out of service.",
+        "In this shop, saws, CNC, sanders, and staplers throw chips and dust. PPE is the last backup after guards and dust collection. Wear what the job needs. Take damaged gear out of service.",
     )
 
     col_gap = 0.12 * inch
     left_w = INNER * 0.56
     right_w = INNER - left_w - col_gap
-    left_x = MARGIN
-    right_x = MARGIN + left_w + col_gap
-    col_h = 3.28 * inch
+    col_h = 3.05 * inch
 
-    sheet.card(left_x, y, left_w, col_h)
-    sheet.card(right_x, y, right_w, col_h, fill=BLUE_TINT, stroke=HexColor("#C5D0D8"))
-    ly = sheet.section_label(left_x + 8, y - 14, "Today's talking points")
-    talking = [
-        "The company assesses hazards and issues the right PPE for the task — not whatever is left in the bin.",
-        "Wear assigned PPE the entire time the hazard is present. Glasses stay on in the shop, not around your neck.",
-        "Inspect before each use. Cracked lenses, torn gloves, and clogged cartridges do not protect you.",
-        "Fit matters. Loose glasses or an untested respirator create a false sense of safety.",
-        "Report damaged or missing PPE before you start. You will not be asked to work without required protection.",
-        "PPE has limits. Glasses are not goggles. A dust mask is not a respirator. The wrong glove can hold a chemical against your skin.",
-    ]
-    sheet.numbered(left_x + 8, ly, talking, left_w - 18, size=7.7, leading=9.6)
+    sheet.card(MARGIN, y, left_w, col_h)
+    sheet.card(MARGIN + left_w + col_gap, y, right_w, col_h, fill=BLUE_TINT, stroke=HexColor("#C5D0D8"))
 
-    ry = sheet.section_label(right_x + 8, y - 14, "Wear the right gear")
-    gear = [
-        "Eyes: safety glasses with side shields; goggles or a face shield for grinding, splash, or flying chips.",
-        "Hands: match the glove to the hazard (cut, chemical, heat). No gloves near rotating bits, spindles, or rollers.",
-        "Feet: closed-toe work shoes; safety-toe where required.",
-        "Hearing: plugs or muffs in posted high-noise areas for the full exposure.",
-        "Head: hard hat where overhead or struck-by hazards exist.",
-        "Respirator: only the unit you were trained, medically cleared, and fit-tested to wear (1910.134).",
-    ]
-    sheet.bullets(right_x + 8, ry, gear, right_w - 18, size=7.5, leading=9.4, bullet_color=HEADER)
+    ly = sheet.section_label(MARGIN + 8, y - 14, "Talking points")
+    sheet.numbered(
+        MARGIN + 8,
+        ly,
+        [
+            "Safety glasses stay on in the shop — saws, CNC, sanding, and assembly throw chips, dust, and staples.",
+            "Wear hearing protection at the saws, widebelt, edgebander, and CNC. If you have to raise your voice, put plugs or muffs in.",
+            "No gloves at the table saw, shaper, jointer, or router. A glove can catch and pull your hand into the cutter (1910.213).",
+            "Use cut-resistant gloves when you handle sheet stock, doors, or hardware — then take them off before you run a machine.",
+            "Cracked glasses, torn gloves, or a dirty respirator do not protect you. Turn them in before you start.",
+        ],
+        left_w - 18,
+        size=8.3,
+        leading=10.6,
+        gap=3.6,
+    )
 
-    y = y - col_h - 0.11 * inch
+    ry = sheet.section_label(MARGIN + left_w + col_gap + 8, y - 14, "In this shop, wear")
+    sheet.bullets(
+        MARGIN + left_w + col_gap + 8,
+        ry,
+        [
+            "Eyes: glasses with side shields in the shop. Add a face shield when changing a cutterhead.",
+            "Hearing: plugs or muffs at loud machines for the whole run.",
+            "Hands: right glove for sheets and hardware. None at spinning cutters.",
+            "Feet: closed-toe work shoes. Panels and hardware drop.",
+            "Dust / finish: only the mask or respirator you were trained to wear. A comfort dust mask is not a respirator (1910.134).",
+            "Chemicals: gloves and eye protection on the SDS for glue, stain, and cleaner.",
+        ],
+        right_w - 18,
+        size=8.0,
+        leading=10.2,
+        gap=3.4,
+        bullet_color=HEADER,
+    )
 
+    y = y - col_h - 0.12 * inch
     half = (INNER - col_gap) / 2
-    box_h = 1.62 * inch
+    box_h = 1.52 * inch
     sheet.card(MARGIN, y, half, box_h, fill=GREEN_TINT, stroke=HexColor("#B7CFC0"))
     sheet.card(MARGIN + half + col_gap, y, half, box_h, fill=RED_TINT, stroke=HexColor("#E0C4C0"))
+
     sheet.section_label(MARGIN + 8, y - 13, "Do", GREEN)
-    dos = [
-        "Put PPE on before you enter the hazard area.",
-        "Clean and store gear so the next person can use it.",
-        "Replace disposable items on schedule — do not stretch a dirty pair.",
-        "Ask if the task, chemical, or machine setup changed.",
-    ]
-    sheet.bullets(MARGIN + 8, y - 28, dos, half - 18, size=7.7, leading=9.8, bullet_color=GREEN)
+    sheet.bullets(
+        MARGIN + 8,
+        y - 28,
+        [
+            "Put glasses on before you walk into machining.",
+            "Store clean PPE so the next shift can use it.",
+            "Ask if the glue, finish, or machine setup changed.",
+        ],
+        half - 18,
+        size=8.4,
+        leading=10.8,
+        gap=3.2,
+        bullet_color=GREEN,
+    )
 
     sheet.section_label(MARGIN + half + col_gap + 8, y - 13, "Don't", RED)
-    donts = [
-        "Modify PPE: no cut earplugs, no removed side shields.",
-        "Share sweaty respirators or disposable earplugs.",
-        "Use damaged gear “just this once.” Take it out of service.",
-        "Wear rings, hoodies, or loose sleeves that can catch in equipment.",
-    ]
     sheet.bullets(
         MARGIN + half + col_gap + 8,
         y - 28,
-        donts,
+        [
+            "Do not take side shields off your glasses.",
+            "Do not run a saw or sander with glasses around your neck.",
+            "Do not share earplugs or a sweaty respirator.",
+        ],
         half - 18,
-        size=7.7,
-        leading=9.8,
+        size=8.4,
+        leading=10.8,
+        gap=3.2,
         bullet_color=RED,
     )
 
-    y = y - box_h - 0.11 * inch
-    q_h = 1.18 * inch
+    y = y - box_h - 0.12 * inch
+    q_h = 1.22 * inch
     sheet.card(MARGIN, y, INNER, q_h)
-    qy = sheet.section_label(MARGIN + 8, y - 13, "Ask the crew")
-    questions = [
-        "What PPE is required at your station today, and what hazard does each piece stop?",
-        "When did you last take something out of service? What was wrong with it?",
-        "Where do you get a replacement if yours fails mid-shift?",
-    ]
-    sheet.numbered(MARGIN + 8, qy, questions, INNER - 20, size=8.0, leading=10.2)
-
-    y = y - q_h - 0.10 * inch
-    stop_h = 0.58 * inch
-    wrap_stop = wrap(
-        "Required PPE is missing, damaged, or does not fit — or anyone says to “just skip it for a minute.” Get a supervisor.",
-        "Inter",
-        8.2,
+    qy = sheet.section_label(MARGIN + 8, y - 14, "Ask the crew")
+    sheet.numbered(
+        MARGIN + 8,
+        qy,
+        [
+            "At your station today — saw, CNC, sanding, assembly, or finish — what PPE is required?",
+            "Where do people take glasses off when they should stay on?",
+            "If your glasses or gloves fail mid-shift, where do you get a new pair?",
+        ],
         INNER - 20,
+        size=8.6,
+        leading=11.0,
+        gap=3.2,
     )
-    c.setFillColor(HexColor("#3A1212"))
-    c.roundRect(MARGIN, y - stop_h, INNER, stop_h, 4, fill=1, stroke=0)
-    c.setFillColor(AMBER)
-    c.setFont("Inter-Bold", 7.2)
-    c.drawString(MARGIN + 10, y - 14, "STOP WORK IF")
-    c.setFillColor(white)
-    c.setFont("Inter", 8.2)
-    ty = y - 30
-    for line in wrap_stop:
-        c.drawString(MARGIN + 10, ty, line)
-        ty -= 11
 
-    y = y - stop_h - 0.12 * inch
-    c.setFillColor(MUTED)
-    c.setFont("Inter-Bold", 7.2)
-    c.drawString(MARGIN, y, "ATTENDANCE  ·  PRINT NAME AND INITIAL")
-    y -= 0.08 * inch
-    rows, cols = 4, 2
-    col_w = INNER / cols
-    row_h = 0.28 * inch
-    for r in range(rows):
-        for col in range(cols):
-            x = MARGIN + col * col_w
-            yy = y - r * row_h
-            c.setStrokeColor(LINE)
-            c.setLineWidth(0.6)
-            c.line(x, yy, x + col_w - 10, yy)
-            c.setFillColor(HexColor("#B7AFA0"))
-            c.setFont("Inter", 6)
-            c.drawString(x, yy + 3, f"{r * cols + col + 1}.")
-
+    y = sheet.stop_work(
+        y - q_h - 0.11 * inch,
+        "Required PPE is missing or damaged, or someone says to skip glasses or hearing protection “just for this cut.” Get a supervisor.",
+    )
+    sheet.attendance(y)
     sheet.footer()
     c.showPage()
 
@@ -355,129 +383,119 @@ def draw_material(sheet: Sheet) -> None:
     sheet.page_background()
     y = sheet.header(
         "Material Handling",
-        "OSHA 29 CFR 1910.176 (materials)  ·  1910.178 (powered industrial trucks)  ·  General Duty Clause",
-        "5–10 MINUTES",
+        "OSHA 29 CFR 1910.176 (materials)  ·  1910.178 (forklifts / pallet jacks)  ·  General Duty Clause",
     )
     y = sheet.blanks(y)
     y = sheet.purpose(
         y,
-        "Most shop strains, crushed fingers, and struck-by injuries happen while moving product — "
-        "sheet stock, totes, pallets, and finished goods. Plan the move, use a cart when you can, and keep paths clear.",
+        "We move 4x8 sheets, drawer boxes, cabinet parts, and doors all day. Most strains, crushed fingers, and struck-by injuries happen on those moves. Plan it. Use a cart. Keep aisles clear.",
     )
 
     col_gap = 0.12 * inch
     left_w = INNER * 0.56
     right_w = INNER - left_w - col_gap
-    left_x = MARGIN
-    right_x = MARGIN + left_w + col_gap
-    col_h = 3.28 * inch
+    col_h = 3.05 * inch
 
-    sheet.card(left_x, y, left_w, col_h)
-    sheet.card(right_x, y, right_w, col_h, fill=BLUE_TINT, stroke=HexColor("#C5D0D8"))
-    ly = sheet.section_label(left_x + 8, y - 14, "Today's talking points")
-    talking = [
-        "OSHA does not set one legal lifting weight. If the load is awkward, above the shoulders, or you cannot see the path — get help or a mechanical aid.",
-        "Know the weight and the route before you pick it up. Clear clutter, oil, and offcuts first (1910.176).",
-        "Stack so it cannot fall. Band or restack unstable loads. Never pull from the middle of a stack.",
-        "Use carts, pallet jacks, or hoists for sheet goods, stacked product, and anything you must carry more than a few steps.",
-        "Stay out of the line of fire: never stand under a raised load, walk under forks, or put hands between a load and a rack.",
-        "Forklifts and powered pallet jacks: trained and authorized operators only. Pedestrians stop, make eye contact, use walkways.",
-    ]
-    sheet.numbered(left_x + 8, ly, talking, left_w - 18, size=7.6, leading=9.5)
+    sheet.card(MARGIN, y, left_w, col_h)
+    sheet.card(MARGIN + left_w + col_gap, y, right_w, col_h, fill=BLUE_TINT, stroke=HexColor("#C5D0D8"))
 
-    ry = sheet.section_label(right_x + 8, y - 14, "Before you move it")
-    gear = [
-        "Can one person move this safely, or do you need a teammate, cart, or jack?",
-        "Is the path clear to the destination — no cords, scrap, or wet floors?",
-        "Is the stack or pallet stable? Fix it before it travels.",
-        "Are exits, aisles, panels, and fire gear still open after you set it down?",
-        "Long stock: one person on each end, call the corner, watch for others.",
-        "Powered equipment: inspect it first. Do not operate damaged forks, brakes, or horns.",
-    ]
-    sheet.bullets(right_x + 8, ry, gear, right_w - 18, size=7.5, leading=9.4, bullet_color=HEADER)
+    ly = sheet.section_label(MARGIN + 8, y - 14, "Talking points")
+    sheet.numbered(
+        MARGIN + 8,
+        ly,
+        [
+            "Two people or a panel cart for a full sheet of plywood, MDF, or particleboard. Do not walk a sheet alone if you cannot see your feet.",
+            "OSHA does not set one legal lift weight. If a stack of drawers or a door load is awkward, get help or a cart.",
+            "Clear offcuts, hoses, and empty pallets before you pick anything up. Keep aisles and exits open (1910.176).",
+            "Stack drawer boxes and doors so they cannot tip. Band or restack a leaning pile. Never pull from the middle of a sheet stack.",
+            "Forklifts and powered pallet jacks: trained operators only. Stop, make eye contact, stay out from under the forks (1910.178).",
+        ],
+        left_w - 18,
+        size=8.3,
+        leading=10.6,
+        gap=3.6,
+    )
 
-    y = y - col_h - 0.11 * inch
+    ry = sheet.section_label(MARGIN + left_w + col_gap + 8, y - 14, "Before you move it")
+    sheet.bullets(
+        MARGIN + left_w + col_gap + 8,
+        ry,
+        [
+            "Sheet stock: cart or two-person lift. Call the corner.",
+            "Drawer boxes: on a cart, not stacked in your arms down the aisle.",
+            "Doors and cabinet parts: do not lean them on a saw, edgebander, or CNC.",
+            "Path clear? No cords, scrap, or wet glue on the floor.",
+            "Will this stack still be stable after you set it down?",
+            "Exits, panels, and fire gear still open?",
+        ],
+        right_w - 18,
+        size=8.1,
+        leading=10.3,
+        gap=3.6,
+        bullet_color=HEADER,
+    )
 
+    y = y - col_h - 0.12 * inch
     half = (INNER - col_gap) / 2
-    box_h = 1.62 * inch
+    box_h = 1.52 * inch
     sheet.card(MARGIN, y, half, box_h, fill=GREEN_TINT, stroke=HexColor("#B7CFC0"))
     sheet.card(MARGIN + half + col_gap, y, half, box_h, fill=RED_TINT, stroke=HexColor("#E0C4C0"))
+
     sheet.section_label(MARGIN + 8, y - 13, "Do", GREEN)
-    dos = [
-        "Bend at the knees and hips; keep the load close; turn with your feet.",
-        "Team-lift bulky material and say who is walking backward.",
-        "Secure loads on carts so they cannot slide or tip.",
-        "Set brakes or chock wheeled equipment when loading.",
-    ]
-    sheet.bullets(MARGIN + 8, y - 28, dos, half - 18, size=7.7, leading=9.8, bullet_color=GREEN)
+    sheet.bullets(
+        MARGIN + 8,
+        y - 28,
+        [
+            "Bend at the knees. Keep the load close. Turn with your feet.",
+            "Team-lift long doors and sheets. Say who walks backward.",
+            "Set the brake on a cart before you load boxes or doors.",
+        ],
+        half - 18,
+        size=8.4,
+        leading=10.8,
+        gap=3.2,
+        bullet_color=GREEN,
+    )
 
     sheet.section_label(MARGIN + half + col_gap + 8, y - 13, "Don't", RED)
-    donts = [
-        "Twist at the waist while lifting or throwing product onto a stack.",
-        "Block aisles, exits, electrical panels, or extinguishers.",
-        "Ride a pallet jack, stand on forks, or walk under a raised load.",
-        "Leave materials leaning on machines or hanging off a rack edge.",
-    ]
     sheet.bullets(
         MARGIN + half + col_gap + 8,
         y - 28,
-        donts,
+        [
+            "Do not twist or throw parts onto a stack.",
+            "Do not block aisles with sheet stock or door carts.",
+            "Do not ride a pallet jack or walk under raised forks.",
+        ],
         half - 18,
-        size=7.7,
-        leading=9.8,
+        size=8.4,
+        leading=10.8,
+        gap=3.2,
         bullet_color=RED,
     )
 
-    y = y - box_h - 0.11 * inch
-    q_h = 1.18 * inch
+    y = y - box_h - 0.12 * inch
+    q_h = 1.22 * inch
     sheet.card(MARGIN, y, INNER, q_h)
-    qy = sheet.section_label(MARGIN + 8, y - 13, "Ask the crew")
-    questions = [
-        "What do we move every day that should go on a cart instead of in our hands?",
-        "Where do stacks or aisle clutter create a struck-by or trip hazard on this floor?",
-        "What do we shout or signal when carrying long stock around a corner?",
-    ]
-    sheet.numbered(MARGIN + 8, qy, questions, INNER - 20, size=8.0, leading=10.2)
-
-    y = y - q_h - 0.10 * inch
-    stop_h = 0.58 * inch
-    wrap_stop = wrap(
-        "The load is unstable, the path is blocked, the lift equipment is damaged, or you were not trained on that equipment. Stop and get help.",
-        "Inter",
-        8.2,
+    qy = sheet.section_label(MARGIN + 8, y - 14, "Ask the crew")
+    sheet.numbered(
+        MARGIN + 8,
+        qy,
+        [
+            "What do we still carry by hand that should go on a cart — sheets, drawer boxes, or doors?",
+            "Where do leaning doors or sheet stacks create a tip or trip hazard on this floor?",
+            "How do we call it out when carrying a long door or sheet around a corner?",
+        ],
         INNER - 20,
+        size=8.6,
+        leading=11.0,
+        gap=3.2,
     )
-    c.setFillColor(HexColor("#3A1212"))
-    c.roundRect(MARGIN, y - stop_h, INNER, stop_h, 4, fill=1, stroke=0)
-    c.setFillColor(AMBER)
-    c.setFont("Inter-Bold", 7.2)
-    c.drawString(MARGIN + 10, y - 14, "STOP WORK IF")
-    c.setFillColor(white)
-    c.setFont("Inter", 8.2)
-    ty = y - 30
-    for line in wrap_stop:
-        c.drawString(MARGIN + 10, ty, line)
-        ty -= 11
 
-    y = y - stop_h - 0.12 * inch
-    c.setFillColor(MUTED)
-    c.setFont("Inter-Bold", 7.2)
-    c.drawString(MARGIN, y, "ATTENDANCE  ·  PRINT NAME AND INITIAL")
-    y -= 0.08 * inch
-    rows, cols = 4, 2
-    col_w = INNER / cols
-    row_h = 0.28 * inch
-    for r in range(rows):
-        for col in range(cols):
-            x = MARGIN + col * col_w
-            yy = y - r * row_h
-            c.setStrokeColor(LINE)
-            c.setLineWidth(0.6)
-            c.line(x, yy, x + col_w - 10, yy)
-            c.setFillColor(HexColor("#B7AFA0"))
-            c.setFont("Inter", 6)
-            c.drawString(x, yy + 3, f"{r * cols + col + 1}.")
-
+    y = sheet.stop_work(
+        y - q_h - 0.11 * inch,
+        "The sheet or door load is unstable, the aisle is blocked, the cart or jack is damaged, or you were not trained on that equipment. Stop and get help.",
+    )
+    sheet.attendance(y)
     sheet.footer()
     c.showPage()
 
@@ -486,24 +504,21 @@ def main() -> None:
     out = Path(__file__).resolve().parent
     ppe = out / "OSHA_Safety_Meeting_PPE.pdf"
     material = out / "OSHA_Safety_Meeting_Material_Handling.pdf"
-    both = out / "OSHA_Safety_Meeting_PPE_and_Material_Handling.pdf"
 
-    s = Sheet(ppe)
+    s = Sheet(ppe, "PPE safety meeting — drawer, cabinet, and door shop")
     draw_ppe(s)
     s.finish()
 
-    s = Sheet(material)
+    s = Sheet(material, "Material handling safety meeting — drawer, cabinet, and door shop")
     draw_material(s)
     s.finish()
 
-    s = Sheet(both)
-    draw_ppe(s)
-    draw_material(s)
-    s.finish()
+    combined = out / "OSHA_Safety_Meeting_PPE_and_Material_Handling.pdf"
+    if combined.exists():
+        combined.unlink()
 
     print(f"Wrote {ppe.name}")
     print(f"Wrote {material.name}")
-    print(f"Wrote {both.name}")
 
 
 if __name__ == "__main__":
