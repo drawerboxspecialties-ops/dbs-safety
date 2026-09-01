@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { MonthCalendar } from "@/components/month-calendar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -154,6 +155,10 @@ export default function HomePage() {
             }
           }}
           onSelect={(key, topicId) => expandMonth(topicId, key)}
+          onDelete={(key) => {
+            setExpanded(key);
+            setClearMonth(key);
+          }}
           preview={
             expanded ? (
               <div className="flex h-full min-h-0 flex-col rounded-2xl border bg-white p-3">
@@ -171,11 +176,12 @@ export default function HomePage() {
                       <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="destructive"
                           disabled={busy}
                           onClick={() => setClearMonth(expanded)}
                         >
-                          Remove from month
+                          <Trash2 />
+                          Delete topic
                         </Button>
                         <Link
                           href={sheetHref(
@@ -367,10 +373,10 @@ export default function HomePage() {
       >
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
-            <DialogTitle>Remove this talk from the month?</DialogTitle>
+            <DialogTitle>Delete this topic from the month?</DialogTitle>
             <DialogDescription>
               {clearMonth
-                ? `${shop.formatMonthLabel(clearMonth)} will go back to empty. Signatures stay saved if you add the same talk later.`
+                ? `${shop.formatMonthLabel(clearMonth)} will go back to empty so you can pick another talk. Signatures stay saved if you add the same talk later.`
                 : "This month will go back to empty."}
             </DialogDescription>
           </DialogHeader>
@@ -388,7 +394,7 @@ export default function HomePage() {
               disabled={busy}
               onClick={() => void removeTopicFromMonth(clearMonth)}
             >
-              Remove from month
+              Delete topic
             </Button>
           </DialogFooter>
         </DialogContent>

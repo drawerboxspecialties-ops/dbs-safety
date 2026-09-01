@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   formatMonthShort,
@@ -43,6 +43,7 @@ export function MonthCalendar({
   preview,
   onYearChange,
   onSelect,
+  onDelete,
 }: {
   year: number;
   now: MonthKey;
@@ -55,6 +56,7 @@ export function MonthCalendar({
   preview?: ReactNode;
   onYearChange: (year: number) => void;
   onSelect: (month: MonthKey, topicId: TopicId) => void;
+  onDelete?: (month: MonthKey) => void;
 }) {
   return (
     <section className="glass-panel flex h-full min-h-0 flex-col rounded-3xl p-4">
@@ -122,53 +124,69 @@ export function MonthCalendar({
             const kind = monthKind(key, now, signed);
             const active = selected === key;
             return (
-              <button
-                key={key}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelect(key, topicId)}
-                className={cn(
-                  "rounded-2xl border text-left transition",
-                  preview ? "min-h-[4.75rem] px-2.5 py-2" : "min-h-[6.75rem] px-3 py-3",
-                  active
-                    ? "border-cyan-400/80 bg-cyan-50/80 ring-1 ring-cyan-300/70"
-                    : topic && kind === "done"
-                      ? "border-transparent bg-emerald-50/80 hover:bg-emerald-50"
-                      : kind === "now"
-                        ? "border-transparent bg-white/80 ring-1 ring-cyan-200/70 hover:bg-white"
-                        : "glass-panel border-transparent hover:-translate-y-0.5",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold">{formatMonthShort(key)}</p>
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                      topic && kind === "done"
-                        ? "bg-emerald-100 text-emerald-900"
+              <div key={key} className="relative">
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onSelect(key, topicId)}
+                  className={cn(
+                    "w-full rounded-2xl border text-left transition",
+                    preview
+                      ? "min-h-[4.75rem] px-2.5 py-2"
+                      : "min-h-[6.75rem] px-3 py-3",
+                    topic && onDelete ? "pr-9" : "",
+                    active
+                      ? "border-cyan-400/80 bg-cyan-50/80 ring-1 ring-cyan-300/70"
+                      : topic && kind === "done"
+                        ? "border-transparent bg-emerald-50/80 hover:bg-emerald-50"
                         : kind === "now"
-                          ? "bg-cyan-100 text-cyan-950"
-                          : "bg-white/70 text-muted-foreground",
-                    )}
-                  >
-                    {topic ? monthKindLabel(kind) : "Open"}
-                  </span>
-                </div>
-                <p className="mt-1.5 truncate text-sm font-medium leading-snug">
-                  {topic ? topic.shortTitle : "Choose a talk"}
-                </p>
-                {preview ? null : (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {topic
-                      ? signed > 0
-                        ? `${signed} signed`
-                        : kind === "upcoming"
-                          ? "Not yet"
-                          : "No signatures"
-                      : "No topic yet"}
+                          ? "border-transparent bg-white/80 ring-1 ring-cyan-200/70 hover:bg-white"
+                          : "glass-panel border-transparent hover:-translate-y-0.5",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold">{formatMonthShort(key)}</p>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+                        topic && onDelete ? "mr-5" : "",
+                        topic && kind === "done"
+                          ? "bg-emerald-100 text-emerald-900"
+                          : kind === "now"
+                            ? "bg-cyan-100 text-cyan-950"
+                            : "bg-white/70 text-muted-foreground",
+                      )}
+                    >
+                      {topic ? monthKindLabel(kind) : "Open"}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 truncate text-sm font-medium leading-snug">
+                    {topic ? topic.shortTitle : "Choose a talk"}
                   </p>
-                )}
-              </button>
+                  {preview ? null : (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {topic
+                        ? signed > 0
+                          ? `${signed} signed`
+                          : kind === "upcoming"
+                            ? "Not yet"
+                            : "No signatures"
+                        : "No topic yet"}
+                    </p>
+                  )}
+                </button>
+                {topic && onDelete ? (
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    aria-label={`Delete topic from ${formatMonthShort(key)}`}
+                    onClick={() => onDelete(key)}
+                    className="absolute top-1.5 right-1.5 rounded-md p-1 text-red-800 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                ) : null}
+              </div>
             );
           })}
         </div>
