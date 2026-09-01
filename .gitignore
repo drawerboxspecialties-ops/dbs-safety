@@ -25,6 +25,7 @@ venv/
 # next.js
 /.next/
 /out/
+.export-api/
 
 # production
 /build
