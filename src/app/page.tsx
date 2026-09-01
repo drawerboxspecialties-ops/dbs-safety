@@ -101,10 +101,6 @@ export default function HomePage() {
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         This year’s talks
       </h1>
-      <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Tap a month to open that packet. Drop a PDF when you have a new talk —
-        you’ll pick the month it belongs to.
-      </p>
 
       <input
         ref={fileRef}
