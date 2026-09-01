@@ -4,12 +4,46 @@ import { useCallback, useEffect, useState } from "react";
 import {
   emptyShopStore,
   formatMonthLabel,
+  mergeShopStore,
   monthKey,
   yearMonths,
   type ShopStore,
 } from "@/lib/shop-data";
 import type { Employee } from "@/lib/employees";
 import type { TopicId } from "@/lib/topics";
+
+const SHOP_KEY = "dbs-safety-shop";
+
+function loadLocalShop(): ShopStore | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SHOP_KEY);
+    if (!raw) return null;
+    return mergeShopStore(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalShop(store: ShopStore) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SHOP_KEY, JSON.stringify(store));
+  } catch {
+    /* ignore quota */
+  }
+}
+
+function newerStore(a: ShopStore, b: ShopStore) {
+  const aTime = Date.parse(a.updatedAt) || 0;
+  const bTime = Date.parse(b.updatedAt) || 0;
+  if (aTime === bTime) {
+    return Object.keys(a.schedule).length >= Object.keys(b.schedule).length
+      ? a
+      : b;
+  }
+  return aTime > bTime ? a : b;
+}
 
 export function useShopStore() {
   const [store, setStore] = useState<ShopStore>(emptyShopStore);
@@ -19,19 +53,16 @@ export function useShopStore() {
 
   useEffect(() => {
     let cancelled = false;
+    const local = loadLocalShop();
+    if (local) setStore(local);
     fetch("/api/store")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
-        setStore({
-          crew: data.crew,
-          topics: data.topics,
-          schedule: data.schedule,
-          currentMonth: data.currentMonth,
-          currentTopic: data.currentTopic,
-          lastCronAt: data.lastCronAt || "",
-          updatedAt: data.updatedAt,
-        });
+        const remote = mergeShopStore(data);
+        const next = local ? newerStore(remote, local) : remote;
+        setStore(next);
+        writeLocalShop(next);
         setBackend(data.backend || "local");
       })
       .catch(() => undefined)
@@ -49,11 +80,18 @@ export function useShopStore() {
       topics?: ShopStore["topics"];
       schedule?: Record<string, TopicId>;
     }) => {
-      setStore((prev) => ({
-        ...prev,
-        ...patch,
-        updatedAt: new Date().toISOString(),
-      }));
+      const next = await new Promise<ShopStore>((resolve) => {
+        setStore((prev) => {
+          const updated = {
+            ...prev,
+            ...patch,
+            updatedAt: new Date().toISOString(),
+          };
+          writeLocalShop(updated);
+          resolve(updated);
+          return updated;
+        });
+      });
       try {
         const res = await fetch("/api/store", {
           method: "POST",
@@ -62,21 +100,15 @@ export function useShopStore() {
         });
         if (!res.ok) throw new Error("Could not save");
         const data = await res.json();
-        setStore({
-          crew: data.crew,
-          topics: data.topics,
-          schedule: data.schedule,
-          currentMonth: data.currentMonth,
-          currentTopic: data.currentTopic,
-          lastCronAt: data.lastCronAt || "",
-          updatedAt: data.updatedAt,
-        });
+        const remote = mergeShopStore(data);
+        setStore(remote);
+        writeLocalShop(remote);
         setBackend(data.backend || "local");
         setNote("Saved.");
-        return data as ShopStore;
+        return remote;
       } catch {
         setNote("Saved on this device.");
-        return null;
+        return next;
       }
     },
     [],

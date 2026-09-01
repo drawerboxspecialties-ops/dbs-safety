@@ -25,9 +25,7 @@ export async function POST(request: Request) {
     ...current,
     crew: body.crew ?? current.crew,
     topics: body.topics ?? current.topics,
-    schedule: body.schedule
-      ? { ...current.schedule, ...body.schedule }
-      : current.schedule,
+    schedule: body.schedule ?? current.schedule,
   });
   const saved = await writeShopStore(next);
   return NextResponse.json({
