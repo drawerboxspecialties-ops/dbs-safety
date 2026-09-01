@@ -28,7 +28,12 @@ export default function PacketPage() {
   if (showSheet) {
     return (
       <PageFrame fill>
-        <SignInSheet embedded onBack={() => setShowSheet(false)} />
+        <SignInSheet
+          embedded
+          topicId={meeting.topic}
+          month={meeting.month || shop.monthKey}
+          onBack={() => setShowSheet(false)}
+        />
       </PageFrame>
     );
   }

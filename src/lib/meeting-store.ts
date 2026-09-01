@@ -256,23 +256,26 @@ function openSheet(
   return next;
 }
 
-export function useMeeting() {
+export function useMeeting(lock?: { topic?: TopicId; month?: string }) {
   const [meeting, setMeeting] = useState<MeetingState>(emptyMeeting);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let local = loadMeeting();
     const query = readSheetQuery();
-    if (query.topic || query.month) {
+    const topic = lock?.topic || query.topic;
+    const month = lock?.month || query.month;
+    if (topic || month) {
       local = openSheet(
         local,
-        (query.topic || local.topic) as TopicId,
-        query.month || local.month,
+        (topic || local.topic) as TopicId,
+        month || local.month,
         local.month,
       );
     }
     setMeeting(local);
     setReady(true);
+    if (lock?.topic || lock?.month) return;
     fetch("/api/store")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -291,7 +294,7 @@ export function useMeeting() {
         window.localStorage.setItem(APPLIED_MONTH, data.currentMonth);
       })
       .catch(() => undefined);
-  }, []);
+  }, [lock?.topic, lock?.month]);
 
   const update = useCallback((patch: Partial<MeetingState>) => {
     setMeeting((prev) => {

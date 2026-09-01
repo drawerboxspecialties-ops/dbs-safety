@@ -75,13 +75,19 @@ const OTHER = "__other";
 
 export function SignInSheet({
   embedded,
+  topicId,
+  month,
   onBack,
 }: {
   embedded?: boolean;
+  topicId?: string;
+  month?: string;
   onBack?: () => void;
 }) {
   const router = useRouter();
-  const { meeting, update, saveProgress, ready } = useMeeting();
+  const { meeting, update, saveProgress, ready } = useMeeting(
+    topicId || month ? { topic: topicId, month } : undefined,
+  );
   const {
     employees,
     ready: crewReady,

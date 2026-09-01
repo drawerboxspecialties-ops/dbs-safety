@@ -199,6 +199,8 @@ export default function HomePage() {
                 {expandedTopic && showSheet ? (
                   <SignInSheet
                     embedded
+                    topicId={expandedTopicId}
+                    month={expanded}
                     onBack={() => setShowSheet(false)}
                   />
                 ) : expandedTopic ? (
