@@ -55,6 +55,21 @@ export function unlockMonth(
   return next;
 }
 
+export function removeTopicEverywhere(
+  topics: Topic[],
+  schedule: Record<MonthKey, TopicId>,
+  topicId: TopicId,
+) {
+  const nextSchedule = { ...schedule };
+  for (const month of Object.keys(nextSchedule)) {
+    if (nextSchedule[month] === topicId) delete nextSchedule[month];
+  }
+  return {
+    topics: topics.filter((topic) => topic.id !== topicId),
+    schedule: nextSchedule,
+  };
+}
+
 export function emptyShopStore(): ShopStore {
   const currentMonth = monthKey();
   return {
@@ -73,8 +88,7 @@ export function mergeShopStore(raw: unknown): ShopStore {
   if (!raw || typeof raw !== "object") return base;
   const data = raw as Partial<ShopStore>;
   const crew = Array.isArray(data.crew) && data.crew.length ? data.crew : base.crew;
-  const topics =
-    Array.isArray(data.topics) && data.topics.length ? data.topics : base.topics;
+  const topics = Array.isArray(data.topics) ? data.topics : base.topics;
   const schedule =
     data.schedule && typeof data.schedule === "object" ? { ...data.schedule } : {};
   const currentMonth = data.currentMonth || monthKey();

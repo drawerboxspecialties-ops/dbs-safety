@@ -21,6 +21,7 @@ import {
   formatMonthShort,
   lockTopicToMonth,
   monthTopic,
+  removeTopicEverywhere,
   unlockMonth,
   yearMonths,
 } from "@/lib/shop-data";
@@ -44,6 +45,7 @@ export default function HomePage() {
     new Date().getFullYear(),
   );
   const [clearMonth, setClearMonth] = useState("");
+  const [deleteTopicId, setDeleteTopicId] = useState("");
   const [showSheet, setShowSheet] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -85,6 +87,16 @@ export default function HomePage() {
     setClearMonth("");
     setError("");
     showMonth("", monthKey);
+  }
+
+  async function removeTopicPermanently(topicId: string) {
+    const next = removeTopicEverywhere(catalog, shop.store.schedule, topicId);
+    await shop.save(next);
+    setDeleteTopicId("");
+    setError("");
+    if (expanded) {
+      showMonth(monthTopic(next.schedule, expanded), expanded);
+    }
   }
 
   function queueFile(file: File | undefined) {
@@ -251,17 +263,27 @@ export default function HomePage() {
                     ) : (
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         {catalog.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            disabled={busy}
-                            onClick={() =>
-                              void assignTopicToMonth(item.id, expanded)
-                            }
-                            className="rounded-xl border bg-muted/50 px-3 py-2.5 text-left hover:bg-muted"
-                          >
-                            <p className="font-medium">{item.title}</p>
-                          </button>
+                          <div key={item.id} className="relative">
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() =>
+                                void assignTopicToMonth(item.id, expanded)
+                              }
+                              className="w-full rounded-xl border bg-muted/50 px-3 py-2.5 pr-9 text-left hover:bg-muted"
+                            >
+                              <p className="font-medium">{item.title}</p>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              aria-label={`Remove ${item.title} permanently`}
+                              onClick={() => setDeleteTopicId(item.id)}
+                              className="absolute top-1.5 right-1.5 rounded-md p-1 text-red-800 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -401,6 +423,41 @@ export default function HomePage() {
               onClick={() => setPendingFile(null)}
             >
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteTopicId !== ""}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTopicId("");
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Remove this talk permanently?</DialogTitle>
+            <DialogDescription>
+              {deleteTopicId
+                ? `${getTopic(deleteTopicId, catalog).title} will be deleted from the list. Months using it go empty. Signatures stay saved if you add the same talk later.`
+                : "This talk will be deleted from the list."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteTopicId("")}
+            >
+              Keep it
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void removeTopicPermanently(deleteTopicId)}
+            >
+              Remove permanently
             </Button>
           </DialogFooter>
         </DialogContent>
