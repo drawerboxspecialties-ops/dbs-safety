@@ -97,7 +97,22 @@ export function MonthCalendar({
           </Button>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+      <div
+        className={cn(
+          "mt-4",
+          preview
+            ? "grid items-start gap-3 sm:gap-4 grid-cols-[minmax(12.5rem,20rem)_minmax(0,1fr)]"
+            : "",
+        )}
+      >
+      <div
+        className={cn(
+          "grid gap-2",
+          preview
+            ? "grid-cols-2"
+            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+        )}
+      >
         {yearMonths(year).map((key) => {
           const topicId = schedule[key] || "";
           const topic = topicId ? getTopic(topicId, topics) : null;
@@ -154,8 +169,10 @@ export function MonthCalendar({
           );
         })}
       </div>
-
-      {preview ? <div className="mt-5">{preview}</div> : null}
+      {preview ? (
+        <div className="min-w-0 sticky top-20">{preview}</div>
+      ) : null}
+      </div>
     </section>
   );
 }

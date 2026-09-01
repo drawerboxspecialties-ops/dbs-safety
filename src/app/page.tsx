@@ -115,7 +115,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
+    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-10">
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         Safety Topic
       </h1>
@@ -151,7 +151,7 @@ export default function HomePage() {
             expanded ? (
               <div
                 ref={previewRef}
-                className="rounded-2xl border bg-white p-3 sm:p-4"
+                className="h-full rounded-2xl border bg-white p-3 sm:p-4"
               >
                 {shop.store.schedule[expanded] ? (
                   <>
@@ -186,7 +186,7 @@ export default function HomePage() {
                         src={packetUrl(
                           getTopic(shop.store.schedule[expanded], catalog).pdf,
                         )}
-                        className="min-h-[55vh] w-full rounded-xl border bg-white"
+                        className="min-h-[70vh] w-full rounded-xl border bg-white"
                       />
                     ) : (
                       <p className="text-sm text-muted-foreground">
