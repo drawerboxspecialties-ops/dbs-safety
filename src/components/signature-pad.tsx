@@ -30,7 +30,7 @@ export function SignaturePad({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 1.8;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111";
@@ -111,10 +111,10 @@ export function SignaturePad({
   }
 
   return (
-    <div className="relative h-16 w-full min-w-[10rem]">
+    <div className="relative h-8 w-full min-w-[8rem]">
       <canvas
         ref={canvasRef}
-        className="h-16 w-full cursor-crosshair touch-none print:hidden"
+        className="h-8 w-full cursor-crosshair touch-none print:hidden"
         style={{ touchAction: "none" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -126,10 +126,10 @@ export function SignaturePad({
         <img
           src={value}
           alt=""
-          className="hidden h-16 w-full object-contain object-left print:block"
+          className="hidden h-8 w-full object-contain object-left print:block"
         />
       ) : (
-        <div className="pointer-events-none absolute inset-x-1 bottom-2 hidden border-b border-black print:block" />
+        <div className="pointer-events-none absolute inset-x-1 bottom-1 hidden border-b border-black print:block" />
       )}
       {value ? (
         <button

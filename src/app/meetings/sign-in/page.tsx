@@ -152,10 +152,10 @@ export default function SignInPage() {
           <table className="w-full border-collapse border border-black text-left text-[12pt]">
             <thead>
               <tr className="bg-black text-[10pt] text-white">
-                <th className="w-10 px-2 py-1.5 font-bold">No.</th>
-                <th className="px-2 py-1.5 font-bold">Employee name</th>
-                <th className="w-40 px-2 py-1.5 font-bold">Department</th>
-                <th className="w-64 px-2 py-1.5 font-bold">Employee signature</th>
+                <th className="w-10 px-2 py-1 font-bold">No.</th>
+                <th className="px-2 py-1 font-bold">Employee name</th>
+                <th className="w-40 px-2 py-1 font-bold">Department</th>
+                <th className="w-56 px-2 py-1 font-bold">Employee signature</th>
               </tr>
             </thead>
             <tbody>
@@ -180,10 +180,10 @@ export default function SignInPage() {
                       key={r.n}
                       className={i % 2 ? "bg-neutral-100" : "bg-white"}
                     >
-                      <td className="border-b border-black px-2 py-1 text-[10pt]">
+                      <td className="border-b border-black px-2 py-0 text-[10pt] leading-tight">
                         {r.n}
                       </td>
-                      <td className="border-b border-black px-2 py-1">
+                      <td className="border-b border-black px-2 py-0">
                         <input
                           className="w-full border-0 bg-transparent text-[12pt] outline-none"
                           placeholder="Employee name"
@@ -193,9 +193,9 @@ export default function SignInPage() {
                           }
                         />
                       </td>
-                      <td className="border-b border-black px-2 py-1">
+                      <td className="border-b border-black px-2 py-0">
                         <input
-                          className="w-full border-0 bg-transparent text-[12pt] outline-none"
+                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none"
                           placeholder="Department"
                           value={state.dept}
                           onChange={(e) =>
@@ -203,7 +203,7 @@ export default function SignInPage() {
                           }
                         />
                       </td>
-                      <td className="border-b border-black px-1 py-0.5">
+                      <td className="border-b border-black px-1 py-0">
                         <SignaturePad
                           value={state.sig}
                           onChange={(sig) => patchRow(r.n, { sig })}
@@ -242,7 +242,7 @@ export default function SignInPage() {
               <Input
                 value={meeting.trainerTitle}
                 onChange={(e) => update({ trainerTitle: e.target.value })}
-                className="h-16 text-base"
+                className="h-9 text-base"
               />
             </div>
           </div>
@@ -268,7 +268,7 @@ function GroupRows({
   return (
     <>
       <tr className="bg-neutral-200">
-        <td colSpan={4} className="border-b border-black px-2 py-1.5 text-[12pt] font-bold">
+        <td colSpan={4} className="border-b border-black px-2 py-0.5 text-[11pt] font-bold">
           {department} — {count} employees
         </td>
       </tr>
@@ -276,14 +276,14 @@ function GroupRows({
         const state = rowState(r.n);
         return (
           <tr key={r.n} className={i % 2 ? "bg-neutral-100" : "bg-white"}>
-            <td className="border-b border-black px-2 py-1 text-[10pt]">{r.n}</td>
-            <td className="border-b border-black px-2 py-1 text-[12pt]">
+            <td className="border-b border-black px-2 py-0 text-[10pt] leading-tight">{r.n}</td>
+            <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
               {r.name}
             </td>
-            <td className="border-b border-black px-2 py-1 text-[12pt]">
+            <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
               {r.dept}
             </td>
-            <td className="border-b border-black px-1 py-0.5">
+            <td className="border-b border-black px-1 py-0">
               <SignaturePad
                 value={state.sig}
                 onChange={(sig) => patchRow(r.n, { sig })}

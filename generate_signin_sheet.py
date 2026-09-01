@@ -22,7 +22,7 @@ PAGE_W, PAGE_H = letter
 MARGIN = 0.5 * inch
 INNER = PAGE_W - 2 * MARGIN
 EXTRA_BLANKS = 6
-ROW_H = 0.42 * inch
+ROW_H = 0.26 * inch
 BAND_H = 0.28 * inch
 FOOT = 0.48 * inch
 
