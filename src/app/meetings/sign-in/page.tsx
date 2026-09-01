@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DatePicker } from "@/components/date-picker";
+import { PageChrome } from "@/components/page-chrome";
 import { SignaturePad } from "@/components/signature-pad";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -178,40 +179,25 @@ export default function SignInPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <div>
-          <p className="text-sm font-semibold text-[#003366]">
-            Safety Meeting App
-          </p>
-          <h1 className="text-2xl font-semibold">Training sign-in</h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/meetings" className={buttonVariants({ variant: "outline" })}>
-            Setup
-          </Link>
-          <Link
-            href={`/meetings/talk?topic=${meeting.topic}`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Talk
-          </Link>
-          <Link
-            href="/meetings/record"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Training record
-          </Link>
-          <Button
-            type="button"
-            className="bg-[#003366] hover:bg-[#00264d]"
-            onClick={() => window.print()}
-          >
-            Print / save PDF
-          </Button>
-        </div>
-      </div>
+      <PageChrome title="Sign-in">
+        <Link href="/meetings" className={buttonVariants({ variant: "outline" })}>
+          Setup
+        </Link>
+        <Link
+          href={`/meetings/talk?topic=${meeting.topic}`}
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Talk
+        </Link>
+        <Link href="/meetings/record" className={buttonVariants({ variant: "outline" })}>
+          Record
+        </Link>
+        <Button type="button" onClick={() => window.print()}>
+          Print
+        </Button>
+      </PageChrome>
 
-      <article className="osha-sheet rounded-xl border bg-white p-4 shadow-sm sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
+      <article className="osha-sheet glass-panel rounded-3xl p-4 sm:p-6 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
         <div className="mb-3 hidden print:block">
           <p className="text-[12pt] font-bold">{EMPLOYER}</p>
           <p className="text-[12pt]">Training sign-in</p>
@@ -340,7 +326,7 @@ export default function SignInPage() {
                           <button
                             type="button"
                             onClick={() => addFromBlank(r)}
-                            className="text-xs font-medium text-[#003366] underline"
+                            className="text-xs font-medium text-cyan-800 underline"
                           >
                             Add to list
                           </button>
@@ -437,7 +423,6 @@ export default function SignInPage() {
           <DialogFooter>
             <Button
               type="button"
-              className="bg-[#003366] hover:bg-[#00264d]"
               onClick={() => setSigning(null)}
             >
               Done
@@ -500,7 +485,6 @@ export default function SignInPage() {
             </Button>
             <Button
               type="button"
-              className="bg-[#003366] hover:bg-[#00264d]"
               disabled={!newName.trim() || !chosenDept()}
               onClick={addEmployee}
             >
@@ -588,7 +572,7 @@ function GroupRows({
               <button
                 type="button"
                 onClick={() => onOpen(r)}
-                className="text-left font-medium text-[#003366] underline decoration-dotted print:text-black print:no-underline print:font-normal"
+                className="text-left font-medium text-cyan-900 underline decoration-dotted print:text-black print:no-underline print:font-normal"
               >
                 {r.name}
               </button>

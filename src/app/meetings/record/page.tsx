@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { PageChrome } from "@/components/page-chrome";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCrew } from "@/lib/crew-store";
 import { useMeeting } from "@/lib/meeting-store";
@@ -65,55 +66,34 @@ export default function TrainingRecordPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <div>
-          <p className="text-sm font-semibold text-[#003366]">
-            Safety Meeting App
-          </p>
-          <h1 className="text-2xl font-semibold">Training record</h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/meetings" className={buttonVariants({ variant: "outline" })}>
-            Setup
-          </Link>
-          <Link
-            href="/meetings/sign-in"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Sign-in
-          </Link>
-          {view === "live" ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={fileRecord}
-              disabled={gaps.length > 0}
-            >
-              Save to shop file
-            </Button>
-          ) : (
-            <Button type="button" variant="outline" onClick={() => setView("live")}>
-              Back to this meeting
-            </Button>
-          )}
+      <PageChrome title="Record">
+        <Link href="/meetings" className={buttonVariants({ variant: "outline" })}>
+          Setup
+        </Link>
+        <Link
+          href="/meetings/sign-in"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Sign-in
+        </Link>
+        {view === "live" ? (
           <Button
             type="button"
-            className="bg-[#003366] hover:bg-[#00264d]"
-            onClick={() => window.print()}
+            variant="outline"
+            onClick={fileRecord}
+            disabled={gaps.length > 0}
           >
-            Print / save PDF
+            Save
           </Button>
-        </div>
-      </div>
-
-      {view === "live" && gaps.length > 0 ? (
-        <div className="print:hidden mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm">
-          <p className="font-medium">This record is not ready to file.</p>
-          <p className="mt-1 text-muted-foreground">
-            Still needed: {gaps.join(", ")}.
-          </p>
-        </div>
-      ) : null}
+        ) : (
+          <Button type="button" variant="outline" onClick={() => setView("live")}>
+            This meeting
+          </Button>
+        )}
+        <Button type="button" onClick={() => window.print()}>
+          Print
+        </Button>
+      </PageChrome>
       {savedNote ? (
         <p className="print:hidden mb-4 text-sm text-emerald-800">{savedNote}</p>
       ) : null}
@@ -121,7 +101,7 @@ export default function TrainingRecordPage() {
       {selected ? (
         <FiledView record={selected} />
       ) : (
-        <article className="osha-sheet rounded-xl border bg-white p-4 shadow-sm sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
+        <article className="osha-sheet glass-panel rounded-3xl p-4 sm:p-6 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
           <header className="border-b border-black pb-3">
             <p className="text-[12pt] font-bold">{EMPLOYER}</p>
             <h2 className="text-[16pt] font-bold">Written training record</h2>
@@ -299,7 +279,7 @@ export default function TrainingRecordPage() {
 
 function FiledView({ record }: { record: FiledMeeting }) {
   return (
-    <article className="osha-sheet rounded-xl border bg-white p-4 shadow-sm sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
+        <article className="osha-sheet glass-panel rounded-3xl p-4 sm:p-6 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
       <header className="border-b border-black pb-3">
         <p className="text-[12pt] font-bold">{EMPLOYER}</p>
         <h2 className="text-[16pt] font-bold">Written training record</h2>
