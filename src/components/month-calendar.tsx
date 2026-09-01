@@ -97,10 +97,6 @@ export function MonthCalendar({
           </Button>
         </div>
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Months only — no dates. Tap a month to open that packet.
-      </p>
-
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {yearMonths(year).map((key) => {
           const topicId = schedule[key] || topicForMonth(key);
