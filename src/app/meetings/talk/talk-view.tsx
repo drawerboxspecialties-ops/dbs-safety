@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { sheetHref } from "@/lib/sheet-href";
 import { getTopic, topicPdfHref } from "@/lib/topics";
 import { withBase } from "@/lib/base-path";
 import { PageChrome } from "@/components/page-chrome";
