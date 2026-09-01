@@ -18,13 +18,53 @@ function fillPaper(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   ctx.restore();
 }
 
-function mid(a: Point, b: Point): Point {
+function dist(a: Point, b: Point) {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+function mixPoints(a: Point, b: Point, ta: number, tb: number, t: number): Point {
+  const span = tb - ta || 1;
+  const u = (tb - t) / span;
+  const v = (t - ta) / span;
   return {
-    x: (a.x + b.x) / 2,
-    y: (a.y + b.y) / 2,
-    t: (a.t + b.t) / 2,
-    pressure: (a.pressure + b.pressure) / 2,
+    x: u * a.x + v * b.x,
+    y: u * a.y + v * b.y,
+    t: u * a.t + v * b.t,
+    pressure: u * a.pressure + v * b.pressure,
   };
+}
+
+/** Centripetal Catmull-Rom: smooth arcs without looping on sharp turns. */
+function catmull(p0: Point, p1: Point, p2: Point, p3: Point, t: number): Point {
+  const t0 = 0;
+  const t1 = t0 + Math.pow(Math.max(dist(p0, p1), 1e-3), 0.5);
+  const t2 = t1 + Math.pow(Math.max(dist(p1, p2), 1e-3), 0.5);
+  const t3 = t2 + Math.pow(Math.max(dist(p2, p3), 1e-3), 0.5);
+  const tt = t1 + (t2 - t1) * t;
+  const a1 = mixPoints(p0, p1, t0, t1, tt);
+  const a2 = mixPoints(p1, p2, t1, t2, tt);
+  const a3 = mixPoints(p2, p3, t2, t3, tt);
+  const b1 = mixPoints(a1, a2, t0, t2, tt);
+  const b2 = mixPoints(a2, a3, t1, t3, tt);
+  return mixPoints(b1, b2, t1, t2, tt);
+}
+
+function densifyStroke(points: Point[]) {
+  if (points.length < 2) return points;
+  const out: Point[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+    const gap = dist(p1, p2);
+    const steps = Math.max(10, Math.min(48, Math.ceil(gap / 0.9)));
+    for (let s = 0; s < steps; s++) {
+      out.push(catmull(p0, p1, p2, p3, s / steps));
+    }
+  }
+  out.push(points[points.length - 1]);
+  return out;
 }
 
 export function SignaturePad({
@@ -42,7 +82,7 @@ export function SignaturePad({
   const valueRef = useRef(value);
   const drawing = useRef(false);
   const stroke = useRef<Point[]>([]);
-  const widthRef = useRef(tall ? 2.6 : 1.9);
+  const inkRef = useRef<HTMLCanvasElement | null>(null);
   const history = useRef<string[]>(value ? [value] : []);
   const index = useRef(value ? 0 : -1);
   const skipSync = useRef(false);
@@ -59,14 +99,45 @@ export function SignaturePad({
   }
 
   function inkWidth() {
-    return tall ? { min: 1.7, max: 3.6, start: 2.6 } : { min: 1.2, max: 2.5, start: 1.9 };
+    return tall ? { min: 2, max: 4.2, start: 2.8 } : { min: 1.4, max: 2.8, start: 2 };
+  }
+
+  function inkLayer(canvas: HTMLCanvasElement) {
+    let ink = inkRef.current;
+    if (!ink) {
+      ink = document.createElement("canvas");
+      inkRef.current = ink;
+    }
+    if (ink.width !== canvas.width || ink.height !== canvas.height) {
+      ink.width = canvas.width;
+      ink.height = canvas.height;
+    }
+    return ink;
+  }
+
+  function stampInk(canvas: HTMLCanvasElement) {
+    const ink = inkLayer(canvas);
+    const ictx = ink.getContext("2d");
+    if (!ictx) return;
+    ictx.setTransform(1, 0, 0, 1, 0, 0);
+    ictx.clearRect(0, 0, ink.width, ink.height);
+    ictx.drawImage(canvas, 0, 0);
+  }
+
+  function restoreInk(ctx: CanvasRenderingContext2D) {
+    const ink = inkRef.current;
+    if (!ink) return;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(ink, 0, 0);
+    ctx.restore();
   }
 
   function setupContext() {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     const w = Math.max(1, Math.round(rect.width * dpr));
     const h = Math.max(1, Math.round(rect.height * dpr));
     const resized = canvas.width !== w || canvas.height !== h;
@@ -155,69 +226,108 @@ export function SignaturePad({
     };
   }
 
-  function nextWidth(p: Point, prev: Point) {
+  function nextWidth(p: Point, prev: Point, current: number) {
     const { min, max } = inkWidth();
     const dt = Math.max(8, p.t - prev.t);
     const speed = Math.hypot(p.x - prev.x, p.y - prev.y) / dt;
-    const fromSpeed = max - (max - min) * Math.min(1, speed * 10);
+    const fromSpeed = max - (max - min) * Math.min(1, speed * 8);
     const fromPressure = min + (max - min) * Math.min(1, p.pressure * 1.35);
     const target = p.pressure > 0.08 ? (fromSpeed + fromPressure) / 2 : fromSpeed;
-    widthRef.current += (target - widthRef.current) * 0.28;
-    return widthRef.current;
+    return current + (target - current) * 0.22;
   }
 
-  function drawDot(ctx: CanvasRenderingContext2D, p: Point) {
+  function acceptPoint(raw: Point) {
+    const pts = stroke.current;
+    const last = pts[pts.length - 1];
+    if (!last) {
+      pts.push(raw);
+      return;
+    }
+    const gap = Math.hypot(raw.x - last.x, raw.y - last.y);
+    if (gap < 0.4) return;
+    if (gap > 10) {
+      pts.push(raw);
+      return;
+    }
+    pts.push({
+      x: last.x + (raw.x - last.x) * 0.62,
+      y: last.y + (raw.y - last.y) * 0.62,
+      t: raw.t,
+      pressure: last.pressure + (raw.pressure - last.pressure) * 0.62,
+    });
+  }
+
+  function drawSmoothStroke(ctx: CanvasRenderingContext2D) {
+    const pts = stroke.current;
+    if (!pts.length) return;
+    const { start } = inkWidth();
+    if (pts.length === 1) {
+      ctx.beginPath();
+      ctx.arc(pts[0].x, pts[0].y, start / 2, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
+    const curve = densifyStroke(pts);
+    let width = start;
+    const widths = [width];
+    for (let i = 1; i < curve.length; i++) {
+      width = nextWidth(curve[i], curve[i - 1], width);
+      widths.push(width);
+    }
+
+    const left: { x: number; y: number }[] = [];
+    const right: { x: number; y: number }[] = [];
+    for (let i = 0; i < curve.length; i++) {
+      const prev = curve[i === 0 ? 0 : i - 1];
+      const next = curve[i === curve.length - 1 ? i : i + 1];
+      let dx = next.x - prev.x;
+      let dy = next.y - prev.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-4) {
+        dx = 1;
+        dy = 0;
+      } else {
+        dx /= len;
+        dy /= len;
+      }
+      const radius = widths[i] / 2;
+      left.push({ x: curve[i].x - dy * radius, y: curve[i].y + dx * radius });
+      right.push({ x: curve[i].x + dy * radius, y: curve[i].y - dx * radius });
+    }
+
+    const outline = left.concat(right.reverse());
     ctx.beginPath();
-    ctx.arc(p.x, p.y, inkWidth().start / 2, 0, Math.PI * 2);
+    ctx.moveTo(outline[0].x, outline[0].y);
+    for (let i = 1; i < outline.length - 1; i++) {
+      const xc = (outline[i].x + outline[i + 1].x) / 2;
+      const yc = (outline[i].y + outline[i + 1].y) / 2;
+      ctx.quadraticCurveTo(outline[i].x, outline[i].y, xc, yc);
+    }
+    ctx.lineTo(outline[outline.length - 1].x, outline[outline.length - 1].y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(curve[0].x, curve[0].y, widths[0] / 2, 0, Math.PI * 2);
+    ctx.arc(
+      curve[curve.length - 1].x,
+      curve[curve.length - 1].y,
+      widths[widths.length - 1] / 2,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
   }
 
-  function drawCurve(
-    ctx: CanvasRenderingContext2D,
-    from: Point,
-    control: Point,
-    to: Point,
-    width: number,
-  ) {
-    ctx.beginPath();
-    ctx.lineWidth = width;
-    ctx.moveTo(from.x, from.y);
-    ctx.quadraticCurveTo(control.x, control.y, to.x, to.y);
-    ctx.stroke();
-  }
-
-  function addPoint(ctx: CanvasRenderingContext2D, p: Point) {
-    const pts = stroke.current;
-    const last = pts[pts.length - 1];
-    if (last && Math.hypot(p.x - last.x, p.y - last.y) < 0.35) return;
-    pts.push(p);
-    if (pts.length === 1) {
-      drawDot(ctx, p);
-      return;
-    }
-    const width = nextWidth(p, last);
-    if (pts.length === 2) {
-      const start = mid(pts[0], pts[1]);
-      drawCurve(ctx, pts[0], pts[0], start, width);
-      return;
-    }
-    const a = pts[pts.length - 3];
-    const b = pts[pts.length - 2];
-    const c = pts[pts.length - 1];
-    drawCurve(ctx, mid(a, b), b, mid(b, c), width);
-  }
-
-  function finishStroke(ctx: CanvasRenderingContext2D) {
-    const pts = stroke.current;
-    if (pts.length === 1) {
-      drawDot(ctx, pts[0]);
-      return;
-    }
-    if (pts.length >= 2) {
-      const a = pts[pts.length - 2];
-      const b = pts[pts.length - 1];
-      drawCurve(ctx, mid(a, b), b, b, widthRef.current);
-    }
+  function paintLiveStroke() {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
+    restoreInk(ctx);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawSmoothStroke(ctx);
   }
 
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -225,27 +335,25 @@ export function SignaturePad({
     e.currentTarget.setPointerCapture(e.pointerId);
     const ready = setupContext();
     if (!ready) return;
+    stampInk(ready.canvas);
     drawing.current = true;
-    widthRef.current = inkWidth().start;
     stroke.current = [];
-    addPoint(
-      ready.ctx,
+    acceptPoint(
       pointFrom(e.clientX, e.clientY, e.timeStamp, e.pressure, e.currentTarget),
     );
+    paintLiveStroke();
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
-    const ctx = ctxRef.current;
-    if (!ctx) return;
+    if (!ctxRef.current) return;
     const native = e.nativeEvent;
     const samples =
       typeof native.getCoalescedEvents === "function"
         ? native.getCoalescedEvents()
         : [native];
     for (const sample of samples) {
-      addPoint(
-        ctx,
+      acceptPoint(
         pointFrom(
           sample.clientX,
           sample.clientY,
@@ -255,6 +363,7 @@ export function SignaturePad({
         ),
       );
     }
+    paintLiveStroke();
   }
 
   function commit(next: string) {
@@ -268,9 +377,11 @@ export function SignaturePad({
 
   function onPointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
+    acceptPoint(
+      pointFrom(e.clientX, e.clientY, e.timeStamp, e.pressure, e.currentTarget),
+    );
     drawing.current = false;
-    const ctx = ctxRef.current;
-    if (ctx) finishStroke(ctx);
+    paintLiveStroke();
     stroke.current = [];
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -312,7 +423,7 @@ export function SignaturePad({
     if (ready) fillPaper(ready.canvas, ready.ctx);
   }
 
-  const box = tall ? "h-44" : "h-8";
+  const box = tall ? "h-52" : "h-8";
   const icon = tall ? "size-5" : "size-3.5";
 
   return (
