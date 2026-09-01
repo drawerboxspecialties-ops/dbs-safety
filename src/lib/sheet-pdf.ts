@@ -12,7 +12,21 @@ import {
 } from "@/lib/meeting-record";
 import type { MeetingState } from "@/lib/meeting-store";
 import { formatMonthName } from "@/lib/shop-data";
+import { normalizeSignature } from "@/lib/signature-image";
 import type { Topic } from "@/lib/topics";
+
+async function addSignatureImage(
+  doc: jsPDF,
+  dataUrl: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  const src = await normalizeSignature(dataUrl);
+  const format = src.includes("image/png") ? "PNG" : "JPEG";
+  doc.addImage(src, format, x, y, w, h);
+}
 
 function fileTopicName(topic: Topic) {
   return (topic.shortTitle || topic.title || topic.id || "topic")
@@ -151,8 +165,7 @@ export async function buildSignInPdf(opts: {
     doc.text((dept || "").slice(0, 22), cols.dept, y);
     if (isSigned(row.sig)) {
       try {
-        const format = row.sig.includes("image/png") ? "PNG" : "JPEG";
-        doc.addImage(row.sig, format, cols.sig, y - 12, 140, 18);
+        await addSignatureImage(doc, row.sig, cols.sig, y - 12, 140, 18);
       } catch {
         doc.text("Signed", cols.sig, y);
       }
@@ -181,8 +194,7 @@ export async function buildSignInPdf(opts: {
   y += 14;
   if (isSigned(meeting.trainerSig)) {
     try {
-      const format = meeting.trainerSig.includes("image/png") ? "PNG" : "JPEG";
-      doc.addImage(meeting.trainerSig, format, left + 8, y - 10, 160, 20);
+      await addSignatureImage(doc, meeting.trainerSig, left + 8, y - 10, 160, 20);
     } catch {
       doc.text("Signed", left + 8, y);
     }

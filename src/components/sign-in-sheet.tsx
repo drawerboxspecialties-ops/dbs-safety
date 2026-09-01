@@ -7,7 +7,7 @@ import { Cloud, Mail } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
-import { SignaturePad } from "@/components/signature-pad";
+import { SignatureImage, SignaturePad } from "@/components/signature-pad";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,6 +64,7 @@ import {
   sheetEmailSubject,
   sheetPdfFilename,
 } from "@/lib/sheet-pdf";
+import { normalizeSignature } from "@/lib/signature-image";
 import { packetUrl } from "@/lib/packet";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
@@ -382,8 +383,19 @@ export function SignInSheet({
     const names = archivePdfNames(topic, monthKey);
     setSaveBusy(true);
     try {
+      const rows = await Promise.all(
+        saved.rows.map(async (row) => ({
+          ...row,
+          sig: row.sig ? await normalizeSignature(row.sig) : row.sig,
+        })),
+      );
+      const trainerSig = saved.trainerSig
+        ? await normalizeSignature(saved.trainerSig)
+        : saved.trainerSig;
+      const cleaned = { ...saved, rows, trainerSig };
+      update({ rows, trainerSig });
       const sheet = await buildSignInPdf({
-        meeting: saved,
+        meeting: cleaned,
         topic,
         employees: crew,
         monthLabel,
@@ -821,8 +833,7 @@ export function SignInSheet({
                 className="min-h-8 rounded-md border border-black px-2 text-left print:hidden"
               >
                 {isSigned(meeting.trainerSig) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <SignatureImage
                     src={meeting.trainerSig}
                     alt="Trainer signature"
                     className="h-8 w-full object-contain object-left"
@@ -834,10 +845,8 @@ export function SignInSheet({
                 )}
               </button>
               {isSigned(meeting.trainerSig) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <SignatureImage
                   src={meeting.trainerSig}
-                  alt=""
                   className="hidden h-8 w-full object-contain object-left print:block"
                 />
               ) : (
@@ -1294,8 +1303,7 @@ function SigPreview({
         className="flex h-8 w-full items-center print:hidden"
       >
         {isSigned(sig) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <SignatureImage
             src={sig}
             alt="Signature"
             className="h-8 w-full object-contain object-left"
@@ -1305,10 +1313,8 @@ function SigPreview({
         )}
       </button>
       {isSigned(sig) ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <SignatureImage
           src={sig}
-          alt=""
           className="hidden h-8 w-full object-contain object-left print:block"
         />
       ) : (

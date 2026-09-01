@@ -2,6 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Redo2, Undo2, X } from "lucide-react";
+import {
+  exportCanvasSignature,
+  normalizeSignature,
+} from "@/lib/signature-image";
+import { cn } from "@/lib/utils";
+
+function fillPaper(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
 
 export function SignaturePad({
   value,
@@ -38,32 +51,40 @@ export function SignaturePad({
     const dpr = Math.min(1.25, window.devicePixelRatio || 1);
     const w = Math.max(1, Math.round(rect.width * dpr));
     const h = Math.max(1, Math.round(rect.height * dpr));
-    if (canvas.width !== w || canvas.height !== h) {
+    const resized = canvas.width !== w || canvas.height !== h;
+    if (resized) {
       canvas.width = w;
       canvas.height = h;
     }
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return null;
+    if (resized) fillPaper(canvas, ctx);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.lineWidth = tall ? 2.6 : 1.8;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111";
     ctxRef.current = ctx;
-    return { ctx, rect };
+    return { ctx, canvas, rect };
   }
 
   function paintStored() {
     const ready = setupContext();
     if (!ready) return;
-    const { ctx, rect } = ready;
-    ctx.clearRect(0, 0, rect.width, rect.height);
-    if (!valueRef.current) return;
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, rect.width, rect.height);
-    };
-    img.src = valueRef.current;
+    const { ctx, canvas, rect } = ready;
+    fillPaper(canvas, ctx);
+    const stored = valueRef.current;
+    if (!stored) return;
+    const token = stored;
+    void normalizeSignature(stored).then((src) => {
+      if (valueRef.current !== token) return;
+      const img = new Image();
+      img.onload = () => {
+        if (valueRef.current !== token) return;
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      };
+      img.src = src;
+    });
   }
 
   useEffect(() => {
@@ -141,7 +162,7 @@ export function SignaturePad({
       /* already released */
     }
     const canvas = canvasRef.current;
-    if (canvas) commit(canvas.toDataURL("image/jpeg", 0.72));
+    if (canvas) commit(exportCanvasSignature(canvas));
   }
 
   function applyAt(nextIndex: number) {
@@ -181,18 +202,16 @@ export function SignaturePad({
       <div className={`relative min-w-0 flex-1 ${box}`}>
         <canvas
           ref={canvasRef}
-          className={`${box} w-full cursor-crosshair touch-none print:hidden`}
-          style={{ touchAction: "none" }}
+          className={`${box} w-full cursor-crosshair touch-none bg-white print:hidden`}
+          style={{ touchAction: "none", colorScheme: "light" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         />
         {value ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <SignatureImage
             src={value}
-            alt=""
             className={`hidden ${box} w-full object-contain object-left print:block`}
           />
         ) : (
@@ -232,5 +251,37 @@ export function SignaturePad({
         </button>
       </div>
     </div>
+  );
+}
+
+export function SignatureImage({
+  src,
+  alt = "",
+  className,
+}: {
+  src: string;
+  alt?: string;
+  className?: string;
+}) {
+  const [clean, setClean] = useState<{ src: string; href: string } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!src) return;
+    let live = true;
+    void normalizeSignature(src).then((href) => {
+      if (live) setClean({ src, href });
+    });
+    return () => {
+      live = false;
+    };
+  }, [src]);
+
+  if (!src) return null;
+  const href = clean?.src === src ? clean.href : src;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={href} alt={alt} className={cn("bg-white", className)} />
   );
 }
