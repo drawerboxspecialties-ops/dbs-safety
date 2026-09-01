@@ -23,7 +23,7 @@ DBS Safety/
     September 2026 PPE talk.pdf
 ```
 
-Saving again overwrites those two files for that month and topic. Tap **Google Drive** once to connect the shop Gmail. If Drive is not connected, Chrome downloads the same-named PDFs instead. **Email PDF** is the other copy — send it to yourself or HR.
+Saving again **replaces** those two files for that month and topic. It does not add copies. Extra files with the same name in that folder are moved to trash. Tap **Google Drive** once to connect the shop Gmail. If Drive is not connected, Chrome downloads the same-named PDFs instead. **Email PDF** is the other copy — send it to yourself or HR.
 
 Do not rely on Chrome cache, Vercel cron, or clearing-site-data-safe storage for OSHA records.
 

@@ -1,13 +1,19 @@
 const CLIENT_ID_KEY = "dbs-safety-google-client-id";
 const TOKEN_KEY = "dbs-safety-google-token";
 const FOLDER_KEY = "dbs-safety-drive-folders";
+const FILE_IDS_KEY = "dbs-safety-drive-file-ids";
 const EMAIL_KEY = "dbs-safety-drive-email";
 
 export const DRIVE_ROOT_FOLDER = "DBS Safety";
 export const DRIVE_MEETINGS_FOLDER = "Safety Meetings";
+export const DRIVE_ROOT_FOLDER_ID = "1x-owvJScsbEdHfXHANsvNPX4Uki0OeRP";
+export const DRIVE_MEETINGS_FOLDER_ID = "11E67WkJF0_hJ8xzf694FhTmGSdShd6mK";
+export const DRIVE_MEETINGS_URL =
+  "https://drive.google.com/drive/folders/11E67WkJF0_hJ8xzf694FhTmGSdShd6mK";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/userinfo.email",
 ].join(" ");
 
@@ -236,17 +242,15 @@ function escapeDriveQuery(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
-async function driveJson<T>(
-  token: string,
-  url: string,
-  init: RequestInit = {},
-): Promise<T> {
-  const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${token}`);
-  if (init.body && !headers.has("Content-Type") && !(init.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
-  }
-  const res = await fetch(url, { ...init, headers });
+function withDriveFlags(url: string, listing = false) {
+  const next = new URL(url);
+  if (!next.hostname.endsWith("googleapis.com")) return url;
+  next.searchParams.set("supportsAllDrives", "true");
+  if (listing) next.searchParams.set("includeItemsFromAllDrives", "true");
+  return next.toString();
+}
+
+async function driveResponse<T>(token: string, res: Response): Promise<T> {
   if (res.status === 401) {
     clearCachedToken();
     writeStored(EMAIL_KEY, "");
@@ -258,7 +262,41 @@ async function driveJson<T>(
     throw new Error(driveErrorMessage(res.status, text));
   }
   if (res.status === 204) return {} as T;
+  const type = res.headers.get("content-type") || "";
+  if (!type.includes("json")) return {} as T;
   return (await res.json()) as T;
+}
+
+async function driveJson<T>(
+  token: string,
+  url: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const listing = !init.method || init.method === "GET";
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  const res = await fetch(withDriveFlags(url, listing && url.includes("/files?")), {
+    ...init,
+    headers,
+  });
+  return driveResponse<T>(token, res);
+}
+
+async function driveUpload<T>(
+  token: string,
+  url: string,
+  method: "POST" | "PATCH",
+  body: BodyInit,
+  contentType: string,
+): Promise<T> {
+  const headers = new Headers();
+  headers.set("Authorization", `Bearer ${token}`);
+  headers.set("Content-Type", contentType);
+  const res = await fetch(withDriveFlags(url), { method, headers, body });
+  return driveResponse<T>(token, res);
 }
 
 function driveErrorMessage(status: number, body: string) {
@@ -319,6 +357,17 @@ async function folderStillThere(token: string, id: string) {
 }
 
 async function meetingsFolderId(token: string) {
+  if (await folderStillThere(token, DRIVE_MEETINGS_FOLDER_ID)) {
+    writeStored(
+      FOLDER_KEY,
+      JSON.stringify({
+        rootId: DRIVE_ROOT_FOLDER_ID,
+        meetingsId: DRIVE_MEETINGS_FOLDER_ID,
+      } satisfies FolderCache),
+    );
+    return DRIVE_MEETINGS_FOLDER_ID;
+  }
+
   try {
     const raw = readStored(FOLDER_KEY);
     if (raw) {
@@ -331,7 +380,9 @@ async function meetingsFolderId(token: string) {
     /* recreate */
   }
 
-  let rootId = await findFolder(token, DRIVE_ROOT_FOLDER);
+  let rootId =
+    (await folderStillThere(token, DRIVE_ROOT_FOLDER_ID) && DRIVE_ROOT_FOLDER_ID) ||
+    (await findFolder(token, DRIVE_ROOT_FOLDER));
   if (!rootId) rootId = await createFolder(token, DRIVE_ROOT_FOLDER);
   let meetingsId = await findFolder(token, DRIVE_MEETINGS_FOLDER, rootId);
   if (!meetingsId) {
@@ -341,23 +392,117 @@ async function meetingsFolderId(token: string) {
   return meetingsId;
 }
 
-async function findFile(token: string, name: string, folderId: string) {
-  const q = [
-    `name='${escapeDriveQuery(name)}'`,
-    `'${folderId}' in parents`,
-    "trashed=false",
-  ].join(" and ");
-  const params = new URLSearchParams({
-    q,
-    spaces: "drive",
-    fields: "files(id,name)",
-    pageSize: "5",
-  });
-  const data = await driveJson<{ files?: { id: string }[] }>(
+type DriveFile = { id: string; name: string; createdTime?: string };
+
+function readFileIdCache(): Record<string, string> {
+  try {
+    const raw = readStored(FILE_IDS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeFileIdCache(cache: Record<string, string>) {
+  writeStored(FILE_IDS_KEY, JSON.stringify(cache));
+}
+
+async function fileStillThere(token: string, id: string) {
+  try {
+    const data = await driveJson<{ id?: string; trashed?: boolean }>(
+      token,
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=id,trashed`,
+    );
+    return Boolean(data.id) && !data.trashed;
+  } catch {
+    return false;
+  }
+}
+
+async function listNamedFiles(
+  token: string,
+  name: string,
+  folderId?: string,
+): Promise<DriveFile[]> {
+  const found: DriveFile[] = [];
+  let pageToken = "";
+  do {
+    const parts = [
+      `name='${escapeDriveQuery(name)}'`,
+      "trashed=false",
+    ];
+    if (folderId) parts.push(`'${folderId}' in parents`);
+    const params = new URLSearchParams({
+      q: parts.join(" and "),
+      spaces: "drive",
+      fields: "nextPageToken,files(id,name,createdTime)",
+      pageSize: "100",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+    const data = await driveJson<{
+      files?: DriveFile[];
+      nextPageToken?: string;
+    }>(token, `https://www.googleapis.com/drive/v3/files?${params}`);
+    found.push(...(data.files || []));
+    pageToken = data.nextPageToken || "";
+  } while (pageToken);
+  found.sort((a, b) => (a.createdTime || "").localeCompare(b.createdTime || ""));
+  return found;
+}
+
+async function trashFile(token: string, id: string) {
+  try {
+    await driveJson(
+      token,
+      `https://www.googleapis.com/drive/v3/files/${id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ trashed: true }),
+      },
+    );
+  } catch {
+    /* leftover copy may already be gone */
+  }
+}
+
+async function replacePdfContent(token: string, fileId: string, blob: Blob) {
+  await driveUpload(
     token,
-    `https://www.googleapis.com/drive/v3/files?${params}`,
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+    "PATCH",
+    blob,
+    "application/pdf",
   );
-  return data.files?.[0]?.id || "";
+}
+
+async function createPdf(
+  token: string,
+  folderId: string,
+  name: string,
+  blob: Blob,
+) {
+  const boundary = `dbs_${crypto.randomUUID().replace(/-/g, "")}`;
+  const metadata = JSON.stringify({
+    name,
+    parents: [folderId],
+    mimeType: "application/pdf",
+  });
+  const head =
+    `--${boundary}\r\n` +
+    `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+    `${metadata}\r\n` +
+    `--${boundary}\r\n` +
+    `Content-Type: application/pdf\r\n\r\n`;
+  const body = new Blob([head, blob, `\r\n--${boundary}--`]);
+  return driveUpload<{ id: string }>(
+    token,
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+    "POST",
+    body,
+    `multipart/related; boundary=${boundary}`,
+  );
 }
 
 async function uploadPdf(
@@ -366,23 +511,39 @@ async function uploadPdf(
   name: string,
   blob: Blob,
 ) {
-  const existing = await findFile(token, name, folderId);
-  const metadata = existing
-    ? { name }
-    : { name, parents: [folderId] };
-  const form = new FormData();
-  form.append(
-    "metadata",
-    new Blob([JSON.stringify(metadata)], { type: "application/json" }),
-  );
-  form.append("file", blob, name);
-  const url = existing
-    ? `https://www.googleapis.com/upload/drive/v3/files/${existing}?uploadType=multipart`
-    : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-  await driveJson<{ id: string }>(token, url, {
-    method: existing ? "PATCH" : "POST",
-    body: form,
-  });
+  const cache = readFileIdCache();
+  let keepId = "";
+  const cachedId = cache[name];
+  if (cachedId && (await fileStillThere(token, cachedId))) {
+    keepId = cachedId;
+  }
+
+  let matches = await listNamedFiles(token, name, folderId);
+  if (!matches.length) matches = await listNamedFiles(token, name);
+  if (!keepId) keepId = matches[0]?.id || "";
+
+  let replaced = false;
+  if (keepId) {
+    await replacePdfContent(token, keepId, blob);
+    await driveJson(token, `https://www.googleapis.com/drive/v3/files/${keepId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    });
+    replaced = true;
+  } else {
+    const created = await createPdf(token, folderId, name, blob);
+    keepId = created.id;
+    matches = await listNamedFiles(token, name, folderId);
+  }
+
+  cache[name] = keepId;
+  writeFileIdCache(cache);
+
+  for (const file of matches) {
+    if (file.id !== keepId) await trashFile(token, file.id);
+  }
+
+  return { id: keepId, replaced };
 }
 
 async function readAccountEmail(token: string) {
@@ -426,12 +587,15 @@ export async function uploadMeetingPdfs(
   const email = (await readAccountEmail(token)) || readStored(EMAIL_KEY);
   if (email) writeStored(EMAIL_KEY, email);
   const folderId = await meetingsFolderId(token);
+  let replaced = false;
   for (const file of files) {
-    await uploadPdf(token, folderId, file.name, file.blob);
+    const result = await uploadPdf(token, folderId, file.name, file.blob);
+    if (result.replaced) replaced = true;
   }
   notifyDrive();
   return {
     email,
     folder: `${DRIVE_ROOT_FOLDER} / ${DRIVE_MEETINGS_FOLDER}`,
+    replaced,
   };
 }

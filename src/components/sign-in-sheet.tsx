@@ -429,10 +429,13 @@ export function SignInSheet({
       try {
         const uploaded = await uploadMeetingPdfs(files);
         setDrive(readDriveStatus());
+        const dest = uploaded.replaced
+          ? `Updated existing files in Google Drive → ${uploaded.folder}`
+          : `Uploaded to Google Drive → ${uploaded.folder}`;
         setListNote(
           n
-            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Uploaded to Google Drive → ${uploaded.folder}${uploaded.email ? ` (${uploaded.email})` : ""}.`
-            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Uploaded to Google Drive → ${uploaded.folder}${uploaded.email ? ` (${uploaded.email})` : ""}.`,
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`,
         );
       } catch (err) {
         keepLocalCopies(sheet, talk, names);
@@ -1200,7 +1203,8 @@ export function SignInSheet({
               <span className="font-medium text-foreground">
                 September 2026 PPE sign-in.pdf
               </span>
-              . Saving again overwrites that month’s files.
+              . Saving again replaces those same files — it does not add
+              copies.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
