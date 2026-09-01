@@ -63,7 +63,7 @@ export function MonthCalendar({
   onDelete?: (month: MonthKey) => void;
 }) {
   return (
-    <section className="glass-panel flex h-full min-h-0 flex-col rounded-2xl p-3 print:bg-white print:shadow-none">
+    <section className="glass-panel flex h-full min-h-0 flex-col rounded-2xl p-3 print:h-auto print:overflow-visible print:bg-white print:p-0 print:shadow-none">
       {title || lead ? (
         <div
           className={cn(
@@ -81,7 +81,7 @@ export function MonthCalendar({
         className={cn(
           "min-h-0 flex-1",
           preview &&
-            "grid items-stretch gap-3 grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)]",
+            "grid items-stretch gap-3 grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] print:block",
         )}
       >
         <div
@@ -208,7 +208,9 @@ export function MonthCalendar({
         </div>
         </div>
         {preview ? (
-          <div className="min-h-0 min-w-0 overflow-hidden">{preview}</div>
+          <div className="min-h-0 min-w-0 overflow-hidden print:overflow-visible print:w-full">
+            {preview}
+          </div>
         ) : null}
       </div>
     </section>

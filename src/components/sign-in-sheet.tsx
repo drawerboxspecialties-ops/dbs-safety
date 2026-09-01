@@ -557,7 +557,7 @@ export function SignInSheet({
         </div>
 
         <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
-          <p className="text-[12pt] font-bold">
+          <p className="print:hidden text-[12pt] font-bold">
             {meeting.department
               ? `${deptSigned} of ${visibleEmployees.length} in ${meeting.department} signed · ${signed} on this ${topic.shortTitle} list`
               : `${signed} signed on this ${topic.shortTitle} list · ${sheetCrew.length} employees`}
@@ -584,8 +584,8 @@ export function SignInSheet({
           </p>
         ) : null}
 
-        <div className="mt-2 overflow-x-auto">
-          <table className="w-full border-collapse border border-black text-left text-[12pt] [contain:content]">
+        <div className="mt-2 overflow-x-auto print:overflow-visible">
+          <table className="w-full border-collapse border border-black text-left text-[12pt] [contain:content] print:[contain:none]">
             <thead>
               <tr className="bg-black text-[10pt] text-white">
                 <th className="w-10 px-2 py-1 font-bold">No.</th>
@@ -1058,7 +1058,7 @@ export function SignInSheet({
 
   if (embedded) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-y-auto pr-0.5">
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto pr-0.5 print:h-auto print:overflow-visible">
         {body}
       </div>
     );
@@ -1133,8 +1133,11 @@ const GroupRows = memo(function GroupRows({
           colSpan={5}
           className="border-b border-black px-2 py-0.5 text-[11pt] font-bold"
         >
-          {department} —{" "}
-          {showLeft ? `${left} left` : `${count} employees`}
+          {department}
+          <span className="print:hidden">
+            {" "}
+            — {showLeft ? `${left} left` : `${count} employees`}
+          </span>
         </td>
       </tr>
       {rows.map((r, i) => {
@@ -1147,8 +1150,8 @@ const GroupRows = memo(function GroupRows({
               i % 2 ? "bg-neutral-100" : "bg-white",
               showLeft &&
                 unsigned &&
-                "bg-amber-100 shadow-[inset_0_0_0_2px_#f59e0b,0_0_18px_rgba(245,158,11,0.45)]",
-              showLeft && !unsigned && "opacity-35",
+                "bg-amber-100 shadow-[inset_0_0_0_2px_#f59e0b,0_0_18px_rgba(245,158,11,0.45)] print:bg-white print:shadow-none",
+              showLeft && !unsigned && "opacity-35 print:opacity-100",
             )}
           >
             <td className="border-b border-black px-2 py-0 text-[10pt] leading-tight">

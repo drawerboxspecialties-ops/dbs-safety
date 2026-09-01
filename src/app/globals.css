@@ -163,13 +163,30 @@
     size: letter;
     margin: 0.5in;
   }
+  html,
+  body,
+  main,
+  section,
+  article {
+    height: auto !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
   body {
     background: white !important;
     background-image: none !important;
   }
   .osha-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 12pt;
     color: #000;
+  }
+  .osha-sheet table {
+    width: 100% !important;
+    contain: none !important;
   }
 }

@@ -195,7 +195,7 @@ export default function HomePage() {
           }}
           preview={
             expanded ? (
-              <div className="flex h-full min-h-0 flex-col rounded-xl border bg-white p-3">
+              <div className="flex h-full min-h-0 flex-col rounded-xl border bg-white p-3 print:h-auto print:overflow-visible print:border-0 print:p-0">
                 {expandedTopic && showSheet ? (
                   <SignInSheet
                     embedded
