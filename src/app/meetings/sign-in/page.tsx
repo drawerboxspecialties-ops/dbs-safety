@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
+import { Mail } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
@@ -35,7 +36,17 @@ import {
   useMeeting,
   type SignRow,
 } from "@/lib/meeting-store";
+import {
+  loadLastEmailTo,
+  saveLastEmailTo,
+  shareSignInPdf,
+} from "@/lib/email-sheet";
 import { readSheetQuery, sheetHref } from "@/lib/sheet-href";
+import {
+  buildSignInPdf,
+  sheetEmailSubject,
+  sheetPdfFilename,
+} from "@/lib/sheet-pdf";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
@@ -99,6 +110,11 @@ export default function SignInPage() {
   const [removeError, setRemoveError] = useState("");
   const [showLeft, setShowLeft] = useState(false);
   const [draftSig, setDraftSig] = useState("");
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   useEffect(() => {
     if (!ready) return;
@@ -237,6 +253,62 @@ export default function SignInPage() {
     setListNote(`Default list saved — ${employees.length} employees.`);
   }
 
+  function openEmailSheet() {
+    const monthKey = meeting.month || shop.monthKey;
+    setEmailError("");
+    setEmailTo(loadLastEmailTo());
+    setEmailSubject(
+      sheetEmailSubject(topic, shop.formatMonthLabel(monthKey)),
+    );
+    setEmailOpen(true);
+  }
+
+  async function sendEmailSheet() {
+    const monthKey = meeting.month || shop.monthKey;
+    const monthLabel = shop.formatMonthLabel(monthKey);
+    setEmailBusy(true);
+    setEmailError("");
+    try {
+      const pdf = await buildSignInPdf({
+        meeting,
+        topic,
+        employees,
+        monthLabel,
+      });
+      const filename = sheetPdfFilename(topic, monthKey);
+      const body = [
+        `Attached is the DBS Safety sign-in sheet for ${topic.title}.`,
+        `Month: ${monthLabel}`,
+        meeting.department ? `Department: ${meeting.department}` : "",
+        meeting.date ? `Session date: ${formatMeetingDate(meeting.date)}` : "",
+        meeting.trainer ? `Trainer: ${meeting.trainer}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      saveLastEmailTo(emailTo);
+      const result = await shareSignInPdf({
+        to: emailTo.trim(),
+        subject: emailSubject.trim() || sheetEmailSubject(topic, monthLabel),
+        body,
+        filename,
+        pdf,
+      });
+      if (result === "cancelled") return;
+      setEmailOpen(false);
+      setListNote(
+        result === "shared"
+          ? "Share sheet opened with the PDF attached. Pick Mail or your email app."
+          : "Email draft downloaded with the PDF attached. Open it in Mail or Outlook to send.",
+      );
+    } catch (err) {
+      setEmailError(
+        err instanceof Error ? err.message : "Could not build the PDF.",
+      );
+    } finally {
+      setEmailBusy(false);
+    }
+  }
+
   function saveSheetProgress() {
     const saved = saveProgress();
     const n = signedCount(saved);
@@ -355,6 +427,10 @@ export default function SignInPage() {
         </Button>
         <Button type="button" variant="outline" onClick={() => window.print()}>
           Print
+        </Button>
+        <Button type="button" variant="outline" onClick={openEmailSheet}>
+          <Mail />
+          Email PDF
         </Button>
       </PageChrome>
 
@@ -837,6 +913,67 @@ export default function SignInPage() {
             </Button>
             <Button type="button" onClick={confirmProtectedRemove}>
               {pendingRemove?.kind === "restore" ? "Restore" : "Remove"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={emailOpen}
+        onOpenChange={(open) => {
+          if (!emailBusy) setEmailOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Email this sign-in sheet</DialogTitle>
+            <DialogDescription>
+              Builds a PDF of the current sheet and opens it as an email
+              attachment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1">
+              <Label htmlFor="email-to">To</Label>
+              <Input
+                id="email-to"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="name@company.com"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            {emailError ? (
+              <p className="text-sm text-red-700">{emailError}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={emailBusy}
+              onClick={() => setEmailOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={emailBusy}
+              onClick={() => void sendEmailSheet()}
+            >
+              {emailBusy ? "Building PDF…" : "Email PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>
