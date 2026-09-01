@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readShopStore, writeShopStore } from "@/lib/server-store";
-import { fillSchedule, monthKey, topicForMonth } from "@/lib/shop-data";
+import { monthKey } from "@/lib/shop-data";
 
 export const runtime = "nodejs";
 
@@ -18,13 +18,10 @@ export async function GET(request: Request) {
 
   const current = await readShopStore();
   const currentMonth = monthKey();
-  const schedule = fillSchedule(current.schedule);
-  const currentTopic = schedule[currentMonth] ?? topicForMonth(currentMonth);
   const saved = await writeShopStore({
     ...current,
-    schedule,
     currentMonth,
-    currentTopic,
+    currentTopic: current.schedule[currentMonth] || current.currentTopic || "",
     lastCronAt: new Date().toISOString(),
   });
 

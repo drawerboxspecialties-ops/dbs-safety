@@ -24,28 +24,18 @@ export function topicForMonth(key: MonthKey): TopicId {
   return month % 2 === 1 ? "ppe" : "material-handling";
 }
 
-export function fillSchedule(
-  schedule: Record<MonthKey, TopicId>,
-  from = new Date(),
-) {
-  const next = { ...schedule };
-  for (let offset = 0; offset < 18; offset += 1) {
-    const d = new Date(from.getFullYear(), from.getMonth() + offset, 1);
-    const key = monthKey(d);
-    if (!next[key]) next[key] = topicForMonth(key);
-  }
-  return next;
+export function fillSchedule(schedule: Record<MonthKey, TopicId>) {
+  return { ...schedule };
 }
 
 export function emptyShopStore(): ShopStore {
   const currentMonth = monthKey();
-  const schedule = fillSchedule({});
   return {
     crew: EMPLOYEES.map((e) => ({ ...e })),
     topics: TOPICS.map((t) => ({ ...t })),
-    schedule,
+    schedule: {},
     currentMonth,
-    currentTopic: schedule[currentMonth] ?? topicForMonth(currentMonth),
+    currentTopic: "",
     lastCronAt: "",
     updatedAt: new Date().toISOString(),
   };
@@ -58,19 +48,15 @@ export function mergeShopStore(raw: unknown): ShopStore {
   const crew = Array.isArray(data.crew) && data.crew.length ? data.crew : base.crew;
   const topics =
     Array.isArray(data.topics) && data.topics.length ? data.topics : base.topics;
-  const schedule = fillSchedule(
-    data.schedule && typeof data.schedule === "object" ? data.schedule : {},
-  );
+  const schedule =
+    data.schedule && typeof data.schedule === "object" ? { ...data.schedule } : {};
   const currentMonth = data.currentMonth || monthKey();
   return {
     crew,
     topics,
     schedule,
     currentMonth,
-    currentTopic:
-      data.currentTopic ||
-      schedule[currentMonth] ||
-      topicForMonth(currentMonth),
+    currentTopic: data.currentTopic || schedule[currentMonth] || "",
     lastCronAt: data.lastCronAt || "",
     updatedAt: data.updatedAt || new Date().toISOString(),
   };

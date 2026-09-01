@@ -50,12 +50,9 @@ export default function HomePage() {
     setYear(Number(nextMonth.slice(0, 4)));
   }, [ready, meeting.month, shop.monthKey]);
 
-  function expandMonth(topicId: string, monthKey: string) {
-    if (expanded === monthKey) {
-      setExpanded("");
-      return;
-    }
-    update({ topic: topicId, month: monthKey });
+  function showMonth(topicId: string, monthKey: string) {
+    if (topicId) update({ topic: topicId, month: monthKey });
+    else update({ month: monthKey });
     setMonth(monthKey);
     setYear(Number(monthKey.slice(0, 4)));
     setExpanded(monthKey);
@@ -64,25 +61,44 @@ export default function HomePage() {
     });
   }
 
+  function expandMonth(topicId: string, monthKey: string) {
+    if (expanded === monthKey) {
+      setExpanded("");
+      return;
+    }
+    showMonth(topicId, monthKey);
+  }
+
+  async function assignTopicToMonth(topicId: string, monthKey: string) {
+    await shop.save({
+      schedule: { ...shop.store.schedule, [monthKey]: topicId },
+    });
+    showMonth(topicId, monthKey);
+  }
+
   function queueFile(file: File | undefined) {
     if (!file) return;
     setError("");
+    if (expanded && !shop.store.schedule[expanded]) {
+      void assignFileToMonth(expanded, file);
+      return;
+    }
     setPendingFile(file);
     setAssignYear(year);
   }
 
-  async function assignFileToMonth(monthKey: string) {
-    if (!pendingFile) return;
+  async function assignFileToMonth(monthKey: string, file = pendingFile) {
+    if (!file) return;
     setBusy(true);
     setError("");
     try {
-      const created = await ingestPdf(pendingFile, catalog);
+      const created = await ingestPdf(file, catalog);
       await shop.save({
         topics: [...catalog, created],
         schedule: { ...shop.store.schedule, [monthKey]: created.id },
       });
       setPendingFile(null);
-      expandMonth(created.id, monthKey);
+      showMonth(created.id, monthKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add PDF.");
     } finally {
@@ -137,36 +153,76 @@ export default function HomePage() {
                 ref={previewRef}
                 className="rounded-2xl border bg-white p-3 sm:p-4"
               >
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                {shop.store.schedule[expanded] ? (
+                  <>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          {shop.formatMonthLabel(expanded)}
+                        </p>
+                        <h3 className="text-lg font-semibold">
+                          {
+                            getTopic(shop.store.schedule[expanded], catalog)
+                              .title
+                          }
+                        </h3>
+                      </div>
+                      <Link
+                        href={sheetHref(
+                          "/meetings/sign-in",
+                          shop.store.schedule[expanded],
+                          expanded,
+                        )}
+                        className={buttonVariants()}
+                      >
+                        Sign this sheet
+                      </Link>
+                    </div>
+                    {packetUrl(
+                      getTopic(shop.store.schedule[expanded], catalog).pdf,
+                    ) ? (
+                      <iframe
+                        title={`${getTopic(shop.store.schedule[expanded], catalog).title} PDF`}
+                        src={packetUrl(
+                          getTopic(shop.store.schedule[expanded], catalog).pdf,
+                        )}
+                        className="min-h-[55vh] w-full rounded-xl border bg-white"
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No PDF on this talk.
+                      </p>
+                    )}
+                  </>
+                ) : (
                   <div>
                     <p className="text-sm text-muted-foreground">
                       {shop.formatMonthLabel(expanded)}
                     </p>
-                    <h3 className="text-lg font-semibold">
-                      {getTopic(meeting.topic, catalog).title}
-                    </h3>
+                    <h3 className="text-lg font-semibold">Choose a talk</h3>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {catalog.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            void assignTopicToMonth(item.id, expanded)
+                          }
+                          className="rounded-xl border bg-muted/50 px-3 py-3 text-left hover:bg-muted"
+                        >
+                          <p className="font-medium">{item.title}</p>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-3 text-sm text-cyan-800 underline"
+                      onClick={() => fileRef.current?.click()}
+                    >
+                      Or drop a new PDF
+                    </button>
                   </div>
-                  <Link
-                    href={sheetHref(
-                      "/meetings/sign-in",
-                      meeting.topic,
-                      expanded,
-                    )}
-                    className={buttonVariants()}
-                  >
-                    Sign this sheet
-                  </Link>
-                </div>
-                {packetUrl(getTopic(meeting.topic, catalog).pdf) ? (
-                  <iframe
-                    title={`${getTopic(meeting.topic, catalog).title} PDF`}
-                    src={packetUrl(getTopic(meeting.topic, catalog).pdf)}
-                    className="min-h-[55vh] w-full rounded-xl border bg-white"
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No PDF on this month.
-                  </p>
                 )}
               </div>
             ) : null

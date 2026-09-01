@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   formatMonthShort,
-  topicForMonth,
   yearMonths,
   type MonthKey,
 } from "@/lib/shop-data";
@@ -100,9 +99,10 @@ export function MonthCalendar({
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {yearMonths(year).map((key) => {
-          const topicId = schedule[key] || topicForMonth(key);
-          const topic = getTopic(topicId, topics);
-          const saved = ready ? progressForMonth(key, topicId) : null;
+          const topicId = schedule[key] || "";
+          const topic = topicId ? getTopic(topicId, topics) : null;
+          const saved =
+            ready && topicId ? progressForMonth(key, topicId) : null;
           const signed = saved?.signed ?? 0;
           const kind = monthKind(key, now, signed);
           const active = selected === key;
@@ -116,7 +116,7 @@ export function MonthCalendar({
                 "min-h-[7.5rem] rounded-2xl border px-3 py-3 text-left transition",
                 active
                   ? "border-cyan-400/80 bg-cyan-50/80 ring-1 ring-cyan-300/70"
-                  : kind === "done"
+                  : topic && kind === "done"
                     ? "border-transparent bg-emerald-50/80 hover:bg-emerald-50"
                     : kind === "now"
                       ? "border-transparent bg-white/80 ring-1 ring-cyan-200/70 hover:bg-white"
@@ -128,27 +128,27 @@ export function MonthCalendar({
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                    kind === "done"
+                    topic && kind === "done"
                       ? "bg-emerald-100 text-emerald-900"
                       : kind === "now"
                         ? "bg-cyan-100 text-cyan-950"
-                        : kind === "upcoming"
-                          ? "bg-white/80 text-muted-foreground"
-                          : "bg-white/50 text-muted-foreground",
+                        : "bg-white/70 text-muted-foreground",
                   )}
                 >
-                  {monthKindLabel(kind)}
+                  {topic ? monthKindLabel(kind) : "Open"}
                 </span>
               </div>
               <p className="mt-2 text-sm font-medium leading-snug">
-                {topic.shortTitle}
+                {topic ? topic.shortTitle : "Choose a talk"}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {signed > 0
-                  ? `${signed} signed`
-                  : kind === "upcoming"
-                    ? "Not yet"
-                    : "No signatures"}
+                {topic
+                  ? signed > 0
+                    ? `${signed} signed`
+                    : kind === "upcoming"
+                      ? "Not yet"
+                      : "No signatures"
+                  : "No topic yet"}
               </p>
             </button>
           );
