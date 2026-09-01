@@ -10,7 +10,7 @@ export function AppNav() {
   const search = useSearchParams();
   const showingLeft = search.get("left") === "1";
   const links = [
-    { href: "/", label: "Topics", active: path === "/" },
+    { href: "/", label: "Safety Topic", active: path === "/" },
     {
       href: "/meetings/packet",
       label: "Packet",
