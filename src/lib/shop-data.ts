@@ -28,6 +28,33 @@ export function fillSchedule(schedule: Record<MonthKey, TopicId>) {
   return { ...schedule };
 }
 
+export function monthTopic(
+  schedule: Record<MonthKey, TopicId>,
+  month: MonthKey,
+) {
+  return schedule[month] || "";
+}
+
+/** Keep the existing talk unless the month is empty or the same talk is set again. */
+export function lockTopicToMonth(
+  schedule: Record<MonthKey, TopicId>,
+  month: MonthKey,
+  topicId: TopicId,
+): Record<MonthKey, TopicId> | null {
+  const current = monthTopic(schedule, month);
+  if (current && current !== topicId) return null;
+  return { ...schedule, [month]: topicId };
+}
+
+export function unlockMonth(
+  schedule: Record<MonthKey, TopicId>,
+  month: MonthKey,
+) {
+  const next = { ...schedule };
+  delete next[month];
+  return next;
+}
+
 export function emptyShopStore(): ShopStore {
   const currentMonth = monthKey();
   return {

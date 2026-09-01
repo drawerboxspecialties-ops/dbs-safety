@@ -20,6 +20,9 @@ import { sheetHref } from "@/lib/sheet-href";
 import {
   formatMonthName,
   formatMonthShort,
+  lockTopicToMonth,
+  monthTopic,
+  unlockMonth,
   yearMonths,
 } from "@/lib/shop-data";
 import { getTopic } from "@/lib/topics";
@@ -66,24 +69,27 @@ export default function HomePage() {
   }
 
   async function assignTopicToMonth(topicId: string, monthKey: string) {
-    await shop.save({
-      schedule: { ...shop.store.schedule, [monthKey]: topicId },
-    });
+    const schedule = lockTopicToMonth(shop.store.schedule, monthKey, topicId);
+    if (!schedule) {
+      setError("This month already has a talk. Delete it first to choose another.");
+      return;
+    }
+    setError("");
+    await shop.save({ schedule });
     showMonth(topicId, monthKey);
   }
 
   async function removeTopicFromMonth(monthKey: string) {
-    const schedule = { ...shop.store.schedule };
-    delete schedule[monthKey];
-    await shop.save({ schedule });
+    await shop.save({ schedule: unlockMonth(shop.store.schedule, monthKey) });
     setClearMonth("");
+    setError("");
     showMonth("", monthKey);
   }
 
   function queueFile(file: File | undefined) {
     if (!file) return;
     setError("");
-    if (expanded && !shop.store.schedule[expanded]) {
+    if (expanded && !monthTopic(shop.store.schedule, expanded)) {
       void assignFileToMonth(expanded, file);
       return;
     }
@@ -93,13 +99,26 @@ export default function HomePage() {
 
   async function assignFileToMonth(monthKey: string, file = pendingFile) {
     if (!file) return;
+    if (monthTopic(shop.store.schedule, monthKey)) {
+      setError("This month already has a talk. Delete it first to choose another.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
       const created = await ingestPdf(file, catalog);
+      const schedule = lockTopicToMonth(
+        shop.store.schedule,
+        monthKey,
+        created.id,
+      );
+      if (!schedule) {
+        setError("This month already has a talk. Delete it first to choose another.");
+        return;
+      }
       await shop.save({
         topics: [...catalog, created],
-        schedule: { ...shop.store.schedule, [monthKey]: created.id },
+        schedule,
       });
       setPendingFile(null);
       showMonth(created.id, monthKey);
@@ -110,7 +129,9 @@ export default function HomePage() {
     }
   }
 
-  const expandedTopicId = expanded ? shop.store.schedule[expanded] : "";
+  const expandedTopicId = expanded
+    ? monthTopic(shop.store.schedule, expanded)
+    : "";
   const expandedTopic = expandedTopicId
     ? getTopic(expandedTopicId, catalog)
     : null;
@@ -170,6 +191,9 @@ export default function HomePage() {
                         <h3 className="truncate text-base font-semibold leading-tight">
                           {expandedTopic.title}
                         </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Locked until you delete it
+                        </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button
@@ -304,8 +328,8 @@ export default function HomePage() {
             <DialogTitle>Which month is this for?</DialogTitle>
             <DialogDescription>
               {pendingFile
-                ? `${pendingFile.name} — tap the month this talk belongs to.`
-                : "Tap the month this talk belongs to."}
+                ? `${pendingFile.name} — tap an empty month. Months with a talk stay locked.`
+                : "Tap an empty month. Months with a talk stay locked."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-between gap-2">
@@ -330,25 +354,37 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {yearMonths(assignYear).map((key) => (
-              <button
-                key={key}
-                type="button"
-                disabled={busy}
-                onClick={() => void assignFileToMonth(key)}
-                className={cn(
-                  "rounded-xl border px-3 py-2.5 text-left text-sm transition",
-                  key === shop.monthKey
-                    ? "border-cyan-400/80 bg-cyan-50/80"
-                    : "border-transparent bg-muted/60 hover:bg-muted",
-                )}
-              >
-                <p className="font-medium">{formatMonthShort(key)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {key === shop.monthKey ? "Now" : formatMonthName(key)}
-                </p>
-              </button>
-            ))}
+            {yearMonths(assignYear).map((key) => {
+              const takenId = monthTopic(shop.store.schedule, key);
+              const taken = takenId
+                ? getTopic(takenId, catalog)
+                : null;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  disabled={busy || Boolean(taken)}
+                  onClick={() => void assignFileToMonth(key)}
+                  className={cn(
+                    "rounded-xl border px-3 py-2.5 text-left text-sm transition",
+                    taken
+                      ? "cursor-not-allowed border-transparent bg-muted/40 text-muted-foreground"
+                      : key === shop.monthKey
+                        ? "border-cyan-400/80 bg-cyan-50/80"
+                        : "border-transparent bg-muted/60 hover:bg-muted",
+                  )}
+                >
+                  <p className="font-medium">{formatMonthShort(key)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {taken
+                      ? taken.shortTitle
+                      : key === shop.monthKey
+                        ? "Now"
+                        : formatMonthName(key)}
+                  </p>
+                </button>
+              );
+            })}
           </div>
           <DialogFooter>
             <Button
