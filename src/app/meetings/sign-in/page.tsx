@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { SignaturePad } from "@/components/signature-pad";
@@ -41,10 +41,10 @@ import { cn } from "@/lib/utils";
 
 function deptChip(active: boolean) {
   return cn(
-    "rounded-full border px-3 py-1.5 text-sm transition",
+    "rounded-full border px-3 py-1.5 text-sm duration-75",
     active
-      ? "border-cyan-400/80 bg-cyan-50/80 text-cyan-950 ring-1 ring-cyan-300/70"
-      : "border-transparent bg-white/60 text-foreground hover:bg-white",
+      ? "border-cyan-400 bg-cyan-50 text-cyan-950"
+      : "border-transparent bg-white text-foreground active:bg-cyan-50",
   );
 }
 
@@ -97,6 +97,7 @@ export default function SignInPage() {
   const [removePassword, setRemovePassword] = useState("");
   const [removeError, setRemoveError] = useState("");
   const [showLeft, setShowLeft] = useState(false);
+  const [draftSig, setDraftSig] = useState("");
 
   useEffect(() => {
     if (!ready) return;
@@ -291,19 +292,24 @@ export default function SignInPage() {
     signing?.kind === "employee"
       ? signing.person.dept || rowState(signing.person).dept
       : meeting.trainer || "Certifying person";
-  const dialogValue =
-    signing?.kind === "employee"
-      ? rowState(signing.person).sig
-      : meeting.trainerSig;
+  function openSign(target: SignTarget) {
+    const sig =
+      target.kind === "employee"
+        ? meetingRow(meeting, target.person).sig
+        : meeting.trainerSig;
+    setDraftSig(sig);
+    setSigning(target);
+  }
 
-  function setDialogSig(sig: string) {
+  function applyDraft() {
     if (!signing) return;
     if (signing.kind === "employee") {
       patchRow(signing.person, {
-        sig,
-        signedAt: isSigned(sig) ? meeting.date : "",
+        sig: draftSig,
+        signedAt: isSigned(draftSig) ? meeting.date : "",
       });
-    } else update({ trainerSig: sig });
+    } else update({ trainerSig: draftSig });
+    setSigning(null);
   }
 
   if (!ready || !crewReady) {
@@ -351,7 +357,7 @@ export default function SignInPage() {
         </Button>
       </PageChrome>
 
-      <article className="osha-sheet glass-panel rounded-3xl p-4 sm:p-6 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
+      <article className="osha-sheet rounded-3xl border bg-white p-4 sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-3 hidden print:block">
           <p className="text-[12pt] font-bold">{EMPLOYER}</p>
           <p className="text-[12pt]">
@@ -440,7 +446,7 @@ export default function SignInPage() {
         ) : null}
 
         <div className="mt-2 overflow-x-auto">
-          <table className="w-full border-collapse border border-black text-left text-[12pt]">
+          <table className="w-full border-collapse border border-black text-left text-[12pt] [contain:content]">
             <thead>
               <tr className="bg-black text-[10pt] text-white">
                 <th className="w-10 px-2 py-1 font-bold">No.</th>
@@ -461,7 +467,7 @@ export default function SignInPage() {
                   )}
                   rowState={rowState}
                   showLeft={showLeft}
-                  onOpen={(person) => setSigning({ kind: "employee", person })}
+                  onOpen={(person) => openSign({ kind: "employee", person })}
                   onMove={startMove}
                   onRemove={removeEmployee}
                 />
@@ -505,7 +511,7 @@ export default function SignInPage() {
                         <SigPreview
                           sig={state.sig}
                           onOpen={() =>
-                            setSigning({ kind: "employee", person: r })
+                            openSign({ kind: "employee", person: r })
                           }
                         />
                       </td>
@@ -543,7 +549,7 @@ export default function SignInPage() {
               <Label className="text-[10pt] font-bold">Trainer signature</Label>
               <button
                 type="button"
-                onClick={() => setSigning({ kind: "trainer" })}
+                onClick={() => openSign({ kind: "trainer" })}
                 className="min-h-8 rounded-md border border-black px-2 text-left print:hidden"
               >
                 {isSigned(meeting.trainerSig) ? (
@@ -585,10 +591,13 @@ export default function SignInPage() {
       <Dialog
         open={signing !== null}
         onOpenChange={(open) => {
-          if (!open) setSigning(null);
+          if (!open) applyDraft();
         }}
       >
-        <DialogContent className="sm:max-w-xl" showCloseButton>
+        <DialogContent
+          className="sm:max-w-xl duration-0 data-open:animate-none data-closed:animate-none"
+          showCloseButton
+        >
           <DialogHeader>
             <DialogTitle>Sign here</DialogTitle>
             <DialogDescription>
@@ -603,16 +612,13 @@ export default function SignInPage() {
                   signing.kind === "employee" ? signing.person.id : "trainer"
                 }
                 size="dialog"
-                value={dialogValue}
-                onChange={setDialogSig}
+                value={draftSig}
+                onChange={setDraftSig}
               />
             ) : null}
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              onClick={() => setSigning(null)}
-            >
+            <Button type="button" onClick={applyDraft}>
               Done
             </Button>
           </DialogFooter>
@@ -879,7 +885,7 @@ function SigPreview({
   );
 }
 
-function GroupRows({
+const GroupRows = memo(function GroupRows({
   department,
   count,
   rows,
@@ -965,4 +971,4 @@ function GroupRows({
       })}
     </>
   );
-}
+});

@@ -14,6 +14,7 @@ export function SignaturePad({
 }) {
   const tall = size === "dialog";
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const valueRef = useRef(value);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
@@ -34,7 +35,7 @@ export function SignaturePad({
     const canvas = canvasRef.current;
     if (!canvas) return null;
     const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(1.25, window.devicePixelRatio || 1);
     const w = Math.max(1, Math.round(rect.width * dpr));
     const h = Math.max(1, Math.round(rect.height * dpr));
     if (canvas.width !== w || canvas.height !== h) {
@@ -48,6 +49,7 @@ export function SignaturePad({
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111";
+    ctxRef.current = ctx;
     return { ctx, rect };
   }
 
@@ -101,20 +103,21 @@ export function SignaturePad({
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
+    setupContext();
     drawing.current = true;
     last.current = point(e);
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
-    const ready = setupContext();
+    const ctx = ctxRef.current;
     const p = point(e);
     const prev = last.current;
-    if (ready && prev) {
-      ready.ctx.beginPath();
-      ready.ctx.moveTo(prev.x, prev.y);
-      ready.ctx.lineTo(p.x, p.y);
-      ready.ctx.stroke();
+    if (ctx && prev) {
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
     }
     last.current = p;
   }
@@ -138,7 +141,7 @@ export function SignaturePad({
       /* already released */
     }
     const canvas = canvasRef.current;
-    if (canvas) commit(canvas.toDataURL("image/png"));
+    if (canvas) commit(canvas.toDataURL("image/jpeg", 0.72));
   }
 
   function applyAt(nextIndex: number) {
@@ -170,7 +173,7 @@ export function SignaturePad({
     commit("");
   }
 
-  const box = tall ? "h-48" : "h-8";
+  const box = tall ? "h-36" : "h-8";
   const icon = tall ? "size-5" : "size-3.5";
 
   return (

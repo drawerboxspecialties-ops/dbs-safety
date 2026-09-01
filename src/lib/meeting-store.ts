@@ -178,6 +178,22 @@ function persistSheet(state: MeetingState) {
   writeSheets(sheets);
 }
 
+let persistTimer = 0;
+
+function persistSheetSoon(state: MeetingState) {
+  if (typeof window === "undefined") {
+    persistSheet(state);
+    return;
+  }
+  window.clearTimeout(persistTimer);
+  persistTimer = window.setTimeout(() => persistSheet(state), 160);
+}
+
+function persistSheetNow(state: MeetingState) {
+  if (typeof window !== "undefined") window.clearTimeout(persistTimer);
+  persistSheet(state);
+}
+
 function openSheet(
   prev: MeetingState,
   topic: TopicId,
@@ -262,11 +278,11 @@ export function useMeeting() {
           topic: destTopic,
           month: destMonth,
         });
-        persistSheet(next);
+        persistSheetNow(next);
         return next;
       }
       const next = normalizeMeeting({ ...prev, ...patch, month: destMonth });
-      persistSheet(next);
+      persistSheetSoon(next);
       return next;
     });
   }, []);
@@ -279,7 +295,7 @@ export function useMeeting() {
         savedAt: new Date().toISOString(),
         month: prev.month || monthKeyNow(),
       });
-      persistSheet(saved);
+      persistSheetNow(saved);
       return saved;
     });
     return saved;
