@@ -1,5 +1,5 @@
 export type TopicId = string;
-export type TopicSource = "seed" | "hr" | "ai";
+export type TopicSource = "seed" | "hr" | "ai" | "upload";
 
 export type Topic = {
   id: TopicId;

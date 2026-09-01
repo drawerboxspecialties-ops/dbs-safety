@@ -2,14 +2,14 @@
 
 Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and doors).
 
-There is no set meeting day. Same topic all month. Catch a department when you have time.
+There is no set meeting day. Catch a department when you have time.
 
-1. Open the app — you see this month’s topic and which departments still need it
-2. Tap a department, give the talk, tap names to sign
-3. That topic has one sign-in sheet for the month. It updates as people sign. A different topic has its own sheet.
-4. Come back later for another department. **Who’s left** is the list to work from
+1. **Topics** — pick a packet or drop a PDF. Choose the month it belongs to.
+2. **Packet** — the PDF for that talk.
+3. **Sign** — that topic’s sign-in sheet for the month. It updates as people sign.
+4. **Who’s left** — leftover names by department.
 
-**Topic** is only for changing the subject, your trainer name, or adding a PDF. **Rest of the year** stays folded away until you need it.
+A different topic has its own sheet. Next month starts a clean sheet for that topic.
 
 ## Run locally
 

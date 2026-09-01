@@ -294,10 +294,10 @@ export default function SignInPage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
       <PageChrome title={meeting.department || topic.shortTitle}>
         <Link
-          href={`/meetings/talk?topic=${meeting.topic}`}
+          href="/meetings/packet"
           className={buttonVariants({ variant: "outline" })}
         >
-          Talk notes
+          Packet
         </Link>
         <Link href="/meetings/record" className={buttonVariants({ variant: "outline" })}>
           Who&apos;s left

@@ -49,25 +49,35 @@ export function useShopStore() {
       topics?: ShopStore["topics"];
       schedule?: Record<string, TopicId>;
     }) => {
-      const res = await fetch("/api/store", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      if (!res.ok) throw new Error("Could not save");
-      const data = await res.json();
-      setStore({
-        crew: data.crew,
-        topics: data.topics,
-        schedule: data.schedule,
-        currentMonth: data.currentMonth,
-        currentTopic: data.currentTopic,
-        lastCronAt: data.lastCronAt || "",
-        updatedAt: data.updatedAt,
-      });
-      setBackend(data.backend || "local");
-      setNote("Saved.");
-      return data as ShopStore;
+      setStore((prev) => ({
+        ...prev,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      }));
+      try {
+        const res = await fetch("/api/store", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+        if (!res.ok) throw new Error("Could not save");
+        const data = await res.json();
+        setStore({
+          crew: data.crew,
+          topics: data.topics,
+          schedule: data.schedule,
+          currentMonth: data.currentMonth,
+          currentTopic: data.currentTopic,
+          lastCronAt: data.lastCronAt || "",
+          updatedAt: data.updatedAt,
+        });
+        setBackend(data.backend || "local");
+        setNote("Saved.");
+        return data as ShopStore;
+      } catch {
+        setNote("Saved on this device.");
+        return null;
+      }
     },
     [],
   );
