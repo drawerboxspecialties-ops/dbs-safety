@@ -133,6 +133,19 @@
   html {
     @apply font-sans;
   }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
+}
+
+@media print {
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
 }
 
 .glass-panel {

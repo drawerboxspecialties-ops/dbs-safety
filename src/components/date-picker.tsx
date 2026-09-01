@@ -21,7 +21,7 @@ export function DatePicker({
   return (
     <Popover>
       <PopoverTrigger
-        className="inline-flex h-11 w-full items-center justify-start rounded-lg border border-border bg-background px-3 text-left text-base font-normal hover:bg-muted"
+        className="inline-flex h-9 w-full items-center justify-start rounded-lg border border-border bg-background px-3 text-left text-sm font-normal hover:bg-muted"
       >
         <CalendarIcon className="mr-2 size-4" />
         {selected ? format(selected, "MMMM d, yyyy") : "Pick a date"}

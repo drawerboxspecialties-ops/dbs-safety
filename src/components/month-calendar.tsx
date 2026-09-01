@@ -26,9 +26,9 @@ export function monthKind(
 
 export function monthKindLabel(kind: MonthKind) {
   if (kind === "done") return "Done";
-  if (kind === "now") return "This month";
-  if (kind === "upcoming") return "Coming up";
-  return "No sheet";
+  if (kind === "now") return "Now";
+  if (kind === "upcoming") return "Later";
+  return "Open";
 }
 
 export function MonthCalendar({
@@ -39,6 +39,7 @@ export function MonthCalendar({
   topics,
   ready,
   disabled,
+  title,
   lead,
   preview,
   onYearChange,
@@ -52,6 +53,7 @@ export function MonthCalendar({
   topics: Topic[];
   ready: boolean;
   disabled?: boolean;
+  title?: string;
   lead?: ReactNode;
   preview?: ReactNode;
   onYearChange: (year: number) => void;
@@ -59,16 +61,14 @@ export function MonthCalendar({
   onDelete?: (month: MonthKey) => void;
 }) {
   return (
-    <section className="glass-panel flex h-full min-h-0 flex-col rounded-3xl p-4">
-      {lead ? <div className="mb-3 shrink-0">{lead}</div> : null}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Year
-          </p>
-          <h2 className="text-lg font-semibold leading-tight">{year}</h2>
-        </div>
-        <div className="flex items-center gap-1">
+    <section className="glass-panel flex h-full min-h-0 flex-col rounded-2xl p-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        {title ? (
+          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+        ) : null}
+        {lead ? <div className="min-w-[12rem] flex-1">{lead}</div> : null}
+        <div className="ml-auto flex items-center gap-1">
+          <p className="mr-1 text-sm font-semibold tabular-nums">{year}</p>
           <Button
             type="button"
             variant="outline"
@@ -102,9 +102,8 @@ export function MonthCalendar({
       <div
         className={cn(
           "mt-3 min-h-0 flex-1",
-          preview
-            ? "grid items-stretch gap-3 grid-cols-[minmax(13.5rem,18rem)_minmax(0,1fr)]"
-            : "",
+          preview &&
+            "grid items-stretch gap-3 grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)]",
         )}
       >
         <div
@@ -130,41 +129,43 @@ export function MonthCalendar({
                   disabled={disabled}
                   onClick={() => onSelect(key, topicId)}
                   className={cn(
-                    "w-full rounded-2xl border text-left transition",
-                    preview
-                      ? "min-h-[4.75rem] px-2.5 py-2"
-                      : "min-h-[6.75rem] px-3 py-3",
-                    topic && onDelete ? "pr-9" : "",
+                    "w-full rounded-xl border text-left transition",
+                    preview ? "min-h-[3.75rem] px-2 py-1.5" : "min-h-[6rem] px-3 py-2.5",
+                    topic && onDelete ? "pr-8" : "",
                     active
                       ? "border-cyan-400/80 bg-cyan-50/80 ring-1 ring-cyan-300/70"
                       : topic && kind === "done"
                         ? "border-transparent bg-emerald-50/80 hover:bg-emerald-50"
                         : kind === "now"
                           ? "border-transparent bg-white/80 ring-1 ring-cyan-200/70 hover:bg-white"
-                          : "glass-panel border-transparent hover:-translate-y-0.5",
+                          : "glass-panel border-transparent hover:bg-white/90",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-semibold">{formatMonthShort(key)}</p>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                        topic && onDelete ? "mr-5" : "",
-                        topic && kind === "done"
-                          ? "bg-emerald-100 text-emerald-900"
-                          : kind === "now"
-                            ? "bg-cyan-100 text-cyan-950"
-                            : "bg-white/70 text-muted-foreground",
-                      )}
-                    >
-                      {topic ? monthKindLabel(kind) : "Open"}
-                    </span>
+                  <div className="flex items-center justify-between gap-1.5">
+                    <p className="text-sm font-semibold">
+                      {formatMonthShort(key)}
+                    </p>
+                    {preview ? null : (
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+                          topic && onDelete ? "mr-5" : "",
+                          topic && kind === "done"
+                            ? "bg-emerald-100 text-emerald-900"
+                            : kind === "now"
+                              ? "bg-cyan-100 text-cyan-950"
+                              : "bg-white/70 text-muted-foreground",
+                        )}
+                      >
+                        {topic ? monthKindLabel(kind) : "Open"}
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-1.5 truncate text-sm font-medium leading-snug">
+                  <p className="mt-1 truncate text-sm font-medium leading-snug text-foreground">
                     {topic ? topic.shortTitle : "Choose a talk"}
                   </p>
                   {preview ? null : (
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {topic
                         ? signed > 0
                           ? `${signed} signed`
@@ -181,7 +182,7 @@ export function MonthCalendar({
                     disabled={disabled}
                     aria-label={`Delete topic from ${formatMonthShort(key)}`}
                     onClick={() => onDelete(key)}
-                    className="absolute top-1.5 right-1.5 rounded-md p-1 text-red-800 hover:bg-red-50 disabled:opacity-50"
+                    className="absolute top-1 right-1 rounded-md p-1 text-red-800 hover:bg-red-50 disabled:opacity-50"
                   >
                     <Trash2 className="size-3.5" />
                   </button>

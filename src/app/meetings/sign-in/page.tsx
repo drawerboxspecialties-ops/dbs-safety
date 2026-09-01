@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
+import { PageFrame } from "@/components/page-frame";
 import { SignaturePad } from "@/components/signature-pad";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -314,14 +315,14 @@ export default function SignInPage() {
 
   if (!ready || !crewReady) {
     return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-4">
-        <p className="text-sm text-muted-foreground">Loading sign-in…</p>
-      </main>
+      <PageFrame>
+        <p className="text-muted-foreground">Loading sign-in…</p>
+      </PageFrame>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-4 print:max-w-none print:px-0 print:py-0">
+    <PageFrame>
       <PageChrome title={meeting.department || topic.shortTitle}>
         <Link
           href={sheetHref("/meetings/packet", meeting.topic, meeting.month)}
@@ -357,7 +358,7 @@ export default function SignInPage() {
         </Button>
       </PageChrome>
 
-      <article className="osha-sheet rounded-3xl border bg-white p-4 sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
+      <article className="osha-sheet rounded-2xl border bg-white p-4 print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-3 hidden print:block">
           <p className="text-[12pt] font-bold">{EMPLOYER}</p>
           <p className="text-[12pt]">
@@ -365,7 +366,7 @@ export default function SignInPage() {
             {meeting.department ? ` — ${meeting.department}` : ""}
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div className="grid gap-1">
             <Label className="text-[10pt] font-bold">Date of this session</Label>
             <DatePicker
@@ -380,7 +381,7 @@ export default function SignInPage() {
             <Input
               value={topic.title}
               readOnly
-              className="h-11 text-base"
+              className="h-9 text-sm"
             />
           </div>
           <div className="grid gap-1">
@@ -390,12 +391,12 @@ export default function SignInPage() {
             <Input
               value={meeting.trainer}
               onChange={(e) => update({ trainer: e.target.value })}
-              className="h-11 text-base"
+              className="h-9 text-sm"
             />
           </div>
         </div>
 
-        <div className="print:hidden mt-4 flex flex-wrap gap-2">
+        <div className="print:hidden mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => update({ department: "" })}
@@ -415,7 +416,7 @@ export default function SignInPage() {
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
           <p className="text-[12pt] font-bold">
             {meeting.department
               ? `${deptSigned} of ${visibleEmployees.length} in ${meeting.department} signed · ${signed} on this ${topic.shortTitle} list`
@@ -433,16 +434,14 @@ export default function SignInPage() {
             </Button>
           </div>
         </div>
-        <p className="print:hidden mb-1 text-sm text-muted-foreground">
-          {showLeft
-            ? "Glowing names still need this talk. Signed names stay dim. Tap Who’s left again to turn it off."
-            : `${topic.shortTitle} keeps one list for this month. Signatures stay. Save progress, then catch the next crew on the same sheet.`}
-          {!showLeft && meeting.savedAt
-            ? ` Last saved ${formatMeetingDate(meeting.savedAt.slice(0, 10))}.`
-            : ""}
-        </p>
-        {listNote ? (
-          <p className="print:hidden mb-2 text-sm text-emerald-800">{listNote}</p>
+        {listNote || meeting.savedAt ? (
+          <p className="print:hidden mb-1 text-xs text-muted-foreground">
+            {listNote
+              ? listNote
+              : meeting.savedAt
+                ? `Last saved ${formatMeetingDate(meeting.savedAt.slice(0, 10))}.`
+                : ""}
+          </p>
         ) : null}
 
         <div className="mt-2 overflow-x-auto">
@@ -842,7 +841,7 @@ export default function SignInPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </PageFrame>
   );
 }
 

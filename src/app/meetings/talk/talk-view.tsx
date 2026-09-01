@@ -6,6 +6,7 @@ import { sheetHref } from "@/lib/sheet-href";
 import { getTopic, topicPdfHref } from "@/lib/topics";
 import { withBase } from "@/lib/base-path";
 import { PageChrome } from "@/components/page-chrome";
+import { PageFrame } from "@/components/page-frame";
 import { buttonVariants } from "@/components/ui/button";
 import { useShopStore } from "@/lib/use-shop-store";
 
@@ -24,7 +25,7 @@ export function TalkView() {
   const packet = pdfUrl(topic.pdf);
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-4 print:max-w-none print:px-0 print:py-0">
+    <PageFrame>
       <PageChrome title={topic.title}>
         {packet ? (
           <a
@@ -44,9 +45,9 @@ export function TalkView() {
         </Link>
       </PageChrome>
 
-      <article className="glass-panel space-y-8 rounded-3xl p-6 print:rounded-none print:bg-white print:p-0 print:shadow-none">
+      <article className="glass-panel space-y-6 rounded-2xl p-4 print:rounded-none print:bg-white print:p-0 print:shadow-none">
         {topic.source && topic.source !== "seed" ? (
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
             From {topic.source === "hr" ? "HR" : "AI"}
             {topic.fileName ? ` · ${topic.fileName}` : ""}
           </p>
@@ -73,7 +74,7 @@ export function TalkView() {
           <div className="grid gap-8 md:grid-cols-5">
             {topic.talkingPoints.length > 0 ? (
               <section className="md:col-span-3">
-                <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                   Talking points
                 </h2>
                 <ol className="mt-3 list-decimal space-y-2.5 pl-5 text-sm leading-relaxed">
@@ -85,7 +86,7 @@ export function TalkView() {
             ) : null}
             {topic.sideItems.length > 0 ? (
               <section className="md:col-span-2">
-                <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                   {topic.sideTitle}
                 </h2>
                 <ul className="mt-3 list-disc space-y-2.5 pl-5 text-sm leading-relaxed">
@@ -102,7 +103,7 @@ export function TalkView() {
           <div className="grid gap-8 sm:grid-cols-2">
             {topic.dos.length > 0 ? (
               <section>
-                <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-800">
+                <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-emerald-800">
                   Do
                 </h2>
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm">
@@ -114,7 +115,7 @@ export function TalkView() {
             ) : null}
             {topic.donts.length > 0 ? (
               <section>
-                <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-red-800">
+                <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-red-800">
                   Don&apos;t
                 </h2>
                 <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm">
@@ -129,13 +130,13 @@ export function TalkView() {
 
         {topic.stopWork ? (
           <section className="rounded-2xl bg-[#0b1220] px-5 py-4 text-white print:bg-black">
-            <h2 className="text-[11px] font-medium uppercase tracking-[0.16em] text-cyan-200">
+            <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-cyan-200">
               Stop work if
             </h2>
             <p className="mt-2 text-sm leading-relaxed">{topic.stopWork}</p>
           </section>
         ) : null}
       </article>
-    </main>
+    </PageFrame>
   );
 }

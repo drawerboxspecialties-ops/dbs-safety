@@ -25,9 +25,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-dvh overflow-hidden antialiased print:h-auto print:overflow-visible`}
     >
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="flex h-dvh flex-col overflow-hidden font-sans text-sm print:h-auto print:overflow-visible">
         <AppShell>{children}</AppShell>
       </body>
     </html>

@@ -1,13 +1,14 @@
 import { Suspense } from "react";
+import { PageFrame } from "@/components/page-frame";
 import { TalkView } from "./talk-view";
 
 export default function TalkPage() {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto w-full max-w-7xl px-4 py-4">
-          <p className="text-sm text-muted-foreground">Loading talk…</p>
-        </main>
+        <PageFrame>
+          <p className="text-muted-foreground">Loading talk…</p>
+        </PageFrame>
       }
     >
       <TalkView />

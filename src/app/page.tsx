@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { MonthCalendar } from "@/components/month-calendar";
+import { PageFrame } from "@/components/page-frame";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -116,18 +117,14 @@ export default function HomePage() {
 
   if (!ready) {
     return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-4">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </main>
+      <PageFrame>
+        <p className="text-muted-foreground">Loading…</p>
+      </PageFrame>
     );
   }
 
   return (
-    <main className="mx-auto flex h-[calc(100dvh-3.75rem)] w-full max-w-7xl flex-col px-4 py-3">
-      <h1 className="shrink-0 text-xl font-semibold tracking-tight">
-        Safety Topic
-      </h1>
-
+    <PageFrame fill>
       <input
         ref={fileRef}
         type="file"
@@ -139,8 +136,9 @@ export default function HomePage() {
         }}
       />
 
-      <div className="mt-3 min-h-0 flex-1">
+      <div className="min-h-0 flex-1">
         <MonthCalendar
+          title="Safety Topic"
           year={year}
           now={shop.monthKey}
           selected={expanded}
@@ -161,15 +159,15 @@ export default function HomePage() {
           }}
           preview={
             expanded ? (
-              <div className="flex h-full min-h-0 flex-col rounded-2xl border bg-white p-3">
+              <div className="flex h-full min-h-0 flex-col rounded-xl border bg-white p-3">
                 {expandedTopic ? (
                   <>
-                    <div className="mb-3 flex shrink-0 flex-wrap items-start justify-between gap-2">
+                    <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                           {shop.formatMonthLabel(expanded)}
                         </p>
-                        <h3 className="truncate text-lg font-semibold leading-tight">
+                        <h3 className="truncate text-base font-semibold leading-tight">
                           {expandedTopic.title}
                         </h3>
                       </div>
@@ -209,10 +207,10 @@ export default function HomePage() {
                   </>
                 ) : (
                   <div className="min-h-0 overflow-y-auto">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                       {shop.formatMonthLabel(expanded)}
                     </p>
-                    <h3 className="text-lg font-semibold leading-tight">
+                    <h3 className="text-base font-semibold leading-tight">
                       Choose a talk
                     </h3>
                     {catalog.length === 0 ? (
@@ -269,20 +267,20 @@ export default function HomePage() {
                   queueFile(e.dataTransfer.files?.[0]);
                 }}
                 className={cn(
-                  "flex min-h-14 w-full items-center justify-center rounded-2xl border-2 border-dashed px-4 py-2.5 text-center transition",
+                  "flex h-9 w-full items-center justify-center rounded-xl border-2 border-dashed px-3 text-center transition",
                   dragOver
                     ? "border-cyan-400 bg-cyan-50/80"
                     : "border-cyan-200/70 bg-white/50 hover:border-cyan-300",
                 )}
               >
-                <p className="text-sm">
+                <p>
                   <span className="font-medium">
                     {busy ? "Saving PDF…" : "Drop a PDF here"}
                   </span>
                   {busy ? null : (
                     <span className="text-muted-foreground">
                       {" "}
-                      or tap to choose a file, then pick the month.
+                      or tap a file, then pick the month.
                     </span>
                   )}
                 </p>
@@ -399,6 +397,6 @@ export default function HomePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </PageFrame>
   );
 }
