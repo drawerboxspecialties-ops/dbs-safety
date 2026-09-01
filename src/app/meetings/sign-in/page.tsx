@@ -22,7 +22,6 @@ import {
   TRAINER_CERT,
   buildRoster,
   isSigned,
-  recordGaps,
   rowState as meetingRow,
   type RosterPerson,
 } from "@/lib/meeting-record";
@@ -63,10 +62,6 @@ export default function SignInPage() {
   const [listNote, setListNote] = useState("");
 
   const roster = useMemo(() => buildRoster(employees), [employees]);
-  const gaps = useMemo(
-    () => recordGaps(meeting, roster),
-    [meeting, roster],
-  );
   const departments = departmentOptions(employees);
 
   function rowState(person: RosterPerson): SignRow {
@@ -215,17 +210,6 @@ export default function SignInPage() {
           </Button>
         </div>
       </div>
-
-      {gaps.length > 0 ? (
-        <p className="print:hidden mb-3 text-sm text-muted-foreground">
-          Training record still needs: {gaps.join(", ")}.
-        </p>
-      ) : (
-        <p className="print:hidden mb-3 text-sm text-emerald-800">
-          Date, subject, trainer, and signatures are on file. Open the training
-          record to print or save it.
-        </p>
-      )}
 
       <article className="osha-sheet rounded-xl border bg-white p-4 shadow-sm sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-3 hidden print:block">
