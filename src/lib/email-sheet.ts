@@ -74,7 +74,7 @@ export function buildEmailDraft(opts: {
   });
 }
 
-function downloadBlob(blob: Blob, filename: string) {
+export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -84,6 +84,12 @@ function downloadBlob(blob: Blob, filename: string) {
   a.click();
   a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+export async function downloadFromUrl(url: string, filename: string) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Could not download that PDF.");
+  downloadBlob(await res.blob(), filename);
 }
 
 export async function shareSignInPdf(opts: {

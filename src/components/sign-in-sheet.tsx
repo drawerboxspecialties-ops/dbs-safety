@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Mail } from "lucide-react";
+import { Download, Mail } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
@@ -41,6 +41,8 @@ import {
   type SignRow,
 } from "@/lib/meeting-store";
 import {
+  downloadBlob,
+  downloadFromUrl,
   loadLastEmailTo,
   saveLastEmailTo,
   shareSignInPdf,
@@ -51,6 +53,7 @@ import {
   sheetEmailSubject,
   sheetPdfFilename,
 } from "@/lib/sheet-pdf";
+import { packetUrl } from "@/lib/packet";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
@@ -331,6 +334,37 @@ export function SignInSheet({
     }
   }
 
+  async function saveRecords() {
+    const monthKey = meeting.month || shop.monthKey;
+    const monthLabel = shop.formatMonthLabel(monthKey);
+    setListNote("");
+    try {
+      const sheet = await buildSignInPdf({
+        meeting,
+        topic,
+        employees: sheetCrew,
+        monthLabel,
+      });
+      downloadBlob(sheet, sheetPdfFilename(topic, monthKey));
+      const talk = packetUrl(topic.pdf);
+      if (talk) {
+        const talkName = `DBS-Safety-talk-${monthKey}-${topic.shortTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")}.pdf`;
+        await downloadFromUrl(talk, talkName);
+      }
+      setListNote(
+        `Downloaded the ${monthLabel} sign-in sheet${talk ? " and talk PDF" : ""}. Keep them in a folder or Drive for compliance.`,
+      );
+    } catch (err) {
+      setListNote(
+        err instanceof Error
+          ? err.message
+          : "Could not download the records.",
+      );
+    }
+  }
+
   function saveSheetProgress() {
     const saved = saveProgress();
     const n = signedCount(saved);
@@ -462,6 +496,14 @@ export function SignInSheet({
         <Button type="button" variant="outline" onClick={openEmailSheet}>
           <Mail />
           Email PDF
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void saveRecords()}
+        >
+          <Download />
+          Save records
         </Button>
       </PageChrome>
 
