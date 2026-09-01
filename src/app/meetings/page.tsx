@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useMeeting } from "@/lib/meeting-store";
 import { getTopic, type Topic, type TopicId } from "@/lib/topics";
 import { AddTopicDialog } from "@/components/add-topic-dialog";
-import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useShopStore } from "@/lib/use-shop-store";
 
 export default function MeetingsPage() {
-  const { meeting, update, ready } = useMeeting();
+  const { meeting, update } = useMeeting();
   const shop = useShopStore();
   const catalog = shop.store.topics;
   const monthTopic = getTopic(shop.store.schedule[shop.monthKey], catalog);
@@ -35,7 +34,7 @@ export default function MeetingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <PageChrome title="Meeting setup">
+      <PageChrome title="This month">
         <Button type="button" variant="outline" onClick={() => setAdding(true)}>
           Add from HR / AI
         </Button>
@@ -48,20 +47,9 @@ export default function MeetingsPage() {
           </p>
           <p className="mt-1 text-lg font-medium">{monthTopic.shortTitle}</p>
           <p className="text-sm text-muted-foreground">
-            Use an HR packet or an AI draft. One topic a month.
+            No set meeting day. Catch a department when you have time.
+            Same topic all month.
           </p>
-        </div>
-
-        <div className="grid gap-2">
-          <Label>Date</Label>
-          {ready ? (
-            <DatePicker
-              value={meeting.date}
-              onChange={(date) => update({ date })}
-            />
-          ) : (
-            <div className="h-11 rounded-lg border bg-muted/40" />
-          )}
         </div>
 
         <div className="grid gap-2">

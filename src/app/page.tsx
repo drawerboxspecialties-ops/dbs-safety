@@ -16,12 +16,12 @@ const tiles = [
   {
     href: "/meetings/sign-in",
     title: "Sign-in",
-    detail: "Names and signatures.",
+    detail: "Catch one department at a time.",
   },
   {
     href: "/meetings/record",
     title: "Record",
-    detail: "Who signed. Who still needs it.",
+    detail: "Who signed this month. Who still needs it.",
   },
 ];
 
@@ -37,9 +37,9 @@ export default function HomePage() {
         <div className="mt-6 grid gap-6 sm:grid-cols-3">
           <div>
             <p className="text-[11px] font-medium text-cyan-700">01</p>
-            <p className="mt-1 font-medium">Set up</p>
+            <p className="mt-1 font-medium">This month</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Date, topic, trainer.
+              Topic and trainer. No set meeting day.
             </p>
           </div>
           <div>
@@ -51,9 +51,9 @@ export default function HomePage() {
           </div>
           <div>
             <p className="text-[11px] font-medium text-cyan-700">03</p>
-            <p className="mt-1 font-medium">Sign and file</p>
+            <p className="mt-1 font-medium">Catch a department</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Signatures, then the record.
+              Sign that crew. Come back when you have time.
             </p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function HomePage() {
           href="/meetings"
           className={cn(buttonVariants({ size: "lg" }), "mt-8")}
         >
-          Open meeting
+          Open this month
         </Link>
       </section>
 

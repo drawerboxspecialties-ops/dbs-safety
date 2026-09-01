@@ -3,6 +3,7 @@ import { loadCrew } from "@/lib/crew-store";
 import {
   BLANK_ROWS,
   EMPLOYEES,
+  departmentOptions,
   employeesByDepartment,
   type Employee,
 } from "@/lib/employees";
@@ -32,6 +33,12 @@ export type AttendanceRow = {
   name: string;
   dept: string;
   sig: string;
+  signedAt: string;
+};
+
+export type NamedRow = {
+  name: string;
+  dept: string;
 };
 
 export type FiledMeeting = {
@@ -42,8 +49,9 @@ export type FiledMeeting = {
   subject: string;
   trainer: string;
   trainerTitle: string;
-  trained: { name: string; dept: string }[];
+  trained: { name: string; dept: string; signedAt?: string }[];
   makeup: { name: string; dept: string }[];
+  sessionDates: string[];
   topicsCovered: string[];
 };
 
@@ -106,6 +114,7 @@ export function rowState(meeting: MeetingState, person: RosterPerson): SignRow {
     name: person.extra ? "" : person.name,
     dept: person.extra ? "" : person.dept,
     sig: "",
+    signedAt: "",
   };
 }
 
@@ -129,15 +138,52 @@ export function trainedEmployees(
         name: attendanceName(person, row),
         dept: attendanceDept(person, row),
         sig: row.sig,
+        signedAt: row.signedAt || meeting.date,
       };
     })
     .filter((r) => r.name && isSigned(r.sig));
 }
 
+export function sessionDates(
+  meeting: MeetingState,
+  roster = buildRoster(),
+): string[] {
+  const dates = new Set<string>();
+  for (const row of trainedEmployees(meeting, roster)) {
+    if (row.signedAt) dates.add(row.signedAt);
+  }
+  if (dates.size === 0 && meeting.date) dates.add(meeting.date);
+  return Array.from(dates).sort();
+}
+
+export function formatSessionDates(dates: string[]) {
+  return dates.map(formatMeetingDate).filter(Boolean).join("; ");
+}
+
+export function groupByDepartment<T extends { dept: string }>(
+  rows: T[],
+  employees?: Employee[],
+): { department: string; rows: T[] }[] {
+  const order = departmentOptions(employees);
+  const extras = rows
+    .map((r) => r.dept)
+    .filter((d) => d && !order.includes(d));
+  const depts = [...order, ...Array.from(new Set(extras))];
+  const groups = depts
+    .map((department) => ({
+      department,
+      rows: rows.filter((r) => r.dept === department),
+    }))
+    .filter((g) => g.rows.length > 0);
+  const noDept = rows.filter((r) => !r.dept);
+  if (noDept.length) groups.push({ department: "Other", rows: noDept });
+  return groups;
+}
+
 export function makeupEmployees(
   meeting: MeetingState,
   roster = buildRoster(),
-): { name: string; dept: string }[] {
+): NamedRow[] {
   return roster
     .map((person) => {
       const row = rowState(meeting, person);
@@ -157,7 +203,7 @@ export function recordGaps(
   roster = buildRoster(),
 ): string[] {
   const gaps: string[] = [];
-  if (!meeting.date) gaps.push("Date of training");
+  if (!meeting.date) gaps.push("Session date");
   if (!meeting.topic) gaps.push("Subject");
   if (!meeting.trainer.trim()) gaps.push("Trainer name");
   if (!isSigned(meeting.trainerSig)) gaps.push("Trainer signature");
@@ -185,11 +231,15 @@ export function snapshotMeeting(
     subject: topic.title,
     trainer: meeting.trainer.trim(),
     trainerTitle: meeting.trainerTitle.trim(),
-    trained: trainedEmployees(meeting, roster).map(({ name, dept }) => ({
-      name,
-      dept,
-    })),
+    trained: trainedEmployees(meeting, roster).map(
+      ({ name, dept, signedAt }) => ({
+        name,
+        dept,
+        signedAt,
+      }),
+    ),
     makeup: makeupEmployees(meeting, roster),
+    sessionDates: sessionDates(meeting, roster),
     topicsCovered: topic.talkingPoints,
   };
 }
@@ -200,7 +250,12 @@ export function loadFiledMeetings(): FiledMeeting[] {
     const raw = localStorage.getItem(RECORDS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as FiledMeeting[];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((record) => ({
+      ...record,
+      sessionDates:
+        record.sessionDates ?? (record.date ? [record.date] : []),
+    }));
   } catch {
     return [];
   }

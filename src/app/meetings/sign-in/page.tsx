@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { SignaturePad } from "@/components/signature-pad";
@@ -26,9 +26,19 @@ import {
   rowState as meetingRow,
   type RosterPerson,
 } from "@/lib/meeting-record";
-import { useMeeting, type SignRow } from "@/lib/meeting-store";
+import { todayISO, useMeeting, type SignRow } from "@/lib/meeting-store";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
+import { cn } from "@/lib/utils";
+
+function deptChip(active: boolean) {
+  return cn(
+    "rounded-full border px-3 py-1.5 text-sm transition",
+    active
+      ? "border-cyan-400/80 bg-cyan-50/80 text-cyan-950 ring-1 ring-cyan-300/70"
+      : "border-transparent bg-white/60 text-foreground hover:bg-white",
+  );
+}
 
 type SignTarget =
   | { kind: "employee"; person: RosterPerson }
@@ -55,8 +65,9 @@ export default function SignInPage() {
         department,
         people: employees.filter((e) => e.department === department),
       }))
-      .filter((g) => g.people.length > 0);
-  }, [employees]);
+      .filter((g) => g.people.length > 0)
+      .filter((g) => !meeting.department || g.department === meeting.department);
+  }, [employees, meeting.department]);
   const [signing, setSigning] = useState<SignTarget | null>(null);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -69,8 +80,21 @@ export default function SignInPage() {
   const [removePassword, setRemovePassword] = useState("");
   const [removeError, setRemoveError] = useState("");
 
+  useEffect(() => {
+    if (!ready) return;
+    const today = todayISO();
+    if (meeting.date !== today) update({ date: today });
+  }, [ready]);
+
+  useEffect(() => {
+    if (meeting.department) setNewDept(meeting.department);
+  }, [meeting.department]);
+
   const roster = useMemo(() => buildRoster(employees), [employees]);
   const departments = departmentOptions(employees);
+  const visibleEmployees = meeting.department
+    ? employees.filter((e) => e.department === meeting.department)
+    : employees;
 
   function rowState(person: RosterPerson): SignRow {
     return meetingRow(meeting, person);
@@ -167,6 +191,12 @@ export default function SignInPage() {
   }
 
   const signed = meeting.rows.filter((r) => isSigned(r.sig)).length;
+  const deptSigned = visibleEmployees.filter((person) => {
+    const row = meeting.rows.find(
+      (r) => (r.id && r.id === person.id) || r.name === person.name,
+    );
+    return row && isSigned(row.sig);
+  }).length;
   const dialogName =
     signing?.kind === "employee"
       ? signing.person.name ||
@@ -184,8 +214,12 @@ export default function SignInPage() {
 
   function setDialogSig(sig: string) {
     if (!signing) return;
-    if (signing.kind === "employee") patchRow(signing.person, { sig });
-    else update({ trainerSig: sig });
+    if (signing.kind === "employee") {
+      patchRow(signing.person, {
+        sig,
+        signedAt: isSigned(sig) ? meeting.date : "",
+      });
+    } else update({ trainerSig: sig });
   }
 
   if (!ready || !crewReady) {
@@ -219,11 +253,14 @@ export default function SignInPage() {
       <article className="osha-sheet glass-panel rounded-3xl p-4 sm:p-6 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none">
         <div className="mb-3 hidden print:block">
           <p className="text-[12pt] font-bold">{EMPLOYER}</p>
-          <p className="text-[12pt]">Training sign-in</p>
+          <p className="text-[12pt]">
+            Training sign-in
+            {meeting.department ? ` — ${meeting.department}` : ""}
+          </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1">
-            <Label className="text-[10pt] font-bold">Date of training</Label>
+            <Label className="text-[10pt] font-bold">Date of this session</Label>
             <DatePicker
               value={meeting.date}
               onChange={(date) => update({ date })}
@@ -251,9 +288,31 @@ export default function SignInPage() {
           </div>
         </div>
 
+        <div className="print:hidden mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => update({ department: "" })}
+            className={deptChip(!meeting.department)}
+          >
+            All
+          </button>
+          {departments.map((dept) => (
+            <button
+              key={dept}
+              type="button"
+              onClick={() => update({ department: dept })}
+              className={deptChip(meeting.department === dept)}
+            >
+              {dept}
+            </button>
+          ))}
+        </div>
+
         <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
           <p className="text-[12pt] font-bold">
-            {signed} employees signed · {employees.length} on default list
+            {meeting.department
+              ? `${deptSigned} of ${visibleEmployees.length} in ${meeting.department} signed · ${signed} this month`
+              : `${signed} signed this month · ${employees.length} on the list`}
           </p>
           <div className="print:hidden flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => setAdding(true)}>
@@ -268,8 +327,8 @@ export default function SignInPage() {
           </div>
         </div>
         <p className="print:hidden mb-1 text-sm text-muted-foreground">
-          Tap a name to sign. Add or remove people, then save the list as the
-          default for the next meeting.
+          Pick the department you are catching today. Signatures stay for the
+          month. Tap a name to sign.
         </p>
         {listNote ? (
           <p className="print:hidden mb-2 text-sm text-emerald-800">{listNote}</p>
@@ -318,7 +377,10 @@ export default function SignInPage() {
                           placeholder="Employee name"
                           value={state.name}
                           onChange={(e) =>
-                            patchRow(r, { name: e.target.value })
+                            patchRow(r, {
+                              name: e.target.value,
+                              dept: state.dept || meeting.department,
+                            })
                           }
                         />
                       </td>
@@ -326,7 +388,7 @@ export default function SignInPage() {
                         <input
                           className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none"
                           placeholder="Department"
-                          value={state.dept}
+                          value={state.dept || meeting.department}
                           onChange={(e) =>
                             patchRow(r, { dept: e.target.value })
                           }

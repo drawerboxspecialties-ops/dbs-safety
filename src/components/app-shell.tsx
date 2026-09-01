@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               href="/meetings"
               className="rounded-full bg-white px-3 py-1.5 font-medium text-[#0b1220] hover:bg-cyan-50"
             >
-              Meeting
+              This month
             </Link>
           </nav>
         </div>

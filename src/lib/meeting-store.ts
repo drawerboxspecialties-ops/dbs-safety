@@ -9,6 +9,7 @@ export type SignRow = {
   name: string;
   dept: string;
   sig: string;
+  signedAt?: string;
 };
 
 export type MeetingState = {
@@ -17,12 +18,14 @@ export type MeetingState = {
   trainer: string;
   trainerSig: string;
   trainerTitle: string;
+  /** Department being caught this session. Empty string = all. */
+  department: string;
   rows: SignRow[];
 };
 
 const KEY = "dbs-safety-meeting";
 
-function todayISO() {
+export function todayISO() {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
     .toISOString()
@@ -36,6 +39,7 @@ export function emptyMeeting(): MeetingState {
     trainer: "",
     trainerSig: "",
     trainerTitle: "",
+    department: "",
     rows: [],
   };
 }

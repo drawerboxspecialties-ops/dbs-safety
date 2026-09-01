@@ -2,14 +2,15 @@
 
 Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and doors).
 
-The first live module is the **Safety Meeting App**:
+The first live module is the **Safety Meeting App**. There is no set meeting day. Catch a department whenever you have time that month. Same topic all month.
 
-1. Set the date (calendar), topic, and trainer
-2. Give the PPE or material handling talk
-3. Collect signatures on the training sign-in
-4. Print or save the **training record** (`/meetings/record`) for the shop file
+1. Pick this month’s topic and the trainer
+2. Give the talk on the floor
+3. Open sign-in, pick the department you are catching, and collect signatures
+4. Come back later for another department — signatures stay for the month
+5. Print or save the **training record** (`/meetings/record`) for the shop file
 
-The training record is the written certification for the talk: employer, date, subject, what was covered, each employee who signed, people who still need the talk, and the trainer certification. Only employees who signed are certified as trained.
+The training record is the written certification: employer, session dates, subject, what was covered, each employee who signed (with the day you caught their department), people who still need the talk grouped by department, and the trainer certification. Only employees who signed are certified as trained.
 
 ## Run locally
 
@@ -47,7 +48,7 @@ The shop store keeps the default employee list and a **one-topic-a-month** plan.
 
 - Local: `data/dbs-safety-store.json`
 - Vercel: add a Blob store and set `BLOB_READ_WRITE_TOKEN` so every tablet shares the same list
-- Cron: on the 1st of each month (`0 15 1 * *` UTC) `/api/cron/monthly-topic` sets this month’s topic
+- Cron: on the 1st of each month (`0 15 1 * *` UTC) `/api/cron/monthly-topic` sets this month’s topic. It does not schedule a meeting date.
 
 Optional: set `CRON_SECRET` and Vercel will send it as `Authorization: Bearer …`.
 
