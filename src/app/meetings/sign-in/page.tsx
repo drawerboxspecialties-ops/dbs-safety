@@ -292,7 +292,7 @@ export default function SignInPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
-      <PageChrome title={meeting.department || "Sign"}>
+      <PageChrome title={meeting.department || topic.shortTitle}>
         <Link
           href={`/meetings/talk?topic=${meeting.topic}`}
           className={buttonVariants({ variant: "outline" })}
@@ -384,8 +384,8 @@ export default function SignInPage() {
           </div>
         </div>
         <p className="print:hidden mb-1 text-sm text-muted-foreground">
-          Tap a name to sign. Move someone if they work in a different
-          department now. Save as default list when the lineup is right.
+          {topic.shortTitle} sheet for this month. It updates as people sign.
+          Tap a name. Move or remove needs the shop password.
         </p>
         {listNote ? (
           <p className="print:hidden mb-2 text-sm text-emerald-800">{listNote}</p>

@@ -52,8 +52,8 @@ export default function HomePage() {
         </h1>
         <p className="mt-2 max-w-xl text-sm text-muted-foreground">
           {left === 0
-            ? "Everyone on the list has signed."
-            : `${left} still need to sign. Catch a department when you have time.`}
+            ? `Everyone on the ${topic.shortTitle} sheet has signed.`
+            : `${left} still need to sign ${topic.shortTitle}. Same sheet all month — it updates as you go.`}
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           <Link

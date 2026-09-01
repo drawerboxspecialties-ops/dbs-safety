@@ -6,8 +6,8 @@ There is no set meeting day. Same topic all month. Catch a department when you h
 
 1. Open the app — you see this month’s topic and which departments still need it
 2. Tap a department, give the talk, tap names to sign
-3. Come back later for another department. Signatures stay for the month
-4. **Who’s left** is the list to work from, and the paper file when you print
+3. That topic has one sign-in sheet for the month. It updates as people sign. A different topic has its own sheet.
+4. Come back later for another department. **Who’s left** is the list to work from
 
 **Topic** is only for changing the subject, your trainer name, or adding a PDF. **Rest of the year** stays folded away until you need it.
 

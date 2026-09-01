@@ -71,7 +71,7 @@ export default function TrainingRecordPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
-      <PageChrome title="Who's left">
+      <PageChrome title={`Who's left · ${topic.shortTitle}`}>
         <Link
           href="/meetings/sign-in"
           className={buttonVariants({ variant: "outline" })}
