@@ -97,22 +97,7 @@ export default function SignInPage() {
       </div>
 
       <article className="osha-sheet rounded-xl border bg-white p-4 shadow-sm sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
-        <header className="border-2 border-black p-3">
-          <p className="text-[10pt] font-bold tracking-wide uppercase">
-            Drawer Box Specialties · Drawer boxes · Cabinets · Doors
-          </p>
-          <h2 className="mt-1 text-[16pt] font-bold leading-tight">
-            Certification of training
-          </h2>
-          <p className="mt-2 text-[10pt] leading-snug">
-            This document is a written certification of training under 29 CFR
-            1910.132(f)(4) (PPE). It also records attendance for other safety
-            talks, including material handling. It lists each employee, the
-            training date, and the subject.
-          </p>
-        </header>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1">
             <Label className="text-[10pt] font-bold">Date of training</Label>
             {ready ? (
@@ -185,7 +170,7 @@ export default function SignInPage() {
                       </td>
                       <td className="border-b border-black px-2 py-0">
                         <input
-                          className="w-full border-0 bg-transparent text-[12pt] outline-none"
+                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none"
                           placeholder="Employee name"
                           value={state.name}
                           onChange={(e) =>

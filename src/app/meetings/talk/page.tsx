@@ -58,15 +58,11 @@ export default async function TalkPage({
                 DRAWER BOX SPECIALTIES · SAFETY MEETING
               </p>
               <h2 className="mt-1 text-2xl font-semibold">{topic.title}</h2>
-              <p className="mt-1 text-sm text-amber-100/90">
-                Drawer boxes · Cabinets · Doors
-              </p>
             </div>
             <Badge variant="secondary" className="bg-amber-400 text-[#1b232c]">
               {topic.minutes}
             </Badge>
           </div>
-          <p className="mt-3 text-xs text-white/70">{topic.osha}</p>
         </header>
 
         <div className="space-y-4 p-5">
