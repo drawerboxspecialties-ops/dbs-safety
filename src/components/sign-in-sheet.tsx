@@ -41,6 +41,7 @@ import {
   type SignRow,
 } from "@/lib/meeting-store";
 import {
+  DRIVE_MEETINGS_URL,
   connectGoogleDrive,
   disconnectGoogleDrive,
   hasGoogleClientId,
@@ -872,7 +873,7 @@ export function SignInSheet({
         }}
       >
         <DialogContent
-          className="sm:max-w-xl duration-0 data-open:animate-none data-closed:animate-none"
+          className="sm:max-w-2xl duration-0 data-open:animate-none data-closed:animate-none"
           showCloseButton
         >
           <DialogHeader>
@@ -882,7 +883,7 @@ export function SignInSheet({
               {dialogDept ? ` · ${dialogDept}` : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-md border border-black bg-white p-2">
+          <div className="rounded-md border border-black bg-white p-3">
             {signing ? (
               <SignaturePad
                 key={
@@ -1203,11 +1204,19 @@ export function SignInSheet({
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
+            <a
+              href={DRIVE_MEETINGS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-cyan-800 underline"
+            >
+              Open DBS Safety / Safety Meetings
+            </a>
             {drive.connected ? (
               <p className="text-sm">
                 Connected
-                {drive.email ? ` as ${drive.email}` : ""}. The first save creates
-                the folders if they are not there yet.
+                {drive.email ? ` as ${drive.email}` : ""}. Saves go to the shop
+                Drive folder.
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
