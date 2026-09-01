@@ -22,7 +22,7 @@ PAGE_W, PAGE_H = letter
 MARGIN = 0.5 * inch
 INNER = PAGE_W - 2 * MARGIN
 EXTRA_BLANKS = 6
-ROW_H = 0.36 * inch
+ROW_H = 0.42 * inch
 BAND_H = 0.28 * inch
 FOOT = 0.48 * inch
 
@@ -146,7 +146,6 @@ class SignIn:
         c.drawString(MARGIN + 0.42 * inch, y - 13, "Employee name")
         c.drawString(MARGIN + 3.35 * inch, y - 13, "Department")
         c.drawString(MARGIN + 4.85 * inch, y - 13, "Employee signature")
-        c.drawString(MARGIN + 6.85 * inch, y - 13, "Time")
 
     def dept_band(self, y: float, dept: str, count: int) -> float:
         c = self.c
@@ -181,8 +180,7 @@ class SignIn:
         c.setFont("Helvetica", 12)
         c.drawString(MARGIN + 3.35 * inch, y - 16, dept)
         c.setLineWidth(0.8)
-        c.line(MARGIN + 4.85 * inch, y - 18, MARGIN + 6.75 * inch, y - 18)
-        c.line(MARGIN + 6.85 * inch, y - 18, MARGIN + INNER - 6, y - 18)
+        c.line(MARGIN + 4.85 * inch, y - 20, MARGIN + INNER - 8, y - 20)
         return y - ROW_H
 
     def certification(self, y: float) -> float:

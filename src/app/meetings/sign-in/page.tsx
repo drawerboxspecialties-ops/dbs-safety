@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { DatePicker } from "@/components/date-picker";
+import { SignaturePad } from "@/components/signature-pad";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +14,8 @@ import {
 import { useMeeting, type SignRow } from "@/lib/meeting-store";
 import { getTopic } from "@/lib/topics";
 
-function stampNow() {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+function isSigned(sig: string) {
+  return sig.startsWith("data:image");
 }
 
 export default function SignInPage() {
@@ -51,7 +51,6 @@ export default function SignInPage() {
         name: "",
         dept: "",
         sig: "",
-        time: "",
       }
     );
   }
@@ -66,7 +65,7 @@ export default function SignInPage() {
     update({ rows: next });
   }
 
-  const signed = meeting.rows.filter((r) => r.sig.trim()).length;
+  const signed = meeting.rows.filter((r) => isSigned(r.sig)).length;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
@@ -156,8 +155,7 @@ export default function SignInPage() {
                 <th className="w-10 px-2 py-1.5 font-bold">No.</th>
                 <th className="px-2 py-1.5 font-bold">Employee name</th>
                 <th className="w-40 px-2 py-1.5 font-bold">Department</th>
-                <th className="w-52 px-2 py-1.5 font-bold">Employee signature</th>
-                <th className="w-28 px-2 py-1.5 font-bold">Time</th>
+                <th className="w-64 px-2 py-1.5 font-bold">Employee signature</th>
               </tr>
             </thead>
             <tbody>
@@ -205,26 +203,10 @@ export default function SignInPage() {
                           }
                         />
                       </td>
-                      <td className="border-b border-black px-2 py-1">
-                        <input
-                          className="w-full border-0 border-b border-black bg-transparent text-[12pt] outline-none"
+                      <td className="border-b border-black px-1 py-0.5">
+                        <SignaturePad
                           value={state.sig}
-                          onChange={(e) =>
-                            patchRow(r.n, {
-                              sig: e.target.value,
-                              time: state.time || (e.target.value ? stampNow() : ""),
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="border-b border-black px-2 py-1">
-                        <input
-                          type="time"
-                          className="w-full border-0 bg-transparent text-[12pt] outline-none"
-                          value={state.time}
-                          onChange={(e) =>
-                            patchRow(r.n, { time: e.target.value })
-                          }
+                          onChange={(sig) => patchRow(r.n, { sig })}
                         />
                       </td>
                     </tr>
@@ -248,18 +230,19 @@ export default function SignInPage() {
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1">
               <Label className="text-[10pt] font-bold">Trainer signature</Label>
-              <Input
-                value={meeting.trainerSig}
-                onChange={(e) => update({ trainerSig: e.target.value })}
-                className="h-11 text-base"
-              />
+              <div className="rounded-md border border-black">
+                <SignaturePad
+                  value={meeting.trainerSig}
+                  onChange={(trainerSig) => update({ trainerSig })}
+                />
+              </div>
             </div>
             <div className="grid gap-1">
               <Label className="text-[10pt] font-bold">Title</Label>
               <Input
                 value={meeting.trainerTitle}
                 onChange={(e) => update({ trainerTitle: e.target.value })}
-                className="h-11 text-base"
+                className="h-16 text-base"
               />
             </div>
           </div>
@@ -285,7 +268,7 @@ function GroupRows({
   return (
     <>
       <tr className="bg-neutral-200">
-        <td colSpan={5} className="border-b border-black px-2 py-1.5 text-[12pt] font-bold">
+        <td colSpan={4} className="border-b border-black px-2 py-1.5 text-[12pt] font-bold">
           {department} — {count} employees
         </td>
       </tr>
@@ -300,24 +283,10 @@ function GroupRows({
             <td className="border-b border-black px-2 py-1 text-[12pt]">
               {r.dept}
             </td>
-            <td className="border-b border-black px-2 py-1">
-              <input
-                className="w-full border-0 border-b border-black bg-transparent text-[12pt] outline-none"
+            <td className="border-b border-black px-1 py-0.5">
+              <SignaturePad
                 value={state.sig}
-                onChange={(e) =>
-                  patchRow(r.n, {
-                    sig: e.target.value,
-                    time: state.time || (e.target.value ? stampNow() : ""),
-                  })
-                }
-              />
-            </td>
-            <td className="border-b border-black px-2 py-1">
-              <input
-                type="time"
-                className="w-full border-0 bg-transparent text-[12pt] outline-none"
-                value={state.time}
-                onChange={(e) => patchRow(r.n, { time: e.target.value })}
+                onChange={(sig) => patchRow(r.n, { sig })}
               />
             </td>
           </tr>

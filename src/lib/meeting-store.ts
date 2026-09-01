@@ -8,7 +8,6 @@ export type SignRow = {
   name: string;
   dept: string;
   sig: string;
-  time: string;
 };
 
 export type MeetingState = {

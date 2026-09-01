@@ -143,9 +143,9 @@
     tr.person { page-break-inside: avoid; }
     .num { width: 0.4in; font-size: 10pt; }
     .dept-cell { width: 1.45in; font-size: 12pt; }
-    .sig-cell { width: 2.15in; }
-    .time-cell { width: 1.05in; }
-    .sig, .time, .blank-name, .blank-dept { width: 100%; font-size: 12pt; min-height: 16pt; }
+    .sig-cell { width: 2.6in; }
+    .blank-name, .blank-dept { width: 100%; font-size: 12pt; min-height: 16pt; }
+    .sig-pad { width: 100%; height: 56px; touch-action: none; cursor: crosshair; display: block; }
     .cert {
       margin-top: 12pt;
       border: 2px solid #000;
@@ -231,7 +231,6 @@
             <th>Employee name</th>
             <th>Department</th>
             <th>Employee signature</th>
-            <th>Time</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -247,8 +246,8 @@
         </p>
         <div class="signoff">
           <div>
-            <label for="trainerSig">Trainer signature</label>
-            <input id="trainerSig" name="trainerSig" type="text" />
+            <label>Trainer signature</label>
+            <canvas id="trainerPad" class="sig-pad" width="420" height="72"></canvas>
           </div>
           <div>
             <label for="trainerTitle">Title</label>
@@ -315,8 +314,8 @@
     const dateEl = document.getElementById("date");
     const topicEl = document.getElementById("topic");
     const facilitatorEl = document.getElementById("facilitator");
-    const trainerSigEl = document.getElementById("trainerSig");
     const trainerTitleEl = document.getElementById("trainerTitle");
+    let trainerSig = "";
     const rowsEl = document.getElementById("rows");
     const countEl = document.getElementById("count");
     const statusEl = document.getElementById("status");
@@ -342,7 +341,7 @@
       for (const [dept, names] of grouped()) {
         const band = document.createElement("tr");
         band.className = "dept";
-        band.innerHTML = `<td colspan="5">${dept} — ${names.length} employees</td>`;
+        band.innerHTML = `<td colspan="4">${dept} — ${names.length} employees</td>`;
         frag.appendChild(band);
         names.forEach((name, i) => {
           n += 1;
@@ -370,8 +369,7 @@
         <td class="num">${n}</td>
         <td>${nameCell}</td>
         <td class="dept-cell">${deptCell}</td>
-        <td class="sig-cell"><input class="sig" data-field="sig" /></td>
-        <td class="time-cell"><input class="time" data-field="time" type="time" /></td>
+        <td class="sig-cell"><canvas class="sig-pad" data-field="sig" width="320" height="72"></canvas></td>
       `;
       return tr;
     }
@@ -380,19 +378,66 @@
       return `${STORAGE}:${dateEl.value || todayISO()}`;
     }
 
+    function bindPad(canvas, getValue, setValue) {
+      const ctx = canvas.getContext("2d");
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#111";
+      let drawing = false;
+      let last = null;
+      function pos(e) {
+        const r = canvas.getBoundingClientRect();
+        const p = e.touches ? e.touches[0] : e;
+        return { x: (p.clientX - r.left) * (canvas.width / r.width), y: (p.clientY - r.top) * (canvas.height / r.height) };
+      }
+      function start(e) {
+        e.preventDefault();
+        drawing = true;
+        last = pos(e);
+      }
+      function move(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        ctx.beginPath();
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        last = p;
+      }
+      function end(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        drawing = false;
+        setValue(canvas.toDataURL("image/png"));
+        save();
+        updateCount();
+      }
+      canvas.addEventListener("pointerdown", start);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", end);
+      canvas.addEventListener("pointercancel", end);
+      const stored = getValue();
+      if (stored && stored.startsWith("data:image")) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        img.src = stored;
+      }
+    }
+
     function collect() {
       const rows = [...rowsEl.querySelectorAll("tr[data-n]")].map((tr) => ({
         n: tr.dataset.n,
         name: tr.querySelector("[data-field=name]")?.value || "",
         dept: tr.querySelector("[data-field=dept]")?.value || "",
-        sig: tr.querySelector("[data-field=sig]").value,
-        time: tr.querySelector("[data-field=time]").value,
+        sig: tr.querySelector("[data-field=sig]")?.dataset.value || "",
       }));
       return {
         date: dateEl.value,
         topic: topicEl.value,
         facilitator: facilitatorEl.value,
-        trainerSig: trainerSigEl.value,
+        trainerSig,
         trainerTitle: trainerTitleEl.value,
         rows,
       };
@@ -402,14 +447,15 @@
       if (!data) {
         topicEl.value = "";
         facilitatorEl.value = "";
-        trainerSigEl.value = "";
+        trainerSig = "";
         trainerTitleEl.value = "";
+        bindAllPads();
         updateCount();
         return;
       }
       topicEl.value = data.topic || "";
       facilitatorEl.value = data.facilitator || "";
-      trainerSigEl.value = data.trainerSig || "";
+      trainerSig = data.trainerSig || "";
       trainerTitleEl.value = data.trainerTitle || "";
       const byN = new Map((data.rows || []).map((r) => [String(r.n), r]));
       rowsEl.querySelectorAll("tr[data-n]").forEach((tr) => {
@@ -417,13 +463,28 @@
         const name = tr.querySelector("[data-field=name]");
         const dept = tr.querySelector("[data-field=dept]");
         const sig = tr.querySelector("[data-field=sig]");
-        const time = tr.querySelector("[data-field=time]");
         if (name) name.value = row?.name || "";
         if (dept) dept.value = row?.dept || "";
-        sig.value = row?.sig || "";
-        time.value = row?.time || "";
+        if (sig) sig.dataset.value = row?.sig || "";
       });
+      bindAllPads();
       updateCount();
+    }
+
+    function bindAllPads() {
+      rowsEl.querySelectorAll("[data-field=sig]").forEach((canvas) => {
+        const next = canvas.cloneNode(true);
+        canvas.replaceWith(next);
+        next.dataset.value = canvas.dataset.value || "";
+        bindPad(next, () => next.dataset.value || "", (v) => { next.dataset.value = v; });
+      });
+      const trainerCanvas = document.getElementById("trainerPad");
+      if (trainerCanvas) {
+        const next = trainerCanvas.cloneNode(true);
+        next.id = "trainerPad";
+        trainerCanvas.replaceWith(next);
+        bindPad(next, () => trainerSig, (v) => { trainerSig = v; });
+      }
     }
 
     function save() {
@@ -437,17 +498,8 @@
     }
 
     function updateCount() {
-      const signed = [...rowsEl.querySelectorAll("[data-field=sig]")].filter((el) => el.value.trim()).length;
+      const signed = [...rowsEl.querySelectorAll("[data-field=sig]")].filter((el) => (el.dataset.value || "").startsWith("data:image")).length;
       countEl.textContent = `${signed} employees signed`;
-    }
-
-    function stampTime(input) {
-      if (input.dataset.field !== "sig" || !input.value.trim()) return;
-      const time = input.closest("tr").querySelector("[data-field=time]");
-      if (time && !time.value) {
-        const now = new Date();
-        time.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      }
     }
 
     dateEl.value = todayISO();
@@ -459,14 +511,14 @@
         load();
         return;
       }
-      stampTime(e.target);
       updateCount();
       save();
     });
     document.getElementById("print").addEventListener("click", () => window.print());
     document.getElementById("clear").addEventListener("click", () => {
-      rowsEl.querySelectorAll("[data-field=sig], [data-field=time]").forEach((el) => { el.value = ""; });
-      trainerSigEl.value = "";
+      rowsEl.querySelectorAll("[data-field=sig]").forEach((el) => { el.dataset.value = ""; });
+      trainerSig = "";
+      bindAllPads();
       updateCount();
       save();
     });
