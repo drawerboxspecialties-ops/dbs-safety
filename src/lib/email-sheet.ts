@@ -74,6 +74,12 @@ export function buildEmailDraft(opts: {
   });
 }
 
+export async function blobFromUrl(url: string) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Could not download that PDF.");
+  return res.blob();
+}
+
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -87,9 +93,7 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 export async function downloadFromUrl(url: string, filename: string) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Could not download that PDF.");
-  downloadBlob(await res.blob(), filename);
+  downloadBlob(await blobFromUrl(url), filename);
 }
 
 export async function shareSignInPdf(opts: {

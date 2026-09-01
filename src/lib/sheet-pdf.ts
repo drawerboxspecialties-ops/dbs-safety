@@ -11,15 +11,31 @@ import {
   rowState,
 } from "@/lib/meeting-record";
 import type { MeetingState } from "@/lib/meeting-store";
+import { formatMonthName } from "@/lib/shop-data";
 import type { Topic } from "@/lib/topics";
 
+function fileTopicName(topic: Topic) {
+  return (topic.shortTitle || topic.title || topic.id || "topic")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** September 2026 PPE sign-in.pdf / September 2026 PPE talk.pdf */
+export function archivePdfNames(topic: Topic, month: string) {
+  const year = (month || "").slice(0, 4) || String(new Date().getFullYear());
+  const monthName = /^\d{4}-\d{2}$/.test(month)
+    ? formatMonthName(month)
+    : "Meeting";
+  const stem = `${monthName} ${year} ${fileTopicName(topic)}`;
+  return {
+    signIn: `${stem} sign-in.pdf`,
+    talk: `${stem} talk.pdf`,
+  };
+}
+
 export function sheetPdfFilename(topic: Topic, month: string) {
-  const monthPart = (month || "sheet").replace(/[^0-9-]/g, "");
-  const topicPart = (topic.shortTitle || topic.id || "talk")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return `DBS-Safety-signin-${monthPart}-${topicPart}.pdf`;
+  return archivePdfNames(topic, month).signIn;
 }
 
 export function sheetEmailSubject(topic: Topic, monthLabel: string) {

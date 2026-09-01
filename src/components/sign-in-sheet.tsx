@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Mail } from "lucide-react";
+import { Cloud, Mail } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
@@ -41,14 +41,25 @@ import {
   type SignRow,
 } from "@/lib/meeting-store";
 import {
+  connectGoogleDrive,
+  disconnectGoogleDrive,
+  hasGoogleClientId,
+  preloadGoogleSignIn,
+  readDriveStatus,
+  setGoogleClientId,
+  subscribeDriveStatus,
+  uploadMeetingPdfs,
+} from "@/lib/drive-archive";
+import {
+  blobFromUrl,
   downloadBlob,
-  downloadFromUrl,
   loadLastEmailTo,
   saveLastEmailTo,
   shareSignInPdf,
 } from "@/lib/email-sheet";
 import { readSheetQuery, sheetHref } from "@/lib/sheet-href";
 import {
+  archivePdfNames,
   buildSignInPdf,
   sheetEmailSubject,
   sheetPdfFilename,
@@ -136,6 +147,14 @@ export function SignInSheet({
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [driveError, setDriveError] = useState("");
+  const [driveClientId, setDriveClientId] = useState(
+    () => readDriveStatus().clientId,
+  );
+  const [drive, setDrive] = useState(readDriveStatus);
 
   useEffect(() => {
     if (!ready) return;
@@ -150,6 +169,12 @@ export function SignInSheet({
   useEffect(() => {
     if (meeting.department) setNewDept(meeting.department);
   }, [meeting.department]);
+
+  useEffect(() => subscribeDriveStatus(() => setDrive(readDriveStatus())), []);
+
+  useEffect(() => {
+    void preloadGoogleSignIn();
+  }, []);
 
   const roster = useMemo(() => buildRoster(sheetCrew), [sheetCrew]);
   const departments = departmentOptions(sheetCrew);
@@ -340,12 +365,22 @@ export function SignInSheet({
     }
   }
 
+  function keepLocalCopies(sheet: Blob, talk: Blob | null, names: {
+    signIn: string;
+    talk: string;
+  }) {
+    downloadBlob(sheet, names.signIn);
+    if (talk) downloadBlob(talk, names.talk);
+  }
+
   async function saveSheetProgress() {
     const saved = saveProgress();
     const n = signedCount(saved);
     const monthKey = saved.month || shop.monthKey;
     const monthLabel = shop.formatMonthLabel(monthKey);
     const crew = saved.roster.length ? saved.roster : sheetCrew;
+    const names = archivePdfNames(topic, monthKey);
+    setSaveBusy(true);
     try {
       const sheet = await buildSignInPdf({
         meeting: saved,
@@ -353,25 +388,98 @@ export function SignInSheet({
         employees: crew,
         monthLabel,
       });
-      downloadBlob(sheet, sheetPdfFilename(topic, monthKey));
-      const talk = packetUrl(topic.pdf);
-      if (talk) {
-        const talkName = `DBS-Safety-talk-${monthKey}-${topic.shortTitle
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")}.pdf`;
-        await downloadFromUrl(talk, talkName);
+      let talk: Blob | null = null;
+      const talkUrl = packetUrl(topic.pdf);
+      if (talkUrl) {
+        try {
+          talk = await blobFromUrl(talkUrl);
+        } catch {
+          talk = null;
+        }
       }
-      setListNote(
-        n
-          ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Sign-in and talk PDFs downloaded for your records.`
-          : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Sign-in and talk PDFs downloaded for your records.`,
-      );
+      const files = [{ name: names.signIn, blob: sheet }];
+      if (talk) files.push({ name: names.talk, blob: talk });
+
+      if (!hasGoogleClientId()) {
+        keepLocalCopies(sheet, talk, names);
+        setDriveClientId("");
+        setDriveError("");
+        setDriveOpen(true);
+        setListNote(
+          n
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. PDFs downloaded. Connect Google Drive so the next save goes to DBS Safety / Safety Meetings.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. PDFs downloaded. Connect Google Drive so the next save goes to DBS Safety / Safety Meetings.`,
+        );
+        return;
+      }
+
+      try {
+        const uploaded = await uploadMeetingPdfs(files);
+        setDrive(readDriveStatus());
+        setListNote(
+          n
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Uploaded to Google Drive → ${uploaded.folder}${uploaded.email ? ` (${uploaded.email})` : ""}.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Uploaded to Google Drive → ${uploaded.folder}${uploaded.email ? ` (${uploaded.email})` : ""}.`,
+        );
+      } catch (err) {
+        keepLocalCopies(sheet, talk, names);
+        const msg =
+          err instanceof Error ? err.message : "Google Drive upload failed.";
+        setListNote(
+          n
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Drive upload failed (${msg}). PDFs downloaded instead.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Drive upload failed (${msg}). PDFs downloaded instead.`,
+        );
+      }
     } catch {
       setListNote(
         n
-          ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Could not download the PDFs.`
-          : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Could not download the PDFs.`,
+          ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Could not build the PDFs.`
+          : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Could not build the PDFs.`,
       );
+    } finally {
+      setSaveBusy(false);
+    }
+  }
+
+  async function confirmDriveConnect() {
+    setDriveBusy(true);
+    setDriveError("");
+    try {
+      if (driveClientId.trim()) setGoogleClientId(driveClientId.trim());
+      if (!hasGoogleClientId()) {
+        setDriveError("Paste the Google client ID first.");
+        return;
+      }
+      const email = await connectGoogleDrive();
+      setDrive(readDriveStatus());
+      setDriveOpen(false);
+      setListNote(
+        email
+          ? `Google Drive connected as ${email}. Save progress will upload to DBS Safety / Safety Meetings.`
+          : "Google Drive connected. Save progress will upload to DBS Safety / Safety Meetings.",
+      );
+    } catch (err) {
+      setDriveError(
+        err instanceof Error ? err.message : "Could not connect Google Drive.",
+      );
+    } finally {
+      setDriveBusy(false);
+    }
+  }
+
+  async function confirmDriveDisconnect() {
+    setDriveBusy(true);
+    setDriveError("");
+    try {
+      await disconnectGoogleDrive();
+      setDrive(readDriveStatus());
+    } catch (err) {
+      setDriveError(
+        err instanceof Error ? err.message : "Could not disconnect.",
+      );
+    } finally {
+      setDriveBusy(false);
     }
   }
 
@@ -486,8 +594,28 @@ export function SignInSheet({
         >
           Who&apos;s left
         </Button>
-        <Button type="button" onClick={() => void saveSheetProgress()}>
-          Save progress
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setDriveError("");
+            setDriveClientId(readDriveStatus().clientId);
+            setDriveOpen(true);
+          }}
+        >
+          <Cloud />
+          {drive.connected
+            ? drive.email
+              ? `Drive · ${drive.email}`
+              : "Drive connected"
+            : "Google Drive"}
+        </Button>
+        <Button
+          type="button"
+          disabled={saveBusy}
+          onClick={() => void saveSheetProgress()}
+        >
+          {saveBusy ? "Saving…" : "Save progress"}
         </Button>
         <Button type="button" variant="outline" onClick={() => window.print()}>
           Print
@@ -1038,6 +1166,89 @@ export function SignInSheet({
               onClick={() => void sendEmailSheet()}
             >
               {emailBusy ? "Building PDF…" : "Email PDF"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={driveOpen}
+        onOpenChange={(open) => {
+          if (!driveBusy) setDriveOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Save to Google Drive</DialogTitle>
+            <DialogDescription>
+              Save progress uploads this month’s sign-in PDF and talk PDF to{" "}
+              <span className="font-medium text-foreground">
+                DBS Safety / Safety Meetings
+              </span>
+              . Files are named like{" "}
+              <span className="font-medium text-foreground">
+                September 2026 PPE sign-in.pdf
+              </span>
+              . Saving again overwrites that month’s files.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            {drive.connected ? (
+              <p className="text-sm">
+                Connected
+                {drive.email ? ` as ${drive.email}` : ""}. The first save creates
+                the folders if they are not there yet.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                One-time setup: create a Google Cloud OAuth client (Web app),
+                turn on the Drive API, and add these JavaScript origins:{" "}
+                <span className="text-foreground">
+                  http://127.0.0.1:43151
+                </span>{" "}
+                and{" "}
+                <span className="text-foreground">
+                  https://drawerboxspecialties-ops.github.io
+                </span>
+                . Then paste the client ID and connect with the shop Gmail.
+              </p>
+            )}
+            <div className="grid gap-1">
+              <Label htmlFor="drive-client-id">Google client ID</Label>
+              <Input
+                id="drive-client-id"
+                value={driveClientId}
+                onChange={(e) => setDriveClientId(e.target.value)}
+                placeholder="123456789-abc.apps.googleusercontent.com"
+                className="h-9 font-mono text-xs"
+                autoComplete="off"
+              />
+            </div>
+            {driveError ? (
+              <p className="text-sm text-red-700">{driveError}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            {drive.connected ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={driveBusy}
+                onClick={() => void confirmDriveDisconnect()}
+              >
+                Disconnect
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              disabled={driveBusy}
+              onClick={() => void confirmDriveConnect()}
+            >
+              {driveBusy
+                ? "Connecting…"
+                : drive.connected
+                  ? "Reconnect"
+                  : "Connect Drive"}
             </Button>
           </DialogFooter>
         </DialogContent>
