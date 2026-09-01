@@ -6,10 +6,13 @@ import { Redo2, Undo2, X } from "lucide-react";
 export function SignaturePad({
   value,
   onChange,
+  size = "inline",
 }: {
   value: string;
   onChange: (dataUrl: string) => void;
+  size?: "inline" | "dialog";
 }) {
+  const tall = size === "dialog";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const valueRef = useRef(value);
   const drawing = useRef(false);
@@ -41,7 +44,7 @@ export function SignaturePad({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = tall ? 2.6 : 1.8;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111";
@@ -167,12 +170,15 @@ export function SignaturePad({
     commit("");
   }
 
+  const box = tall ? "h-48" : "h-8";
+  const icon = tall ? "size-5" : "size-3.5";
+
   return (
-    <div className="flex items-center gap-0.5">
-      <div className="relative h-8 min-w-0 flex-1">
+    <div className={tall ? "flex flex-col gap-2" : "flex items-center gap-0.5"}>
+      <div className={`relative min-w-0 flex-1 ${box}`}>
         <canvas
           ref={canvasRef}
-          className="h-8 w-full cursor-crosshair touch-none print:hidden"
+          className={`${box} w-full cursor-crosshair touch-none print:hidden`}
           style={{ touchAction: "none" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -184,22 +190,22 @@ export function SignaturePad({
           <img
             src={value}
             alt=""
-            className="hidden h-8 w-full object-contain object-left print:block"
+            className={`hidden ${box} w-full object-contain object-left print:block`}
           />
         ) : (
           <div className="pointer-events-none absolute inset-x-1 bottom-1 hidden border-b border-black print:block" />
         )}
       </div>
-      <div className="flex shrink-0 print:hidden">
+      <div className="flex shrink-0 justify-end print:hidden">
         <button
           type="button"
           title="Undo"
           aria-label="Undo signature"
           disabled={!canUndo}
           onClick={undo}
-          className="rounded p-0.5 text-neutral-700 disabled:opacity-30"
+          className="rounded p-1 text-neutral-700 disabled:opacity-30"
         >
-          <Undo2 className="size-3.5" />
+          <Undo2 className={icon} />
         </button>
         <button
           type="button"
@@ -207,9 +213,9 @@ export function SignaturePad({
           aria-label="Redo signature"
           disabled={!canRedo}
           onClick={redo}
-          className="rounded p-0.5 text-neutral-700 disabled:opacity-30"
+          className="rounded p-1 text-neutral-700 disabled:opacity-30"
         >
-          <Redo2 className="size-3.5" />
+          <Redo2 className={icon} />
         </button>
         <button
           type="button"
@@ -217,9 +223,9 @@ export function SignaturePad({
           aria-label="Clear signature"
           disabled={!canUndo}
           onClick={clear}
-          className="rounded p-0.5 text-neutral-700 disabled:opacity-30"
+          className="rounded p-1 text-neutral-700 disabled:opacity-30"
         >
-          <X className="size-3.5" />
+          <X className={icon} />
         </button>
       </div>
     </div>

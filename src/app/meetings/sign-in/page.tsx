@@ -1,10 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "@/components/date-picker";
 import { SignaturePad } from "@/components/signature-pad";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,10 +26,15 @@ function isSigned(sig: string) {
   return sig.startsWith("data:image");
 }
 
+type SignTarget =
+  | { kind: "employee"; n: number; name: string; dept: string }
+  | { kind: "trainer" };
+
 export default function SignInPage() {
   const { meeting, update, ready } = useMeeting();
   const topic = getTopic(meeting.topic);
   const groups = employeesByDepartment();
+  const [signing, setSigning] = useState<SignTarget | null>(null);
 
   const roster = useMemo(() => {
     const rows: { n: number; name: string; dept: string; extra: boolean }[] = [];
@@ -66,6 +79,24 @@ export default function SignInPage() {
   }
 
   const signed = meeting.rows.filter((r) => isSigned(r.sig)).length;
+  const dialogName =
+    signing?.kind === "employee"
+      ? signing.name || rowState(signing.n).name || "Employee"
+      : "Trainer";
+  const dialogDept =
+    signing?.kind === "employee"
+      ? signing.dept || rowState(signing.n).dept
+      : meeting.trainer || "Certifying person";
+  const dialogValue =
+    signing?.kind === "employee"
+      ? rowState(signing.n).sig
+      : meeting.trainerSig;
+
+  function setDialogSig(sig: string) {
+    if (!signing) return;
+    if (signing.kind === "employee") patchRow(signing.n, { sig });
+    else update({ trainerSig: sig });
+  }
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
@@ -132,6 +163,9 @@ export default function SignInPage() {
         </div>
 
         <p className="mt-4 text-[12pt] font-bold">{signed} employees signed</p>
+        <p className="print:hidden mb-1 text-sm text-muted-foreground">
+          Tap a name to sign.
+        </p>
 
         <div className="mt-2 overflow-x-auto">
           <table className="w-full border-collapse border border-black text-left text-[12pt]">
@@ -153,7 +187,7 @@ export default function SignInPage() {
                     (r) => !r.extra && r.dept === group.department,
                   )}
                   rowState={rowState}
-                  patchRow={patchRow}
+                  onOpen={(row) => setSigning({ kind: "employee", ...row })}
                 />
               ))}
               {roster
@@ -189,9 +223,16 @@ export default function SignInPage() {
                         />
                       </td>
                       <td className="border-b border-black px-1 py-0">
-                        <SignaturePad
-                          value={state.sig}
-                          onChange={(sig) => patchRow(r.n, { sig })}
+                        <SigPreview
+                          sig={state.sig}
+                          onOpen={() =>
+                            setSigning({
+                              kind: "employee",
+                              n: r.n,
+                              name: state.name,
+                              dept: state.dept,
+                            })
+                          }
                         />
                       </td>
                     </tr>
@@ -212,12 +253,34 @@ export default function SignInPage() {
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1">
               <Label className="text-[10pt] font-bold">Trainer signature</Label>
-              <div className="rounded-md border border-black">
-                <SignaturePad
-                  value={meeting.trainerSig}
-                  onChange={(trainerSig) => update({ trainerSig })}
+              <button
+                type="button"
+                onClick={() => setSigning({ kind: "trainer" })}
+                className="min-h-8 rounded-md border border-black px-2 text-left print:hidden"
+              >
+                {isSigned(meeting.trainerSig) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={meeting.trainerSig}
+                    alt="Trainer signature"
+                    className="h-8 w-full object-contain object-left"
+                  />
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Tap to sign
+                  </span>
+                )}
+              </button>
+              {isSigned(meeting.trainerSig) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={meeting.trainerSig}
+                  alt=""
+                  className="hidden h-8 w-full object-contain object-left print:block"
                 />
-              </div>
+              ) : (
+                <div className="hidden border-b border-black print:block" />
+              )}
             </div>
             <div className="grid gap-1">
               <Label className="text-[10pt] font-bold">Title</Label>
@@ -230,7 +293,85 @@ export default function SignInPage() {
           </div>
         </section>
       </article>
+
+      <Dialog
+        open={signing !== null}
+        onOpenChange={(open) => {
+          if (!open) setSigning(null);
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-xl"
+          showCloseButton
+        >
+          <DialogHeader>
+            <DialogTitle>Sign here</DialogTitle>
+            <DialogDescription>
+              {dialogName}
+              {dialogDept ? ` · ${dialogDept}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border border-black bg-white p-2">
+            {signing ? (
+              <SignaturePad
+                key={signing.kind === "employee" ? signing.n : "trainer"}
+                size="dialog"
+                value={dialogValue}
+                onChange={setDialogSig}
+              />
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              className="bg-[#003366] hover:bg-[#00264d]"
+              onClick={() => setSigning(null)}
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
+  );
+}
+
+function SigPreview({
+  sig,
+  onOpen,
+}: {
+  sig: string;
+  onOpen: () => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex h-8 w-full items-center print:hidden"
+      >
+        {isSigned(sig) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={sig}
+            alt="Signature"
+            className="h-8 w-full object-contain object-left"
+          />
+        ) : (
+          <span className="text-xs text-muted-foreground">Tap name to sign</span>
+        )}
+      </button>
+      {isSigned(sig) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={sig}
+          alt=""
+          className="hidden h-8 w-full object-contain object-left print:block"
+        />
+      ) : (
+        <div className="mx-1 hidden border-b border-black print:block" />
+      )}
+    </>
   );
 }
 
@@ -239,13 +380,13 @@ function GroupRows({
   count,
   rows,
   rowState,
-  patchRow,
+  onOpen,
 }: {
   department: string;
   count: number;
   rows: { n: number; name: string; dept: string }[];
   rowState: (n: number) => SignRow;
-  patchRow: (n: number, patch: Partial<SignRow>) => void;
+  onOpen: (row: { n: number; name: string; dept: string }) => void;
 }) {
   return (
     <>
@@ -260,16 +401,19 @@ function GroupRows({
           <tr key={r.n} className={i % 2 ? "bg-neutral-100" : "bg-white"}>
             <td className="border-b border-black px-2 py-0 text-[10pt] leading-tight">{r.n}</td>
             <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
-              {r.name}
+              <button
+                type="button"
+                onClick={() => onOpen(r)}
+                className="text-left font-medium text-[#003366] underline decoration-dotted print:text-black print:no-underline print:font-normal"
+              >
+                {r.name}
+              </button>
             </td>
             <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
               {r.dept}
             </td>
             <td className="border-b border-black px-1 py-0">
-              <SignaturePad
-                value={state.sig}
-                onChange={(sig) => patchRow(r.n, { sig })}
-              />
+              <SigPreview sig={state.sig} onOpen={() => onOpen(r)} />
             </td>
           </tr>
         );
