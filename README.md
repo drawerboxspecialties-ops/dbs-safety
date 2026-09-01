@@ -20,25 +20,28 @@ npm run dev
 
 Open [http://127.0.0.1:43151](http://127.0.0.1:43151).
 
+## Operations Hub
+
+The shop launcher is [ops-dashboard](https://drawerboxspecialties-ops.github.io/ops-dashboard/).
+
+Create the GitHub repo as **`drawerboxspecialties-ops/dbs-safety`** and enable GitHub Pages. The workflow in `.github/workflows/github-pages.yml` publishes the app, and the hub lists Pages repos automatically.
+
+To nest the app under the hub instead:
+
+```bash
+git clone https://github.com/drawerboxspecialties-ops/ops-dashboard.git ../ops-dashboard
+./scripts/publish-ops-dashboard.sh ../ops-dashboard
+```
+
+Then commit and push `ops-dashboard`. The app will be at `/ops-dashboard/safety/`.
+
 ## GitHub and Vercel
 
-This project is ready to import as a Next.js app.
+1. In Cursor, click **Create repo** and name it `dbs-safety` under **drawerboxspecialties-ops**.
+2. Clone that repo on the shop computer, then `npm install` and `npm run dev`.
+3. On [vercel.com/new](https://vercel.com/new), import `dbs-safety`. Framework: Next.js. No env vars.
 
-1. In Cursor, click **Create repo** and name it `dbs-safety` (GitHub).
-2. Clone that repo to a folder on the shop computer:
-
-   ```bash
-   git clone https://github.com/<your-account>/dbs-safety.git
-   cd dbs-safety
-   npm install
-   npm run dev
-   ```
-
-3. On [vercel.com/new](https://vercel.com/new), import the `dbs-safety` GitHub repo.
-4. Leave the framework as Next.js. No env vars are required.
-5. Deploy. After the first ship, every push to the default branch updates the live site.
-
-Crew names added on the sign-in sheet stay in that browser. They are not stored on Vercel.
+Crew names added on the sign-in sheet stay in that browser. They are not stored on the server.
 
 ## Printable PDFs
 

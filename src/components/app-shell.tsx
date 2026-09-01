@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OPS_HUB_URL } from "@/lib/base-path";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +13,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <p className="text-lg font-semibold leading-tight">DBS Safety</p>
           </Link>
           <nav className="flex flex-wrap items-center gap-1 text-sm">
+            <a
+              href={OPS_HUB_URL}
+              className="rounded-md px-3 py-1.5 hover:bg-white/10"
+            >
+              Ops Hub
+            </a>
             <Link
               href="/"
               className="rounded-md px-3 py-1.5 hover:bg-white/10"
