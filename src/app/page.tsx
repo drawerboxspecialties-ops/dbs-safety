@@ -20,9 +20,6 @@ export default function HomePage() {
             LIVE MODULE
           </p>
           <CardTitle className="text-2xl">Safety Meeting App</CardTitle>
-          <CardDescription className="text-white/80">
-            PPE or material handling talk, then a fillable attendance record.
-          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-3">
           <div>
