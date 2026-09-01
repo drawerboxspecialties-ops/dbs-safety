@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { readSheetQuery } from "@/lib/sheet-href";
 import type { TopicId } from "@/lib/topics";
 
 export type SignRow = {
@@ -216,27 +217,26 @@ export function useMeeting() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const local = loadMeeting();
+    let local = loadMeeting();
+    const query = readSheetQuery();
+    if (query.topic || query.month) {
+      local = openSheet(
+        local,
+        (query.topic || local.topic) as TopicId,
+        query.month || local.month,
+        local.month,
+      );
+    }
     setMeeting(local);
     setReady(true);
     fetch("/api/store")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data?.currentMonth || !data?.currentTopic) return;
+        const chosen = readSheetQuery();
+        if (chosen.topic || chosen.month) return;
         const applied = window.localStorage.getItem(APPLIED_MONTH);
-        if (applied === data.currentMonth) {
-          if (local.topic !== data.currentTopic) {
-            setMeeting(
-              openSheet(
-                local,
-                data.currentTopic as TopicId,
-                data.currentMonth,
-                data.currentMonth,
-              ),
-            );
-          }
-          return;
-        }
+        if (applied === data.currentMonth) return;
         const next = openSheet(
           local,
           data.currentTopic as TopicId,

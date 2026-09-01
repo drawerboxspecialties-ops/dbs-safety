@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MonthCalendar } from "@/components/month-calendar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { sheetProgress, useMeeting } from "@/lib/meeting-store";
+import {
+  listSheetProgress,
+  sheetProgress,
+  useMeeting,
+} from "@/lib/meeting-store";
+import { sheetHref } from "@/lib/sheet-href";
 import {
   ingestPdf,
   packetUrl,
@@ -29,13 +34,20 @@ export default function HomePage() {
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [progressTick, setProgressTick] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const topic = getTopic(picked, catalog);
   const pickedProgress = progressFor(picked, month);
 
   function progressFor(topicId: string, monthKey: string) {
     if (!ready) return null;
-    return sheetProgress(topicId, monthKey);
+    void progressTick;
+    const here = sheetProgress(topicId, monthKey);
+    if (here?.signed) return here;
+    const other = listSheetProgress()
+      .filter((row) => row.topic === topicId && row.signed > 0)
+      .sort((a, b) => b.month.localeCompare(a.month))[0];
+    return other ?? here;
   }
 
   useEffect(() => {
@@ -44,7 +56,20 @@ export default function HomePage() {
     setPicked(meeting.topic);
     setMonth(nextMonth);
     setYear(Number(nextMonth.slice(0, 4)));
+    setProgressTick((n) => n + 1);
   }, [ready, meeting.topic, meeting.month, shop.monthKey]);
+
+  useEffect(() => {
+    function refresh() {
+      setProgressTick((n) => n + 1);
+    }
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
 
   async function applyAndOpen(topicId: string, monthKey: string, pdf?: string) {
     const schedule = { ...shop.store.schedule, [monthKey]: topicId };
@@ -52,7 +77,11 @@ export default function HomePage() {
     await shop.save({ schedule });
     const next = getTopic(topicId, shop.store.topics);
     router.push(
-      packetUrl(pdf || next.pdf) ? "/meetings/packet" : "/meetings/sign-in",
+      sheetHref(
+        packetUrl(pdf || next.pdf) ? "/meetings/packet" : "/meetings/sign-in",
+        topicId,
+        monthKey,
+      ),
     );
   }
 
@@ -127,9 +156,8 @@ export default function HomePage() {
             {packetUrl(topic.pdf) ? "Open packet" : "Open sign-in"}
           </Button>
           <Link
-            href="/meetings/sign-in"
+            href={sheetHref("/meetings/sign-in", picked, month)}
             className={buttonVariants({ size: "lg", variant: "outline" })}
-            onClick={() => update({ topic: picked, month })}
           >
             Skip to sign-in
           </Link>
@@ -171,6 +199,9 @@ export default function HomePage() {
                 {saved && saved.signed > 0 ? (
                   <p className="mt-2 text-sm text-cyan-900">
                     {saved.signed} signed — same list
+                    {saved.month && saved.month !== month
+                      ? ` · ${shop.formatMonthLabel(saved.month)}`
+                      : ""}
                   </p>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">

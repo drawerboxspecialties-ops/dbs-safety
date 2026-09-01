@@ -24,6 +24,7 @@ import {
   trainedEmployees,
   type FiledMeeting,
 } from "@/lib/meeting-record";
+import { sheetHref } from "@/lib/sheet-href";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 
@@ -73,7 +74,7 @@ export default function TrainingRecordPage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
       <PageChrome title={`Who's left · ${topic.shortTitle}`}>
         <Link
-          href="/meetings/sign-in"
+          href={sheetHref("/meetings/sign-in", meeting.topic, meeting.month)}
           className={buttonVariants({ variant: "outline" })}
         >
           Sign
@@ -164,7 +165,11 @@ export default function TrainingRecordPage() {
                       ))}
                     </ul>
                     <Link
-                      href="/meetings/sign-in"
+                      href={sheetHref(
+                        "/meetings/sign-in",
+                        meeting.topic,
+                        meeting.month,
+                      )}
                       className="print:hidden mt-1 inline-block text-[10pt] text-cyan-800 underline"
                       onClick={() => update({ department: group.department })}
                     >

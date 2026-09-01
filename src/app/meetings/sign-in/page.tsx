@@ -33,6 +33,7 @@ import {
   useMeeting,
   type SignRow,
 } from "@/lib/meeting-store";
+import { sheetHref } from "@/lib/sheet-href";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
@@ -310,12 +311,15 @@ export default function SignInPage() {
     <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
       <PageChrome title={meeting.department || topic.shortTitle}>
         <Link
-          href="/meetings/packet"
+          href={sheetHref("/meetings/packet", meeting.topic, meeting.month)}
           className={buttonVariants({ variant: "outline" })}
         >
           Packet
         </Link>
-        <Link href="/meetings/record" className={buttonVariants({ variant: "outline" })}>
+        <Link
+          href={sheetHref("/meetings/record", meeting.topic, meeting.month)}
+          className={buttonVariants({ variant: "outline" })}
+        >
           Who&apos;s left
         </Link>
         <Button type="button" onClick={saveSheetProgress}>

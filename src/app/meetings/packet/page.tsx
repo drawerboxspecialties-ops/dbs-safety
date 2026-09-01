@@ -5,6 +5,7 @@ import { PageChrome } from "@/components/page-chrome";
 import { buttonVariants } from "@/components/ui/button";
 import { useMeeting } from "@/lib/meeting-store";
 import { packetUrl, topicSourceLabel } from "@/lib/packet";
+import { sheetHref } from "@/lib/sheet-href";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 
@@ -13,7 +14,12 @@ export default function PacketPage() {
   const shop = useShopStore();
   const topic = getTopic(meeting.topic, shop.store.topics);
   const href = packetUrl(topic.pdf);
-  const monthLabel = shop.formatMonthLabel(shop.monthKey);
+  const monthLabel = shop.formatMonthLabel(meeting.month || shop.monthKey);
+  const signHref = sheetHref(
+    "/meetings/sign-in",
+    meeting.topic,
+    meeting.month || shop.monthKey,
+  );
 
   if (!ready) {
     return (
@@ -34,7 +40,7 @@ export default function PacketPage() {
             Talk notes
           </Link>
         ) : null}
-        <Link href="/meetings/sign-in" className={buttonVariants()}>
+        <Link href={signHref} className={buttonVariants()}>
           Sign this sheet
         </Link>
       </PageChrome>
@@ -55,7 +61,7 @@ export default function PacketPage() {
         <div className="glass-panel rounded-3xl p-6">
           <p className="text-sm">No PDF on this topic.</p>
           <Link
-            href="/meetings/sign-in"
+            href={signHref}
             className={buttonVariants({ className: "mt-4" })}
           >
             Sign this sheet
