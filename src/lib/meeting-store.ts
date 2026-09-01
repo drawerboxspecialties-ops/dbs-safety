@@ -60,8 +60,24 @@ export function useMeeting() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setMeeting(loadMeeting());
+    const local = loadMeeting();
+    setMeeting(local);
     setReady(true);
+    fetch("/api/store")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.currentMonth || !data?.currentTopic) return;
+        const applied = window.localStorage.getItem("dbs-safety-applied-month");
+        if (applied === data.currentMonth) return;
+        const next = { ...local, topic: data.currentTopic as TopicId };
+        saveMeeting(next);
+        setMeeting(next);
+        window.localStorage.setItem(
+          "dbs-safety-applied-month",
+          data.currentMonth,
+        );
+      })
+      .catch(() => undefined);
   }, []);
 
   const update = useCallback((patch: Partial<MeetingState>) => {

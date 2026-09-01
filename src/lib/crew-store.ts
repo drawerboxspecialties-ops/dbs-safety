@@ -51,13 +51,33 @@ export function useCrew() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setEmployees(loadCrew());
-    setReady(true);
+    let cancelled = false;
+    const local = loadCrew();
+    setEmployees(local);
+    fetch("/api/store")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.crew?.length) return;
+        setEmployees(data.crew);
+        saveCrew(data.crew);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const persist = useCallback((next: Employee[]) => {
     setEmployees(next);
     saveCrew(next);
+    fetch("/api/store", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ crew: next }),
+    }).catch(() => undefined);
   }, []);
 
   const add = useCallback(

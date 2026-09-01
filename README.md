@@ -39,9 +39,21 @@ Then commit and push `ops-dashboard`. The app will be at `/ops-dashboard/safety/
 
 1. In Cursor, click **Create repo** and name it `dbs-safety` under **drawerboxspecialties-ops**.
 2. Clone that repo on the shop computer, then `npm install` and `npm run dev`.
-3. On [vercel.com/new](https://vercel.com/new), import `dbs-safety`. Framework: Next.js. No env vars.
+3. On [vercel.com/new](https://vercel.com/new), import `dbs-safety`. Framework: Next.js.
 
-Crew names added on the sign-in sheet stay in that browser. They are not stored on the server.
+### Shared crew list and monthly topics
+
+The shop store keeps the default employee list and a **one-topic-a-month** plan.
+
+- Local: `data/dbs-safety-store.json`
+- Vercel: add a Blob store and set `BLOB_READ_WRITE_TOKEN` so every tablet shares the same list
+- Cron: on the 1st of each month (`0 15 1 * *` UTC) `/api/cron/monthly-topic` sets this month’s topic
+
+Optional: set `CRON_SECRET` and Vercel will send it as `Authorization: Bearer …`.
+
+Odd months default to PPE. Even months default to material handling. Change the year plan on Meeting setup.
+
+The sign-in **Save as default list** writes the crew to this store and to the browser.
 
 ## Printable PDFs
 
