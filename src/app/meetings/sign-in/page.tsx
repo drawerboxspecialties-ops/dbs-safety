@@ -207,10 +207,7 @@ export default function SignInPage() {
           </h3>
           <p className="mt-2 text-[12pt] leading-snug">
             I certify that each employee named above has received and understood
-            the training on the subject listed, including when PPE is necessary,
-            what PPE is required, how to use and care for it, its limits, and
-            (for material handling) safe lifting, stacking, and powered
-            equipment rules.
+            the training on the subject listed.
           </p>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1">
