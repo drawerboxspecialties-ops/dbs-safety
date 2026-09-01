@@ -55,7 +55,7 @@ Odd months default to PPE. Even months default to material handling. Change the 
 
 Add a packet from **HR** or an **AI draft** on Meeting setup: title and a PDF. Those topics join the monthly plan and the talk page. PDFs store next to the shop file locally, or in Vercel Blob when that token is set.
 
-On sign-in, **Move** puts an employee in another department. **Save as default list** writes that lineup to the shop store and this browser. **Restore original** brings back the payroll seed.
+On sign-in, **Move** and **Remove** (and **Restore original**) ask for the shop password. **Save as default list** writes the lineup to the shop store and this browser.
 
 ## Printable PDFs
 

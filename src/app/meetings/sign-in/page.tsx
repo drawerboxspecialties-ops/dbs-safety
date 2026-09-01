@@ -172,6 +172,8 @@ export default function SignInPage() {
     });
     setMoveDept(person.dept);
     setMoveCustom("");
+    setRemovePassword("");
+    setRemoveError("");
   }
 
   function chosenMoveDept() {
@@ -180,9 +182,15 @@ export default function SignInPage() {
 
   function confirmMove() {
     if (!pendingMove) return;
+    if (removePassword !== REMOVE_PASSWORD) {
+      setRemoveError("Wrong password.");
+      return;
+    }
     const department = chosenMoveDept();
     if (!department || department === pendingMove.dept) {
       setPendingMove(null);
+      setRemovePassword("");
+      setRemoveError("");
       return;
     }
     const person = move(pendingMove.id, department);
@@ -201,6 +209,8 @@ export default function SignInPage() {
     });
     setPendingMove(null);
     setMoveCustom("");
+    setRemovePassword("");
+    setRemoveError("");
     setListNote(
       `${person.name} moved to ${department}. Save as default list to keep this.`,
     );
@@ -629,6 +639,8 @@ export default function SignInPage() {
           if (!open) {
             setPendingMove(null);
             setMoveCustom("");
+            setRemovePassword("");
+            setRemoveError("");
           }
         }}
       >
@@ -637,8 +649,8 @@ export default function SignInPage() {
             <DialogTitle>Move employee</DialogTitle>
             <DialogDescription>
               {pendingMove
-                ? `Move ${pendingMove.name} to another department. Save as default list when the lineup is right.`
-                : "Move this employee to another department."}
+                ? `Enter the password to move ${pendingMove.name}.`
+                : "Enter the password to move this employee."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
@@ -670,6 +682,25 @@ export default function SignInPage() {
                 />
               </div>
             ) : null}
+            <div className="grid gap-1">
+              <Label htmlFor="move-password">Password</Label>
+              <Input
+                id="move-password"
+                type="password"
+                value={removePassword}
+                onChange={(e) => {
+                  setRemovePassword(e.target.value);
+                  setRemoveError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") confirmMove();
+                }}
+                className="h-11 text-base"
+              />
+              {removeError && pendingMove ? (
+                <p className="text-sm text-red-700">{removeError}</p>
+              ) : null}
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -678,6 +709,8 @@ export default function SignInPage() {
               onClick={() => {
                 setPendingMove(null);
                 setMoveCustom("");
+                setRemovePassword("");
+                setRemoveError("");
               }}
             >
               Cancel
