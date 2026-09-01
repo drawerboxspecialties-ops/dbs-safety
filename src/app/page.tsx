@@ -13,19 +13,7 @@ import {
 export default function HomePage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">
-      <section className="mb-8 max-w-2xl">
-        <p className="text-sm font-semibold tracking-wide text-[#003366]">
-          Drawer Box Specialties
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
-          DBS Safety
-        </h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          Shop-floor safety for drawer boxes, cabinets, and doors. Run a
-          5–10 minute crew talk, then collect the OSHA training sign-in.
-        </p>
-      </section>
-
+      <h1 className="sr-only">DBS Safety</h1>
       <Card className="mb-8 overflow-hidden border-[#003366]/15 shadow-sm">
         <CardHeader className="bg-[#003366] text-white">
           <p className="text-xs font-semibold tracking-[0.12em] text-amber-300">
