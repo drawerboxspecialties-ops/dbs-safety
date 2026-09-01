@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { MonthCalendar } from "@/components/month-calendar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,6 @@ import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
 
 export default function HomePage() {
-  const router = useRouter();
   const { meeting, update, ready } = useMeeting();
   const shop = useShopStore();
   const catalog = shop.store.topics;
@@ -36,6 +35,8 @@ export default function HomePage() {
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [expanded, setExpanded] = useState("");
+  const previewRef = useRef<HTMLDivElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [assignYear, setAssignYear] = useState(() =>
     new Date().getFullYear(),
@@ -49,20 +50,18 @@ export default function HomePage() {
     setYear(Number(nextMonth.slice(0, 4)));
   }, [ready, meeting.month, shop.monthKey]);
 
-  async function applyAndOpen(topicId: string, monthKey: string, pdf?: string) {
-    const schedule = { ...shop.store.schedule, [monthKey]: topicId };
+  function expandMonth(topicId: string, monthKey: string) {
+    if (expanded === monthKey) {
+      setExpanded("");
+      return;
+    }
     update({ topic: topicId, month: monthKey });
     setMonth(monthKey);
     setYear(Number(monthKey.slice(0, 4)));
-    await shop.save({ schedule });
-    const next = getTopic(topicId, shop.store.topics);
-    router.push(
-      sheetHref(
-        packetUrl(pdf || next.pdf) ? "/meetings/packet" : "/meetings/sign-in",
-        topicId,
-        monthKey,
-      ),
-    );
+    setExpanded(monthKey);
+    requestAnimationFrame(() => {
+      previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function queueFile(file: File | undefined) {
@@ -78,9 +77,12 @@ export default function HomePage() {
     setError("");
     try {
       const created = await ingestPdf(pendingFile, catalog);
-      await shop.save({ topics: [...catalog, created] });
+      await shop.save({
+        topics: [...catalog, created],
+        schedule: { ...shop.store.schedule, [monthKey]: created.id },
+      });
       setPendingFile(null);
-      await applyAndOpen(created.id, monthKey, created.pdf);
+      expandMonth(created.id, monthKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add PDF.");
     } finally {
@@ -117,15 +119,58 @@ export default function HomePage() {
         <MonthCalendar
           year={year}
           now={shop.monthKey}
-          selected={month}
+          selected={expanded}
           schedule={shop.store.schedule}
           topics={catalog}
           ready={ready}
           disabled={busy}
-          onYearChange={setYear}
-          onSelect={(key, topicId) => {
-            void applyAndOpen(topicId, key);
+          onYearChange={(nextYear) => {
+            setYear(nextYear);
+            if (expanded && !expanded.startsWith(`${nextYear}-`)) {
+              setExpanded("");
+            }
           }}
+          onSelect={(key, topicId) => expandMonth(topicId, key)}
+          preview={
+            expanded ? (
+              <div
+                ref={previewRef}
+                className="rounded-2xl border bg-white p-3 sm:p-4"
+              >
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {shop.formatMonthLabel(expanded)}
+                    </p>
+                    <h3 className="text-lg font-semibold">
+                      {getTopic(meeting.topic, catalog).title}
+                    </h3>
+                  </div>
+                  <Link
+                    href={sheetHref(
+                      "/meetings/sign-in",
+                      meeting.topic,
+                      expanded,
+                    )}
+                    className={buttonVariants()}
+                  >
+                    Sign this sheet
+                  </Link>
+                </div>
+                {packetUrl(getTopic(meeting.topic, catalog).pdf) ? (
+                  <iframe
+                    title={`${getTopic(meeting.topic, catalog).title} PDF`}
+                    src={packetUrl(getTopic(meeting.topic, catalog).pdf)}
+                    className="min-h-[55vh] w-full rounded-xl border bg-white"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No PDF on this month.
+                  </p>
+                )}
+              </div>
+            ) : null
+          }
           lead={
             <div>
               <button

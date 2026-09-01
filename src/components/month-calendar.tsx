@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  formatMonthName,
   formatMonthShort,
   topicForMonth,
   yearMonths,
@@ -42,6 +41,7 @@ export function MonthCalendar({
   ready,
   disabled,
   lead,
+  preview,
   onYearChange,
   onSelect,
 }: {
@@ -53,6 +53,7 @@ export function MonthCalendar({
   ready: boolean;
   disabled?: boolean;
   lead?: ReactNode;
+  preview?: ReactNode;
   onYearChange: (year: number) => void;
   onSelect: (month: MonthKey, topicId: TopicId) => void;
 }) {
@@ -154,9 +155,7 @@ export function MonthCalendar({
         })}
       </div>
 
-      <p className="mt-4 text-sm text-muted-foreground">
-        {formatMonthName(selected)} is the last month you opened.
-      </p>
+      {preview ? <div className="mt-5">{preview}</div> : null}
     </section>
   );
 }
