@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   topicFromIntake,
   type Topic,
@@ -32,8 +31,6 @@ export function AddTopicDialog({
 }) {
   const [title, setTitle] = useState("");
   const [source, setSource] = useState<TopicSource>("hr");
-  const [why, setWhy] = useState("");
-  const [points, setPoints] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -41,8 +38,6 @@ export function AddTopicDialog({
   function reset() {
     setTitle("");
     setSource("hr");
-    setWhy("");
-    setPoints("");
     setFile(null);
     setError("");
   }
@@ -69,8 +64,6 @@ export function AddTopicDialog({
       const topic = topicFromIntake({
         title,
         source,
-        why,
-        talkingPoints: points,
         pdf,
         fileName,
         existing,
@@ -97,7 +90,7 @@ export function AddTopicDialog({
         <DialogHeader>
           <DialogTitle>Add topic</DialogTitle>
           <DialogDescription>
-            Paste a packet from HR or AI. Attach the PDF if you have one.
+            Title, where it came from, and the PDF if you have one.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -122,25 +115,6 @@ export function AddTopicDialog({
               <option value="hr">HR</option>
               <option value="ai">AI draft</option>
             </select>
-          </div>
-          <div className="grid gap-1">
-            <Label htmlFor="topic-why">Why this meeting</Label>
-            <Textarea
-              id="topic-why"
-              value={why}
-              onChange={(e) => setWhy(e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div className="grid gap-1">
-            <Label htmlFor="topic-points">Talking points</Label>
-            <Textarea
-              id="topic-points"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
-              placeholder="One point per line"
-              rows={5}
-            />
           </div>
           <div className="grid gap-1">
             <Label htmlFor="topic-pdf">PDF</Label>
