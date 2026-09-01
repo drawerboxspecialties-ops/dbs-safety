@@ -56,14 +56,14 @@ The shop launcher is [ops-dashboard](https://drawerboxspecialties-ops.github.io/
 
 Create the GitHub repo as **`drawerboxspecialties-ops/dbs-safety`** and enable GitHub Pages. The workflow in `.github/workflows/github-pages.yml` publishes the app, and the hub lists Pages repos automatically.
 
-To nest the app under the hub instead:
+To nest the app under the hub instead (legacy `/ops-dashboard/safety/` path):
 
 ```bash
 git clone https://github.com/drawerboxspecialties-ops/ops-dashboard.git ../ops-dashboard
 ./scripts/publish-ops-dashboard.sh ../ops-dashboard
 ```
 
-Then commit and push `ops-dashboard`. The app will be at `/ops-dashboard/safety/`.
+The hub auto-lists GitHub Pages repos. **Do not** also add a manual `dbs-safety` entry in `VERCEL_APPS` — that creates a duplicate card. Use `APP_EXTRA_LINKS` and `PAGE_APP_OVERRIDES` in `ops-dashboard/index.html` instead (see `scripts/ops-dashboard-card.js`).
 
 ## GitHub and Vercel
 
