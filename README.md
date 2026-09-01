@@ -6,10 +6,10 @@ There is no set meeting day. Catch a department when you have time.
 
 1. **Topics** — pick a packet or drop a PDF. Choose the month it belongs to.
 2. **Packet** — the PDF for that talk.
-3. **Sign** — that topic’s sign-in sheet for the month. It updates as people sign.
+3. **Sign** — that topic’s sign-in list for the month. Tap **Save progress** to keep the same list; come back and add the next crew.
 4. **Who’s left** — leftover names by department.
 
-A different topic has its own sheet. Next month starts a clean sheet for that topic.
+Each topic has its own running sheet for the month. Signatures stay on that list until the next month starts a clean sheet.
 
 ## Run locally
 
@@ -55,7 +55,7 @@ Odd months default to PPE. Even months default to material handling. Change the 
 
 Add a packet from **HR** or an **AI draft** on Meeting setup: title and a PDF. Those topics join the monthly plan and the talk page. PDFs store next to the shop file locally, or in Vercel Blob when that token is set.
 
-On sign-in, **Move** and **Remove** (and **Restore original**) ask for the shop password. **Save as default list** writes the lineup to the shop store and this browser.
+On sign-in, **Save progress** writes that topic’s signatures on this device so the same list is there when you open the topic again. **Move** and **Remove** (and **Restore original**) ask for the shop password. **Save as default list** writes the employee lineup to the shop store and this browser.
 
 ## Printable PDFs
 

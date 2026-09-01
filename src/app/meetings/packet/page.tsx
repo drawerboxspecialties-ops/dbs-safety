@@ -41,7 +41,8 @@ export default function PacketPage() {
 
       <p className="mb-4 text-sm text-muted-foreground">
         {topicSourceLabel(topic.source)} · {monthLabel}. Give the talk from the
-        packet, then open the sign-in sheet for this topic.
+        packet, then open this topic’s sign-in list. Save progress and keep
+        adding the next crew.
       </p>
 
       {href ? (

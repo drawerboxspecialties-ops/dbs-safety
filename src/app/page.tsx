@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useMeeting } from "@/lib/meeting-store";
+import { sheetProgress, useMeeting } from "@/lib/meeting-store";
 import {
   ingestPdf,
   packetUrl,
@@ -26,16 +26,22 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const topic = getTopic(picked, catalog);
+  const pickedProgress = progressFor(picked, month);
+
+  function progressFor(topicId: string, monthKey: string) {
+    if (!ready) return null;
+    return sheetProgress(topicId, monthKey);
+  }
 
   useEffect(() => {
     if (!ready) return;
     setPicked(meeting.topic);
-    setMonth(shop.monthKey);
-  }, [ready, meeting.topic, shop.monthKey]);
+    setMonth(meeting.month || shop.monthKey);
+  }, [ready, meeting.topic, meeting.month, shop.monthKey]);
 
   async function applyAndOpen(topicId: string, monthKey: string, pdf?: string) {
     const schedule = { ...shop.store.schedule, [monthKey]: topicId };
-    update({ topic: topicId });
+    update({ topic: topicId, month: monthKey });
     await shop.save({ schedule });
     const next = getTopic(topicId, shop.store.topics);
     router.push(
@@ -74,8 +80,8 @@ export default function HomePage() {
         Choose the talk
       </h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Pick a packet or drop a PDF. Choose the month. Then the packet and that
-        topic’s sign-in sheet.
+        Pick a packet or drop a PDF. Choose the month. That topic keeps one
+        sign-in list — save progress and keep adding names.
       </p>
 
       <input
@@ -131,6 +137,7 @@ export default function HomePage() {
             const assigned = shop.months.filter(
               (key) => shop.store.schedule[key] === item.id,
             );
+            const saved = progressFor(item.id, month);
             return (
               <button
                 key={item.id}
@@ -151,6 +158,15 @@ export default function HomePage() {
                     ? ` · ${shop.formatMonthLabel(assigned[0])}`
                     : ""}
                 </p>
+                {saved && saved.signed > 0 ? (
+                  <p className="mt-2 text-sm text-cyan-900">
+                    {saved.signed} signed — same list
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No signatures yet
+                  </p>
+                )}
               </button>
             );
           })}
@@ -180,8 +196,9 @@ export default function HomePage() {
           ))}
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          {topic.shortTitle} → {shop.formatMonthLabel(month)}. Next: the PDF,
-          then that topic’s sign-in sheet.
+          {pickedProgress?.signed
+            ? `${pickedProgress.signed} already signed on ${topic.shortTitle} for ${shop.formatMonthLabel(month)}. Open the same list and keep adding.`
+            : `${topic.shortTitle} → ${shop.formatMonthLabel(month)}. Next: the PDF, then that topic’s sign-in list.`}
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button
@@ -195,7 +212,7 @@ export default function HomePage() {
           <Link
             href="/meetings/sign-in"
             className={buttonVariants({ size: "lg", variant: "outline" })}
-            onClick={() => update({ topic: picked })}
+            onClick={() => update({ topic: picked, month })}
           >
             Skip to sign-in
           </Link>

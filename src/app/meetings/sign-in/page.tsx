@@ -22,11 +22,17 @@ import {
   EMPLOYER,
   TRAINER_CERT,
   buildRoster,
+  formatMeetingDate,
   isSigned,
   rowState as meetingRow,
   type RosterPerson,
 } from "@/lib/meeting-record";
-import { todayISO, useMeeting, type SignRow } from "@/lib/meeting-store";
+import {
+  signedCount,
+  todayISO,
+  useMeeting,
+  type SignRow,
+} from "@/lib/meeting-store";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
@@ -47,7 +53,7 @@ type SignTarget =
 const OTHER = "__other";
 
 export default function SignInPage() {
-  const { meeting, update, ready } = useMeeting();
+  const { meeting, update, saveProgress, ready } = useMeeting();
   const {
     employees,
     ready: crewReady,
@@ -221,6 +227,16 @@ export default function SignInPage() {
     setListNote(`Default list saved — ${employees.length} employees.`);
   }
 
+  function saveSheetProgress() {
+    const saved = saveProgress();
+    const n = signedCount(saved);
+    setListNote(
+      n
+        ? `Saved ${topic.shortTitle} — ${n} signed. Same list when you come back.`
+        : `Saved the ${topic.shortTitle} sheet. Same list when people sign later.`,
+    );
+  }
+
   function restoreList() {
     setRemovePassword("");
     setRemoveError("");
@@ -302,7 +318,10 @@ export default function SignInPage() {
         <Link href="/meetings/record" className={buttonVariants({ variant: "outline" })}>
           Who&apos;s left
         </Link>
-        <Button type="button" onClick={() => window.print()}>
+        <Button type="button" onClick={saveSheetProgress}>
+          Save progress
+        </Button>
+        <Button type="button" variant="outline" onClick={() => window.print()}>
           Print
         </Button>
       </PageChrome>
@@ -368,8 +387,8 @@ export default function SignInPage() {
         <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
           <p className="text-[12pt] font-bold">
             {meeting.department
-              ? `${deptSigned} of ${visibleEmployees.length} in ${meeting.department} signed · ${signed} this month`
-              : `${signed} signed this month · ${employees.length} on the list`}
+              ? `${deptSigned} of ${visibleEmployees.length} in ${meeting.department} signed · ${signed} on this ${topic.shortTitle} list`
+              : `${signed} signed on this ${topic.shortTitle} list · ${employees.length} employees`}
           </p>
           <div className="print:hidden flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => setAdding(true)}>
@@ -384,8 +403,12 @@ export default function SignInPage() {
           </div>
         </div>
         <p className="print:hidden mb-1 text-sm text-muted-foreground">
-          {topic.shortTitle} sheet for this month. It updates as people sign.
-          Tap a name. Move or remove needs the shop password.
+          {topic.shortTitle} keeps one list for this month. Signatures stay.
+          Save progress, then catch the next crew on the same sheet. Tap a
+          name. Move or remove needs the shop password.
+          {meeting.savedAt
+            ? ` Last saved ${formatMeetingDate(meeting.savedAt.slice(0, 10))}.`
+            : ""}
         </p>
         {listNote ? (
           <p className="print:hidden mb-2 text-sm text-emerald-800">{listNote}</p>
