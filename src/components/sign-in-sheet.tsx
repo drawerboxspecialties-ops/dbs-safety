@@ -453,6 +453,7 @@ export function SignInSheet({
       }
       const email = await connectGoogleDrive();
       setDrive(readDriveStatus());
+      setDriveClientId(readDriveStatus().clientId);
       setDriveOpen(false);
       setListNote(
         email
