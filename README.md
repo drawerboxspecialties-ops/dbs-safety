@@ -5,7 +5,7 @@ Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and door
 There is no set meeting day. Catch a department when you have time.
 
 1. **Safety Topic** — months start empty. Tap a month to open the talk on the **right**. Choose an existing talk or drop a new PDF — that talk stays locked on the month until you **Delete topic**. Trash on a talk in **Choose a talk** removes it from the list permanently.
-2. **Sign this sheet** — opens the roster in the same window. **Save progress** keeps signatures on **that month only** and uploads this month’s sign-in PDF and talk PDF to Google Drive (`DBS Safety / Safety Meetings`, named `September 2026 PPE sign-in.pdf`). If Drive is not connected, the PDFs download instead. Add or remove people and the new list is the default for later months; past months stay as they were. **Email PDF** attaches the sheet. **Packet** goes back to the talk.
+2. **Sign this sheet** — opens the roster in the same window. **Save progress** keeps signatures on **that month only** and downloads this month’s sign-in PDF and talk PDF (named like `September 2026 PPE sign-in.pdf`). Add or remove people and the new list is the default for later months; past months stay as they were. **Email PDF** attaches the sheet. **Packet** goes back to the talk.
 3. **Who’s left** — glows unsigned names on the same sign-in sheet. No extra page.
 
 Each topic has its own running sheet for the month. Signatures stay on that list until the next month starts a clean sheet.
@@ -14,35 +14,16 @@ Each topic has its own running sheet for the month. Signatures stay on that list
 
 The live Pages site stores work in this browser only. That is not a permanent archive.
 
-After people sign, tap **Save progress**. The sheet is saved for that month, and the app uploads this month’s **sign-in PDF** and **talk PDF** to Google Drive:
+After people sign, tap **Save progress**. The sheet is saved for that month, and the app downloads this month’s **sign-in PDF** and **talk PDF**:
 
 ```
-DBS Safety/
-  Safety Meetings/
-    September 2026 PPE sign-in.pdf
-    September 2026 PPE talk.pdf
+September 2026 PPE sign-in.pdf
+September 2026 PPE talk.pdf
 ```
 
-Saving again **replaces** those two files for that month and topic. It does not add copies. Extra files with the same name in that folder are moved to trash. Tap **Google Drive** once to connect the shop Gmail. If Drive is not connected, Chrome downloads the same-named PDFs instead. **Email PDF** is the other copy — send it to yourself or HR.
+Upload those to **DBS Safety / Safety Meetings** in Google Drive (or ask Cursor to file them with the Drive MCP). **Email PDF** is the other copy — send it to yourself or HR.
 
 Do not rely on Chrome cache, Vercel cron, or clearing-site-data-safe storage for OSHA records.
-
-### Connect Google Drive (one time)
-
-The live Pages site cannot write to Drive by itself. The shop computer signs in with Google.
-
-1. Open [Google Cloud Console](https://console.cloud.google.com/) with the shop Gmail.
-2. Create a project (or pick one). Enable **Google Drive API**.
-3. APIs & Services → **OAuth consent screen**. User type External is fine. Add the shop Gmail as a test user if the app is in Testing.
-4. APIs & Services → **Credentials** → Create credentials → **OAuth client ID** → Application type **Web application**.
-5. Authorized JavaScript origins (no path, no trailing slash):
-   - `http://127.0.0.1:43151`
-   - `http://localhost:43151`
-   - `https://drawerboxspecialties-ops.github.io`
-6. Copy the client ID. In DBS Safety tap **Google Drive**, paste it, then **Connect Drive** and pick the shop Gmail.
-7. Optional: add GitHub Actions secret `GOOGLE_CLIENT_ID` so the Pages build bakes the client ID in. You can still paste it in the app.
-
-The app creates **DBS Safety** and **Safety Meetings** itself. It can only see folders it created (Drive `drive.file` scope). Do not put a client secret in this repo.
 
 ## Run locally
 
