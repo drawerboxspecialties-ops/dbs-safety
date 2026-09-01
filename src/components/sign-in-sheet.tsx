@@ -41,6 +41,11 @@ import {
   type SignRow,
 } from "@/lib/meeting-store";
 import {
+  hasGoogleClientId,
+  preloadGoogleSignIn,
+  uploadMeetingPdfs,
+} from "@/lib/drive-archive";
+import {
   blobFromUrl,
   downloadBlob,
   loadLastEmailTo,
@@ -153,6 +158,10 @@ export function SignInSheet({
   useEffect(() => {
     if (meeting.department) setNewDept(meeting.department);
   }, [meeting.department]);
+
+  useEffect(() => {
+    void preloadGoogleSignIn();
+  }, []);
 
   const roster = useMemo(() => buildRoster(sheetCrew), [sheetCrew]);
   const departments = departmentOptions(sheetCrew);
@@ -386,12 +395,40 @@ export function SignInSheet({
           talk = null;
         }
       }
-      keepLocalCopies(sheet, talk, names);
-      setListNote(
-        n
-          ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. PDFs downloaded.`
-          : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. PDFs downloaded.`,
-      );
+
+      if (!hasGoogleClientId()) {
+        keepLocalCopies(sheet, talk, names);
+        setListNote(
+          n
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. PDFs downloaded.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. PDFs downloaded.`,
+        );
+        return;
+      }
+
+      const files = [{ name: names.signIn, blob: sheet }];
+      if (talk) files.push({ name: names.talk, blob: talk });
+
+      try {
+        const uploaded = await uploadMeetingPdfs(files);
+        const dest = uploaded.replaced
+          ? `Updated Google Drive → ${uploaded.folder}`
+          : `Uploaded to Google Drive → ${uploaded.folder}`;
+        setListNote(
+          n
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`,
+        );
+      } catch (err) {
+        keepLocalCopies(sheet, talk, names);
+        const msg =
+          err instanceof Error ? err.message : "Google Drive upload failed.";
+        setListNote(
+          n
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Drive upload failed (${msg}). PDFs downloaded instead.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Drive upload failed (${msg}). PDFs downloaded instead.`,
+        );
+      }
     } catch {
       setListNote(
         n
