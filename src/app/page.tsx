@@ -38,9 +38,9 @@ export default function HomePage() {
             </p>
           </div>
           <div>
-            <p className="font-medium">3. Sign in</p>
+            <p className="font-medium">3. Sign in and file</p>
             <p className="text-sm text-muted-foreground">
-              43 employees by department, plus blank lines. Print the record.
+              Names, signatures, and a written training record for the shop file.
             </p>
           </div>
           <div className="sm:col-span-3">
@@ -106,6 +106,23 @@ export default function HomePage() {
               className={buttonVariants({ variant: "outline" })}
             >
               Open sign-in
+            </Link>
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <ClipboardCheck className="mb-1 size-5 text-[#003366]" />
+            <CardTitle>Training record</CardTitle>
+            <CardDescription>
+              File copy: date, subject, who signed, who still needs the talk.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href="/meetings/record"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Open record
             </Link>
           </CardContent>
         </Card>

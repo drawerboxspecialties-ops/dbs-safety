@@ -31,7 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="print:hidden border-t bg-white/70">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap justify-between gap-2 px-4 py-3 text-xs text-muted-foreground">
           <span>Drawer Box Specialties · Drawer boxes, cabinets, and doors</span>
-          <span>Toolbox talks support OSHA 1910.132 and 1910.176 / 1910.178</span>
+          <span>Keep the printed training record with the safety-meeting file</span>
         </div>
       </footer>
     </div>

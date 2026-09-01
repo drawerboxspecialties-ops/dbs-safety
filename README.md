@@ -6,7 +6,10 @@ The first live module is the **Safety Meeting App**:
 
 1. Set the date (calendar), topic, and trainer
 2. Give the PPE or material handling talk
-3. Collect the OSHA training sign-in (29 CFR 1910.132(f)(4))
+3. Collect signatures on the training sign-in
+4. Print or save the **training record** (`/meetings/record`) for the shop file
+
+The training record is the written certification for the talk: employer, date, subject, what was covered, each employee who signed, people who still need the talk, and the trainer certification. Only employees who signed are certified as trained.
 
 ## Run
 

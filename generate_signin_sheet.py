@@ -198,7 +198,7 @@ class SignIn:
         c.drawString(
             MARGIN + 8,
             y - 34,
-            "I certify that each employee named above has received and understood the training on the subject listed.",
+            "I certify that each employee who signed has received and understood the training on the subject listed.",
         )
         c.setFont("Helvetica-Bold", 10)
         c.drawString(MARGIN + 8, y - 56, "Trainer signature")

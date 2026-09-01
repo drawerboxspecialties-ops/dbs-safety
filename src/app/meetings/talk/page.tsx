@@ -47,6 +47,12 @@ export default async function TalkPage({
           >
             Continue to sign-in
           </Link>
+          <Link
+            href="/meetings/record"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Training record
+          </Link>
         </div>
       </div>
 

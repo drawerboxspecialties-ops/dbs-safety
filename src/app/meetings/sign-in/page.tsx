@@ -15,16 +15,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { employeesByDepartment } from "@/lib/employees";
 import {
-  BLANK_ROWS,
-  employeesByDepartment,
-} from "@/lib/employees";
+  EMPLOYER,
+  TRAINER_CERT,
+  buildRoster,
+  isSigned,
+  recordGaps,
+  rowState as meetingRow,
+} from "@/lib/meeting-record";
 import { useMeeting, type SignRow } from "@/lib/meeting-store";
 import { getTopic } from "@/lib/topics";
-
-function isSigned(sig: string) {
-  return sig.startsWith("data:image");
-}
 
 type SignTarget =
   | { kind: "employee"; n: number; name: string; dept: string }
@@ -36,36 +37,11 @@ export default function SignInPage() {
   const groups = employeesByDepartment();
   const [signing, setSigning] = useState<SignTarget | null>(null);
 
-  const roster = useMemo(() => {
-    const rows: { n: number; name: string; dept: string; extra: boolean }[] = [];
-    let n = 0;
-    for (const group of groups) {
-      for (const person of group.people) {
-        n += 1;
-        rows.push({
-          n,
-          name: person.name,
-          dept: person.department,
-          extra: false,
-        });
-      }
-    }
-    for (let i = 0; i < BLANK_ROWS; i += 1) {
-      n += 1;
-      rows.push({ n, name: "", dept: "", extra: true });
-    }
-    return rows;
-  }, [groups]);
+  const roster = useMemo(() => buildRoster(), []);
+  const gaps = useMemo(() => recordGaps(meeting), [meeting]);
 
   function rowState(n: number): SignRow {
-    return (
-      meeting.rows.find((r) => r.n === String(n)) ?? {
-        n: String(n),
-        name: "",
-        dept: "",
-        sig: "",
-      }
-    );
+    return meetingRow(meeting, n);
   }
 
   function patchRow(n: number, patch: Partial<SignRow>) {
@@ -117,6 +93,12 @@ export default function SignInPage() {
           >
             Talk
           </Link>
+          <Link
+            href="/meetings/record"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Training record
+          </Link>
           <Button
             type="button"
             className="bg-[#003366] hover:bg-[#00264d]"
@@ -127,7 +109,22 @@ export default function SignInPage() {
         </div>
       </div>
 
+      {gaps.length > 0 ? (
+        <p className="print:hidden mb-3 text-sm text-muted-foreground">
+          Training record still needs: {gaps.join(", ")}.
+        </p>
+      ) : (
+        <p className="print:hidden mb-3 text-sm text-emerald-800">
+          Date, subject, trainer, and signatures are on file. Open the training
+          record to print or save it.
+        </p>
+      )}
+
       <article className="osha-sheet rounded-xl border bg-white p-4 shadow-sm sm:p-6 print:rounded-none print:border-0 print:p-0 print:shadow-none">
+        <div className="mb-3 hidden print:block">
+          <p className="text-[12pt] font-bold">{EMPLOYER}</p>
+          <p className="text-[12pt]">Training sign-in</p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1">
             <Label className="text-[10pt] font-bold">Date of training</Label>
@@ -247,8 +244,7 @@ export default function SignInPage() {
             Trainer certification
           </h3>
           <p className="mt-2 text-[12pt] leading-snug">
-            I certify that each employee named above has received and understood
-            the training on the subject listed.
+            {TRAINER_CERT}
           </p>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1">

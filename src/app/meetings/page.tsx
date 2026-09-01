@@ -26,8 +26,8 @@ export default function MeetingsPage() {
         Safety Meeting App
       </h1>
       <p className="mt-2 text-muted-foreground">
-        Start a crew meeting. The date, topic, and trainer carry into the talk
-        and the OSHA sign-in sheet.
+        Start a crew meeting. The date, topic, and trainer carry into the talk,
+        sign-in, and training record.
       </p>
 
       <Card className="mt-6">
@@ -67,7 +67,7 @@ export default function MeetingsPage() {
                 >
                   <p className="font-semibold">{topic.title}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {topic.minutes} · {topic.osha.split("·")[0]}
+                    {topic.minutes}
                   </p>
                 </button>
               ))}
@@ -99,6 +99,12 @@ export default function MeetingsPage() {
               className={buttonVariants({ size: "lg", variant: "outline" })}
             >
               Skip to sign-in
+            </Link>
+            <Link
+              href="/meetings/record"
+              className={buttonVariants({ size: "lg", variant: "outline" })}
+            >
+              Training record
             </Link>
           </div>
         </CardContent>
