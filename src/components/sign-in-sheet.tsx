@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Download, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
@@ -334,15 +334,17 @@ export function SignInSheet({
     }
   }
 
-  async function saveRecords() {
-    const monthKey = meeting.month || shop.monthKey;
+  async function saveSheetProgress() {
+    const saved = saveProgress();
+    const n = signedCount(saved);
+    const monthKey = saved.month || shop.monthKey;
     const monthLabel = shop.formatMonthLabel(monthKey);
-    setListNote("");
+    const crew = saved.roster.length ? saved.roster : sheetCrew;
     try {
       const sheet = await buildSignInPdf({
-        meeting,
+        meeting: saved,
         topic,
-        employees: sheetCrew,
+        employees: crew,
         monthLabel,
       });
       downloadBlob(sheet, sheetPdfFilename(topic, monthKey));
@@ -354,26 +356,17 @@ export function SignInSheet({
         await downloadFromUrl(talk, talkName);
       }
       setListNote(
-        `Downloaded the ${monthLabel} sign-in sheet${talk ? " and talk PDF" : ""}. Keep them in a folder or Drive for compliance.`,
+        n
+          ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Sign-in and talk PDFs downloaded for your records.`
+          : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Sign-in and talk PDFs downloaded for your records.`,
       );
-    } catch (err) {
+    } catch {
       setListNote(
-        err instanceof Error
-          ? err.message
-          : "Could not download the records.",
+        n
+          ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. Could not download the PDFs.`
+          : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. Could not download the PDFs.`,
       );
     }
-  }
-
-  function saveSheetProgress() {
-    const saved = saveProgress();
-    const n = signedCount(saved);
-    const monthLabel = shop.formatMonthLabel(saved.month || shop.monthKey);
-    setListNote(
-      n
-        ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. This month only.`
-        : `Saved the ${topic.shortTitle} sheet for ${monthLabel} only.`,
-    );
   }
 
   function restoreList() {
@@ -487,7 +480,7 @@ export function SignInSheet({
         >
           Who&apos;s left
         </Button>
-        <Button type="button" onClick={saveSheetProgress}>
+        <Button type="button" onClick={() => void saveSheetProgress()}>
           Save progress
         </Button>
         <Button type="button" variant="outline" onClick={() => window.print()}>
@@ -496,14 +489,6 @@ export function SignInSheet({
         <Button type="button" variant="outline" onClick={openEmailSheet}>
           <Mail />
           Email PDF
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void saveRecords()}
-        >
-          <Download />
-          Save records
         </Button>
       </PageChrome>
 

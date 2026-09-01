@@ -5,7 +5,7 @@ Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and door
 There is no set meeting day. Catch a department when you have time.
 
 1. **Safety Topic** — months start empty. Tap a month to open the talk on the **right**. Choose an existing talk or drop a new PDF — that talk stays locked on the month until you **Delete topic**. Trash on a talk in **Choose a talk** removes it from the list permanently.
-2. **Sign this sheet** — opens the roster in the same window. **Save progress** keeps signatures on **that month only**. Add or remove people and the new list is the default for later months; past months stay as they were. **Save records** downloads this month’s sign-in PDF and talk PDF for your files or Drive. **Email PDF** attaches the sheet. **Packet** goes back to the talk.
+2. **Sign this sheet** — opens the roster in the same window. **Save progress** keeps signatures on **that month only** and downloads this month’s sign-in PDF and talk PDF for your files or Drive. Add or remove people and the new list is the default for later months; past months stay as they were. **Email PDF** attaches the sheet. **Packet** goes back to the talk.
 3. **Who’s left** — glows unsigned names on the same sign-in sheet. No extra page.
 
 Each topic has its own running sheet for the month. Signatures stay on that list until the next month starts a clean sheet.
@@ -14,7 +14,7 @@ Each topic has its own running sheet for the month. Signatures stay on that list
 
 The live Pages site stores work in this browser only. That is not a permanent archive.
 
-After people sign, tap **Save records**. Chrome downloads this month’s **sign-in PDF** and the **talk PDF**. Put those files in a shop folder or Google Drive / OneDrive. **Email PDF** is the other copy — send it to yourself or HR.
+After people sign, tap **Save progress**. The sheet is saved for that month, and Chrome also downloads this month’s **sign-in PDF** and the **talk PDF**. Put those files in a shop folder or Google Drive / OneDrive. **Email PDF** is the other copy — send it to yourself or HR.
 
 Do not rely on Chrome cache, Vercel cron, or clearing-site-data-safe storage for OSHA records.
 
