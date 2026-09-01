@@ -7,7 +7,7 @@ import type { MeetingState, SignRow } from "@/lib/meeting-store";
 import { getTopic, type TopicId } from "@/lib/topics";
 
 export const EMPLOYER = "Drawer Box Specialties";
-export const WORKPLACE = "Shop — drawer boxes, cabinets, and doors";
+export const WORKPLACE = "Shop";
 
 export const TRAINER_CERT =
   "I certify that each employee who signed has received and understood the training on the subject listed.";

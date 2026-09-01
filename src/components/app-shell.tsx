@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1">{children}</div>
       <footer className="print:hidden border-t bg-white/70">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap justify-between gap-2 px-4 py-3 text-xs text-muted-foreground">
-          <span>Drawer Box Specialties · Drawer boxes, cabinets, and doors</span>
+          <span>Drawer Box Specialties</span>
           <span>Keep the printed training record with the safety-meeting file</span>
         </div>
       </footer>
