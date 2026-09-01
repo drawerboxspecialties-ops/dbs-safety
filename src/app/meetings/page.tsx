@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useMeeting } from "@/lib/meeting-store";
-import { getTopic, TOPICS, type TopicId } from "@/lib/topics";
+import { getTopic, type Topic, type TopicId } from "@/lib/topics";
+import { AddTopicDialog } from "@/components/add-topic-dialog";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,7 +16,9 @@ import { useShopStore } from "@/lib/use-shop-store";
 export default function MeetingsPage() {
   const { meeting, update, ready } = useMeeting();
   const shop = useShopStore();
-  const monthTopic = getTopic(shop.store.schedule[shop.monthKey]);
+  const catalog = shop.store.topics;
+  const monthTopic = getTopic(shop.store.schedule[shop.monthKey], catalog);
+  const [adding, setAdding] = useState(false);
 
   function setMonthTopic(month: string, topic: TopicId) {
     const schedule = { ...shop.store.schedule, [month]: topic };
@@ -22,9 +26,20 @@ export default function MeetingsPage() {
     if (month === shop.monthKey) update({ topic });
   }
 
+  async function saveTopic(topic: Topic) {
+    const topics = [...catalog, topic];
+    await shop.save({ topics });
+    update({ topic: topic.id });
+    shop.setNote("Topic saved.");
+  }
+
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <PageChrome title="Meeting setup" />
+      <PageChrome title="Meeting setup">
+        <Button type="button" variant="outline" onClick={() => setAdding(true)}>
+          Add from HR / AI
+        </Button>
+      </PageChrome>
 
       <section className="glass-panel grid gap-6 rounded-3xl p-6">
         <div>
@@ -33,7 +48,7 @@ export default function MeetingsPage() {
           </p>
           <p className="mt-1 text-lg font-medium">{monthTopic.shortTitle}</p>
           <p className="text-sm text-muted-foreground">
-            One topic a month. Cron sets this on the 1st.
+            Use an HR packet or an AI draft. One topic a month.
           </p>
         </div>
 
@@ -52,7 +67,7 @@ export default function MeetingsPage() {
         <div className="grid gap-2">
           <Label>Subject</Label>
           <div className="grid gap-2 sm:grid-cols-2">
-            {TOPICS.map((topic) => (
+            {catalog.map((topic) => (
               <button
                 key={topic.id}
                 type="button"
@@ -66,7 +81,12 @@ export default function MeetingsPage() {
               >
                 <p className="font-medium">{topic.title}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {topic.minutes}
+                  {topic.source === "hr"
+                    ? "HR packet"
+                    : topic.source === "ai"
+                      ? "AI draft"
+                      : topic.minutes}
+                  {topic.pdf ? " · PDF" : ""}
                 </p>
               </button>
             ))}
@@ -89,12 +109,10 @@ export default function MeetingsPage() {
                   </span>
                   <select
                     value={selected}
-                    onChange={(e) =>
-                      setMonthTopic(key, e.target.value as TopicId)
-                    }
+                    onChange={(e) => setMonthTopic(key, e.target.value)}
                     className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
                   >
-                    {TOPICS.map((topic) => (
+                    {catalog.map((topic) => (
                       <option key={topic.id} value={topic.id}>
                         {topic.shortTitle}
                       </option>
@@ -108,8 +126,7 @@ export default function MeetingsPage() {
             <p className="text-sm text-cyan-800">{shop.note}</p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Crew list and this plan save to the shop store
-              {shop.backend === "vercel-blob" ? " on Vercel" : ""}.
+              Topics, PDFs, and the crew list save to the shop store.
             </p>
           )}
         </div>
@@ -137,20 +154,15 @@ export default function MeetingsPage() {
           >
             Sign-in
           </Link>
-          <Button
-            type="button"
-            variant="ghost"
-            size="lg"
-            onClick={() =>
-              shop
-                .save({ crew: undefined, schedule: shop.store.schedule })
-                .catch(() => shop.setNote("Could not save."))
-            }
-          >
-            Save plan
-          </Button>
         </div>
       </section>
+
+      <AddTopicDialog
+        open={adding}
+        onOpenChange={setAdding}
+        existing={catalog}
+        onSave={saveTopic}
+      />
     </main>
   );
 }

@@ -51,3 +51,4 @@ next-env.d.ts
 
 # local shop store (seeded at runtime)
 /data/*.json
+/data/files/

@@ -46,6 +46,7 @@ export function useShopStore() {
   const save = useCallback(
     async (patch: {
       crew?: Employee[];
+      topics?: ShopStore["topics"];
       schedule?: Record<string, TopicId>;
     }) => {
       const res = await fetch("/api/store", {

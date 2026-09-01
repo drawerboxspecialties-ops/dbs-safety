@@ -53,6 +53,8 @@ Optional: set `CRON_SECRET` and Vercel will send it as `Authorization: Bearer â€
 
 Odd months default to PPE. Even months default to material handling. Change the year plan on Meeting setup.
 
+Add a packet from **HR** or an **AI draft** on Meeting setup: title, talking points, and a PDF. Those topics join the monthly plan and the talk page. PDFs store next to the shop file locally, or in Vercel Blob when that token is set.
+
 The sign-in **Save as default list** writes the crew to this store and to the browser.
 
 ## Printable PDFs

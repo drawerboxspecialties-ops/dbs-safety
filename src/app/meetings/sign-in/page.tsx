@@ -28,6 +28,7 @@ import {
 } from "@/lib/meeting-record";
 import { useMeeting, type SignRow } from "@/lib/meeting-store";
 import { getTopic } from "@/lib/topics";
+import { useShopStore } from "@/lib/use-shop-store";
 
 type SignTarget =
   | { kind: "employee"; person: RosterPerson }
@@ -45,7 +46,8 @@ export default function SignInPage() {
     saveAsDefault,
     restoreOriginal,
   } = useCrew();
-  const topic = getTopic(meeting.topic);
+  const shop = useShopStore();
+  const topic = getTopic(meeting.topic, shop.store.topics);
   const groups = useMemo(() => {
     const order = departmentOptions(employees);
     return order

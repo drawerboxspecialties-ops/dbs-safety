@@ -7,7 +7,7 @@ import {
   type Employee,
 } from "@/lib/employees";
 import type { MeetingState, SignRow } from "@/lib/meeting-store";
-import { getTopic, type TopicId } from "@/lib/topics";
+import { getTopic, type Topic, type TopicId } from "@/lib/topics";
 
 export const EMPLOYER = "Drawer Box Specialties";
 export const WORKPLACE = "Shop";
@@ -170,8 +170,9 @@ export function recordGaps(
 export function snapshotMeeting(
   meeting: MeetingState,
   employees?: Employee[],
+  topics?: Topic[],
 ): FiledMeeting {
-  const topic = getTopic(meeting.topic);
+  const topic = getTopic(meeting.topic, topics);
   const roster = buildRoster(employees ?? currentCrew());
   return {
     id:

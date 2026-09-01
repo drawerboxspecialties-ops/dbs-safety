@@ -22,11 +22,13 @@ import {
   type FiledMeeting,
 } from "@/lib/meeting-record";
 import { getTopic } from "@/lib/topics";
+import { useShopStore } from "@/lib/use-shop-store";
 
 export default function TrainingRecordPage() {
   const { meeting, ready } = useMeeting();
   const { employees, ready: crewReady } = useCrew();
-  const topic = getTopic(meeting.topic);
+  const shop = useShopStore();
+  const topic = getTopic(meeting.topic, shop.store.topics);
   const [filed, setFiled] = useState<FiledMeeting[]>([]);
   const [savedNote, setSavedNote] = useState("");
   const [view, setView] = useState<"live" | string>("live");
@@ -48,7 +50,7 @@ export default function TrainingRecordPage() {
   const selected = view === "live" ? null : filed.find((r) => r.id === view);
 
   function fileRecord() {
-    const snap = snapshotMeeting(meeting, employees);
+    const snap = snapshotMeeting(meeting, employees, shop.store.topics);
     const next = saveFiledMeeting(snap);
     setFiled(next);
     setSavedNote(

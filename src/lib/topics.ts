@@ -1,4 +1,5 @@
-export type TopicId = "ppe" | "material-handling";
+export type TopicId = string;
+export type TopicSource = "seed" | "hr" | "ai";
 
 export type Topic = {
   id: TopicId;
@@ -14,7 +15,38 @@ export type Topic = {
   donts: string[];
   stopWork: string;
   pdf: string;
+  source?: TopicSource;
+  fileName?: string;
 };
+
+export function makeTopicId(title: string, existing: { id: string }[] = []) {
+  const base =
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || `topic-${Date.now()}`;
+  if (!existing.some((t) => t.id === base)) return base;
+  let n = 2;
+  let id = `${base}-${n}`;
+  while (existing.some((t) => t.id === id)) {
+    n += 1;
+    id = `${base}-${n}`;
+  }
+  return id;
+}
+
+export function linesToList(text: string) {
+  return text
+    .split(/\n+/)
+    .map((line) => line.replace(/^\s*[-*\d.]+\s*/, "").trim())
+    .filter(Boolean);
+}
+
+export function topicPdfHref(pdf: string) {
+  if (!pdf) return "";
+  if (/^https?:\/\//.test(pdf) || pdf.startsWith("/api/")) return pdf;
+  return pdf;
+}
 
 export const TOPICS: Topic[] = [
   {
@@ -53,6 +85,7 @@ export const TOPICS: Topic[] = [
     stopWork:
       "Required PPE is missing or damaged, or someone says to skip glasses or hearing protection “just for this cut.” Get a supervisor.",
     pdf: "/OSHA_Safety_Meeting_PPE.pdf",
+    source: "seed",
   },
   {
     id: "material-handling",
@@ -90,9 +123,42 @@ export const TOPICS: Topic[] = [
     stopWork:
       "The sheet or door load is unstable, the aisle is blocked, the cart or jack is damaged, or you were not trained on that equipment. Stop and get help.",
     pdf: "/OSHA_Safety_Meeting_Material_Handling.pdf",
+    source: "seed",
   },
 ];
 
-export function getTopic(id: string | null | undefined) {
-  return TOPICS.find((t) => t.id === id) ?? TOPICS[0];
+export function getTopic(
+  id: string | null | undefined,
+  catalog: Topic[] = TOPICS,
+) {
+  return catalog.find((t) => t.id === id) ?? catalog[0] ?? TOPICS[0];
+}
+
+export function topicFromIntake(input: {
+  title: string;
+  source: TopicSource;
+  why?: string;
+  talkingPoints?: string;
+  pdf?: string;
+  fileName?: string;
+  existing: Topic[];
+}): Topic {
+  const title = input.title.trim();
+  return {
+    id: makeTopicId(title, input.existing),
+    title,
+    shortTitle: title,
+    minutes: "5–10 minutes",
+    osha: "",
+    why: (input.why ?? "").trim(),
+    talkingPoints: linesToList(input.talkingPoints ?? ""),
+    sideTitle: "",
+    sideItems: [],
+    dos: [],
+    donts: [],
+    stopWork: "",
+    pdf: input.pdf ?? "",
+    source: input.source,
+    fileName: input.fileName,
+  };
 }
