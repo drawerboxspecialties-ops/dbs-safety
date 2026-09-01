@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { MonthCalendar } from "@/components/month-calendar";
 import { PageFrame } from "@/components/page-frame";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { SignInSheet } from "@/components/sign-in-sheet";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { useMeeting } from "@/lib/meeting-store";
 import { ingestPdf, packetUrl } from "@/lib/packet";
-import { sheetHref } from "@/lib/sheet-href";
 import {
   formatMonthName,
   formatMonthShort,
@@ -45,6 +44,7 @@ export default function HomePage() {
     new Date().getFullYear(),
   );
   const [clearMonth, setClearMonth] = useState("");
+  const [showSheet, setShowSheet] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -61,10 +61,11 @@ export default function HomePage() {
   }
 
   function expandMonth(topicId: string, monthKey: string) {
-    if (expanded === monthKey) {
+    if (expanded === monthKey && !showSheet) {
       setExpanded("");
       return;
     }
+    setShowSheet(false);
     showMonth(topicId, monthKey);
   }
 
@@ -171,8 +172,10 @@ export default function HomePage() {
             setYear(nextYear);
             if (expanded && !expanded.startsWith(`${nextYear}-`)) {
               setExpanded("");
+              setShowSheet(false);
             }
           }}
+          printFocus={showSheet}
           onSelect={(key, topicId) => expandMonth(topicId, key)}
           onDelete={(key) => {
             setExpanded(key);
@@ -181,7 +184,12 @@ export default function HomePage() {
           preview={
             expanded ? (
               <div className="flex h-full min-h-0 flex-col rounded-xl border bg-white p-3">
-                {expandedTopic ? (
+                {expandedTopic && showSheet ? (
+                  <SignInSheet
+                    embedded
+                    onBack={() => setShowSheet(false)}
+                  />
+                ) : expandedTopic ? (
                   <>
                     <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
@@ -205,16 +213,15 @@ export default function HomePage() {
                           <Trash2 />
                           Delete topic
                         </Button>
-                        <Link
-                          href={sheetHref(
-                            "/meetings/sign-in",
-                            expandedTopicId,
-                            expanded,
-                          )}
-                          className={buttonVariants()}
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            showMonth(expandedTopicId, expanded);
+                            setShowSheet(true);
+                          }}
                         >
                           Sign this sheet
-                        </Link>
+                        </Button>
                       </div>
                     </div>
                     {packetUrl(expandedTopic.pdf) ? (

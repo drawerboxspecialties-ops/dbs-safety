@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
-import { buttonVariants } from "@/components/ui/button";
+import { SignInSheet } from "@/components/sign-in-sheet";
+import { Button } from "@/components/ui/button";
 import { useMeeting } from "@/lib/meeting-store";
 import { packetUrl } from "@/lib/packet";
-import { sheetHref } from "@/lib/sheet-href";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 
@@ -15,11 +15,7 @@ export default function PacketPage() {
   const shop = useShopStore();
   const topic = getTopic(meeting.topic, shop.store.topics);
   const href = packetUrl(topic.pdf);
-  const signHref = sheetHref(
-    "/meetings/sign-in",
-    meeting.topic,
-    meeting.month || shop.monthKey,
-  );
+  const [showSheet, setShowSheet] = useState(false);
 
   if (!ready) {
     return (
@@ -29,12 +25,20 @@ export default function PacketPage() {
     );
   }
 
+  if (showSheet) {
+    return (
+      <PageFrame fill>
+        <SignInSheet embedded onBack={() => setShowSheet(false)} />
+      </PageFrame>
+    );
+  }
+
   return (
     <PageFrame fill>
       <PageChrome title={topic.title}>
-        <Link href={signHref} className={buttonVariants()}>
+        <Button type="button" onClick={() => setShowSheet(true)}>
           Sign this sheet
-        </Link>
+        </Button>
       </PageChrome>
 
       {href ? (
@@ -46,12 +50,13 @@ export default function PacketPage() {
       ) : (
         <div className="glass-panel rounded-2xl p-4">
           <p>No PDF on this topic.</p>
-          <Link
-            href={signHref}
-            className={buttonVariants({ className: "mt-3" })}
+          <Button
+            type="button"
+            className="mt-3"
+            onClick={() => setShowSheet(true)}
           >
             Sign this sheet
-          </Link>
+          </Button>
         </div>
       )}
     </PageFrame>

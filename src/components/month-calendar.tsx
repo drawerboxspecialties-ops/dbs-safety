@@ -42,6 +42,7 @@ export function MonthCalendar({
   title,
   lead,
   preview,
+  printFocus,
   onYearChange,
   onSelect,
   onDelete,
@@ -56,13 +57,19 @@ export function MonthCalendar({
   title?: string;
   lead?: ReactNode;
   preview?: ReactNode;
+  printFocus?: boolean;
   onYearChange: (year: number) => void;
   onSelect: (month: MonthKey, topicId: TopicId) => void;
   onDelete?: (month: MonthKey) => void;
 }) {
   return (
-    <section className="glass-panel flex h-full min-h-0 flex-col rounded-2xl p-3">
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
+    <section className="glass-panel flex h-full min-h-0 flex-col rounded-2xl p-3 print:bg-white print:shadow-none">
+      <div
+        className={cn(
+          "flex shrink-0 flex-wrap items-center gap-2",
+          printFocus && "print:hidden",
+        )}
+      >
         {title ? (
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
         ) : null}
@@ -112,6 +119,7 @@ export function MonthCalendar({
             preview
               ? "grid-cols-2 overflow-y-auto pr-0.5"
               : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+            printFocus && "print:hidden",
           )}
         >
           {yearMonths(year).map((key) => {

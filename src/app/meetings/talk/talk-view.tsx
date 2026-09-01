@@ -37,11 +37,8 @@ export function TalkView() {
             PDF
           </a>
         ) : null}
-        <Link
-          href={sheetHref("/meetings/sign-in", topic.id, shop.monthKey)}
-          className={buttonVariants()}
-        >
-          Sign a department
+        <Link href="/" className={buttonVariants()}>
+          Safety Topic
         </Link>
       </PageChrome>
 
