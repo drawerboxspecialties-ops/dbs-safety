@@ -70,15 +70,19 @@ export function useCrew() {
     };
   }, []);
 
-  const persist = useCallback((next: Employee[]) => {
+  const applyLocal = useCallback((next: Employee[]) => {
     setEmployees(next);
     saveCrew(next);
+  }, []);
+
+  const persist = useCallback((next: Employee[]) => {
+    applyLocal(next);
     fetch("/api/store", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ crew: next }),
     }).catch(() => undefined);
-  }, []);
+  }, [applyLocal]);
 
   const add = useCallback(
     (name: string, department: string) => {
@@ -103,9 +107,34 @@ export function useCrew() {
     [employees, persist],
   );
 
+  const move = useCallback(
+    (id: string, department: string) => {
+      const trimmed = department.trim();
+      if (!trimmed) return null;
+      const current = employees.find((e) => e.id === id);
+      if (!current) return null;
+      if (current.department === trimmed) return current;
+      applyLocal(
+        employees.map((e) =>
+          e.id === id ? { ...e, department: trimmed } : e,
+        ),
+      );
+      return { ...current, department: trimmed };
+    },
+    [employees, applyLocal],
+  );
+
   const restoreOriginal = useCallback(() => {
     persist(cloneSeed());
   }, [persist]);
 
-  return { employees, ready, add, remove, saveAsDefault: persist, restoreOriginal };
+  return {
+    employees,
+    ready,
+    add,
+    remove,
+    move,
+    saveAsDefault: persist,
+    restoreOriginal,
+  };
 }

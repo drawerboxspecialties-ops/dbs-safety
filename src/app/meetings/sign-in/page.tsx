@@ -53,6 +53,7 @@ export default function SignInPage() {
     ready: crewReady,
     add,
     remove,
+    move,
     saveAsDefault,
     restoreOriginal,
   } = useCrew();
@@ -77,6 +78,13 @@ export default function SignInPage() {
   const [pendingRemove, setPendingRemove] = useState<
     { kind: "one"; id: string; name: string } | { kind: "restore" } | null
   >(null);
+  const [pendingMove, setPendingMove] = useState<{
+    id: string;
+    name: string;
+    dept: string;
+  } | null>(null);
+  const [moveDept, setMoveDept] = useState("");
+  const [moveCustom, setMoveCustom] = useState("");
   const [removePassword, setRemovePassword] = useState("");
   const [removeError, setRemoveError] = useState("");
 
@@ -154,6 +162,48 @@ export default function SignInPage() {
     setRemovePassword("");
     setRemoveError("");
     setPendingRemove({ kind: "one", id, name });
+  }
+
+  function startMove(person: RosterPerson) {
+    setPendingMove({
+      id: person.id,
+      name: person.name,
+      dept: person.dept,
+    });
+    setMoveDept(person.dept);
+    setMoveCustom("");
+  }
+
+  function chosenMoveDept() {
+    return moveDept === OTHER ? moveCustom.trim() : moveDept.trim();
+  }
+
+  function confirmMove() {
+    if (!pendingMove) return;
+    const department = chosenMoveDept();
+    if (!department || department === pendingMove.dept) {
+      setPendingMove(null);
+      return;
+    }
+    const person = move(pendingMove.id, department);
+    if (!person) return;
+    const nextRows = meeting.rows.map((r) =>
+      r.id === pendingMove.id || r.name === pendingMove.name
+        ? { ...r, dept: department }
+        : r,
+    );
+    update({
+      rows: nextRows,
+      department:
+        meeting.department && meeting.department !== department
+          ? department
+          : meeting.department,
+    });
+    setPendingMove(null);
+    setMoveCustom("");
+    setListNote(
+      `${person.name} moved to ${department}. Save as default list to keep this.`,
+    );
   }
 
   function saveList() {
@@ -327,8 +377,8 @@ export default function SignInPage() {
           </div>
         </div>
         <p className="print:hidden mb-1 text-sm text-muted-foreground">
-          Pick the department you are catching today. Signatures stay for the
-          month. Tap a name to sign.
+          Pick the department you are catching today. Move people if they
+          changed departments, then save as default list. Tap a name to sign.
         </p>
         {listNote ? (
           <p className="print:hidden mb-2 text-sm text-emerald-800">{listNote}</p>
@@ -342,7 +392,7 @@ export default function SignInPage() {
                 <th className="px-2 py-1 font-bold">Employee name</th>
                 <th className="w-40 px-2 py-1 font-bold">Department</th>
                 <th className="w-56 px-2 py-1 font-bold">Employee signature</th>
-                <th className="print:hidden w-16 px-2 py-1 font-bold">List</th>
+                <th className="print:hidden w-24 px-2 py-1 font-bold">List</th>
               </tr>
             </thead>
             <tbody>
@@ -356,6 +406,7 @@ export default function SignInPage() {
                   )}
                   rowState={rowState}
                   onOpen={(person) => setSigning({ kind: "employee", person })}
+                  onMove={startMove}
                   onRemove={removeEmployee}
                 />
               ))}
@@ -576,6 +627,76 @@ export default function SignInPage() {
       </Dialog>
 
       <Dialog
+        open={pendingMove !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingMove(null);
+            setMoveCustom("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Move employee</DialogTitle>
+            <DialogDescription>
+              {pendingMove
+                ? `Move ${pendingMove.name} to another department. Save as default list when the lineup is right.`
+                : "Move this employee to another department."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1">
+              <Label htmlFor="move-dept">Department</Label>
+              <select
+                id="move-dept"
+                value={moveDept}
+                onChange={(e) => setMoveDept(e.target.value)}
+                className="h-11 rounded-lg border border-border bg-background px-3 text-base"
+              >
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+                <option value={OTHER}>Other…</option>
+              </select>
+            </div>
+            {moveDept === OTHER ? (
+              <div className="grid gap-1">
+                <Label htmlFor="move-custom">New department</Label>
+                <Input
+                  id="move-custom"
+                  value={moveCustom}
+                  onChange={(e) => setMoveCustom(e.target.value)}
+                  className="h-11 text-base"
+                  autoFocus
+                />
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setPendingMove(null);
+                setMoveCustom("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!chosenMoveDept()}
+              onClick={confirmMove}
+            >
+              Move
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={pendingRemove !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -685,6 +806,7 @@ function GroupRows({
   rows,
   rowState,
   onOpen,
+  onMove,
   onRemove,
 }: {
   department: string;
@@ -692,6 +814,7 @@ function GroupRows({
   rows: RosterPerson[];
   rowState: (person: RosterPerson) => SignRow;
   onOpen: (person: RosterPerson) => void;
+  onMove: (person: RosterPerson) => void;
   onRemove: (id: string, name: string) => void;
 }) {
   return (
@@ -727,13 +850,22 @@ function GroupRows({
               <SigPreview sig={state.sig} onOpen={() => onOpen(r)} />
             </td>
             <td className="print:hidden border-b border-black px-1 py-0">
-              <button
-                type="button"
-                onClick={() => onRemove(r.id, r.name)}
-                className="text-xs font-medium text-red-800 underline"
-              >
-                Remove
-              </button>
+              <div className="flex flex-col items-start gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => onMove(r)}
+                  className="text-xs font-medium text-cyan-800 underline"
+                >
+                  Move
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemove(r.id, r.name)}
+                  className="text-xs font-medium text-red-800 underline"
+                >
+                  Remove
+                </button>
+              </div>
             </td>
           </tr>
         );
