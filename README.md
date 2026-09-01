@@ -2,15 +2,14 @@
 
 Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and doors).
 
-The first live module is the **Safety Meeting App**. There is no set meeting day. Catch a department whenever you have time that month. Same topic all month.
+There is no set meeting day. Same topic all month. Catch a department when you have time.
 
-1. Pick this month’s topic and the trainer
-2. Give the talk on the floor
-3. Open sign-in, pick the department you are catching, and collect signatures
-4. Come back later for another department — signatures stay for the month
-5. Print or save the **training record** (`/meetings/record`) for the shop file
+1. Open the app — you see this month’s topic and which departments still need it
+2. Tap a department, give the talk, tap names to sign
+3. Come back later for another department. Signatures stay for the month
+4. **Who’s left** is the list to work from, and the paper file when you print
 
-The training record is the written certification: employer, session dates, subject, what was covered, each employee who signed (with the day you caught their department), people who still need the talk grouped by department, and the trainer certification. Only employees who signed are certified as trained.
+**Topic** is only for changing the subject, your trainer name, or adding a PDF. **Rest of the year** stays folded away until you need it.
 
 ## Run locally
 

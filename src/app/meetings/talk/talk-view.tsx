@@ -35,11 +35,8 @@ export function TalkView() {
             PDF
           </a>
         ) : null}
-        <Link href="/meetings" className={buttonVariants({ variant: "outline" })}>
-          Setup
-        </Link>
         <Link href="/meetings/sign-in" className={buttonVariants()}>
-          Sign-in
+          Sign a department
         </Link>
       </PageChrome>
 

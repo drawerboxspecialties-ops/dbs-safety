@@ -34,9 +34,9 @@ export default function MeetingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <PageChrome title="This month">
+      <PageChrome title="Topic">
         <Button type="button" variant="outline" onClick={() => setAdding(true)}>
-          Add from HR / AI
+          Add PDF
         </Button>
       </PageChrome>
 
@@ -46,20 +46,19 @@ export default function MeetingsPage() {
             This month
           </p>
           <p className="mt-1 text-lg font-medium">{monthTopic.shortTitle}</p>
-          <p className="text-sm text-muted-foreground">
-            No set meeting day. Catch a department when you have time.
-            Same topic all month.
-          </p>
         </div>
 
         <div className="grid gap-2">
-          <Label>Subject</Label>
+          <Label>Use this topic</Label>
           <div className="grid gap-2 sm:grid-cols-2">
             {catalog.map((topic) => (
               <button
                 key={topic.id}
                 type="button"
-                onClick={() => update({ topic: topic.id })}
+                onClick={() => {
+                  update({ topic: topic.id });
+                  setMonthTopic(shop.monthKey, topic.id);
+                }}
                 className={cn(
                   "rounded-2xl border px-4 py-3 text-left transition",
                   meeting.topic === topic.id
@@ -73,7 +72,7 @@ export default function MeetingsPage() {
                     ? "HR packet"
                     : topic.source === "ai"
                       ? "AI draft"
-                      : topic.minutes}
+                      : "Built in"}
                   {topic.pdf ? " · PDF" : ""}
                 </p>
               </button>
@@ -82,14 +81,42 @@ export default function MeetingsPage() {
         </div>
 
         <div className="grid gap-2">
-          <Label>Year plan</Label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <Label htmlFor="trainer">Your name (trainer)</Label>
+          <Input
+            id="trainer"
+            value={meeting.trainer}
+            onChange={(e) => update({ trainer: e.target.value })}
+            placeholder="Who is giving the talk"
+            className="h-11 text-base"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/meetings/talk?topic=${meeting.topic}`}
+            className={buttonVariants({ size: "lg" })}
+          >
+            Talk notes
+          </Link>
+          <Link
+            href="/meetings/sign-in"
+            className={buttonVariants({ size: "lg", variant: "outline" })}
+          >
+            Sign a department
+          </Link>
+        </div>
+
+        <details className="rounded-2xl bg-white/60 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            Rest of the year
+          </summary>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {shop.months.map((key) => {
               const selected = shop.store.schedule[key] ?? meeting.topic;
               return (
                 <label
                   key={key}
-                  className="flex flex-col gap-1 rounded-2xl bg-white/60 px-3 py-2"
+                  className="flex flex-col gap-1 rounded-xl bg-white/80 px-3 py-2"
                 >
                   <span className="text-xs text-muted-foreground">
                     {shop.formatMonthLabel(key)}
@@ -111,38 +138,9 @@ export default function MeetingsPage() {
             })}
           </div>
           {shop.note ? (
-            <p className="text-sm text-cyan-800">{shop.note}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Topics, PDFs, and the crew list save to the shop store.
-            </p>
-          )}
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="trainer">Trainer</Label>
-          <Input
-            id="trainer"
-            value={meeting.trainer}
-            onChange={(e) => update({ trainer: e.target.value })}
-            className="h-11 text-base"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/meetings/talk?topic=${meeting.topic}`}
-            className={buttonVariants({ size: "lg" })}
-          >
-            Start talk
-          </Link>
-          <Link
-            href="/meetings/sign-in"
-            className={buttonVariants({ size: "lg", variant: "outline" })}
-          >
-            Sign-in
-          </Link>
-        </div>
+            <p className="mt-2 text-sm text-cyan-800">{shop.note}</p>
+          ) : null}
+        </details>
       </section>
 
       <AddTopicDialog

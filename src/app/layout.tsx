@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DBS Safety",
   description:
-    "Drawer Box Specialties safety app — Safety Meeting talks and OSHA training sign-in.",
+    "Catch a department when you have time. Same safety topic all month.",
 };
 
 export default function RootLayout({

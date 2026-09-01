@@ -1,85 +1,118 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
+import { useCrew } from "@/lib/crew-store";
+import { departmentProgress } from "@/lib/meeting-record";
+import { useMeeting } from "@/lib/meeting-store";
+import { withBase } from "@/lib/base-path";
+import { getTopic, topicPdfHref } from "@/lib/topics";
+import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
 
-const tiles = [
-  {
-    href: "/meetings/talk?topic=ppe",
-    title: "PPE talk",
-    detail: "Glasses, hearing, no gloves at cutters.",
-  },
-  {
-    href: "/meetings/talk?topic=material-handling",
-    title: "Material handling",
-    detail: "Sheets, doors, carts.",
-  },
-  {
-    href: "/meetings/sign-in",
-    title: "Sign-in",
-    detail: "Catch one department at a time.",
-  },
-  {
-    href: "/meetings/record",
-    title: "Record",
-    detail: "Who signed this month. Who still needs it.",
-  },
-];
+function packetHref(pdf: string) {
+  const href = topicPdfHref(pdf);
+  if (!href) return "";
+  if (href.startsWith("http") || href.startsWith("/api/")) return href;
+  return withBase(href);
+}
 
 export default function HomePage() {
-  return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:py-14">
-      <h1 className="sr-only">DBS Safety</h1>
+  const router = useRouter();
+  const { meeting, update, ready } = useMeeting();
+  const { employees, ready: crewReady } = useCrew();
+  const shop = useShopStore();
+  const topic = getTopic(meeting.topic, shop.store.topics);
+  const progress = departmentProgress(meeting, employees);
+  const left = progress.reduce((sum, row) => sum + row.left, 0);
+  const packet = packetHref(topic.pdf);
 
+  function openDept(department: string) {
+    update({ department });
+    router.push("/meetings/sign-in");
+  }
+
+  if (!ready || !crewReady) {
+    return (
+      <main className="mx-auto w-full max-w-5xl px-4 py-10">
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
       <section className="glass-panel rounded-3xl p-6 sm:p-8">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-          Safety Meeting
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          This month
         </p>
-        <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          <div>
-            <p className="text-[11px] font-medium text-cyan-700">01</p>
-            <p className="mt-1 font-medium">This month</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Topic and trainer. No set meeting day.
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-cyan-700">02</p>
-            <p className="mt-1 font-medium">Talk</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              One page for the floor.
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-cyan-700">03</p>
-            <p className="mt-1 font-medium">Catch a department</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sign that crew. Come back when you have time.
-            </p>
-          </div>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+          {topic.shortTitle}
+        </h1>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          {left === 0
+            ? "Everyone on the list has signed."
+            : `${left} still need to sign. Catch a department when you have time.`}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link
+            href={`/meetings/talk?topic=${meeting.topic}`}
+            className={buttonVariants({ size: "lg" })}
+          >
+            Talk notes
+          </Link>
+          {packet ? (
+            <a
+              href={packet}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({ size: "lg", variant: "outline" })}
+            >
+              PDF
+            </a>
+          ) : null}
+          <Link
+            href="/meetings"
+            className={buttonVariants({ size: "lg", variant: "ghost" })}
+          >
+            Change topic
+          </Link>
         </div>
-        <Link
-          href="/meetings"
-          className={cn(buttonVariants({ size: "lg" }), "mt-8")}
-        >
-          Open this month
-        </Link>
       </section>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {tiles.map((tile) => (
+      <section className="mt-6">
+        <div className="flex items-end justify-between gap-3 px-1">
+          <h2 className="text-lg font-semibold">Departments</h2>
           <Link
-            key={tile.href}
-            href={tile.href}
-            className="glass-panel group rounded-2xl p-4 transition hover:-translate-y-0.5"
+            href="/meetings/record"
+            className="text-sm text-cyan-800 hover:underline"
           >
-            <p className="font-medium">{tile.title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{tile.detail}</p>
-            <p className="mt-4 text-sm text-cyan-800 group-hover:underline">
-              Open
-            </p>
+            Who&apos;s left
           </Link>
-        ))}
-      </div>
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {progress.map((row) => (
+            <button
+              key={row.department}
+              type="button"
+              onClick={() => openDept(row.department)}
+              className={cn(
+                "glass-panel rounded-2xl p-4 text-left transition hover:-translate-y-0.5",
+                row.left === 0 && "opacity-70",
+              )}
+            >
+              <p className="font-medium">{row.department}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {row.left === 0
+                  ? `All ${row.total} signed`
+                  : `${row.left} of ${row.total} still need it`}
+              </p>
+              <p className="mt-4 text-sm text-cyan-800">Sign this crew</p>
+            </button>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

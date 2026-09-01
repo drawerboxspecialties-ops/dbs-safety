@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { OPS_HUB_URL } from "@/lib/base-path";
+import { AppNav } from "@/components/app-nav";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -12,34 +12,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </p>
             <p className="text-base font-semibold">DBS Safety</p>
           </Link>
-          <nav className="flex flex-wrap items-center gap-1 text-sm">
-            <a
-              href={OPS_HUB_URL}
-              className="rounded-full px-3 py-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
-            >
-              Ops Hub
-            </a>
-            <Link
-              href="/"
-              className="rounded-full px-3 py-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
-            >
-              Home
-            </Link>
-            <Link
-              href="/meetings"
-              className="rounded-full bg-white px-3 py-1.5 font-medium text-[#0b1220] hover:bg-cyan-50"
-            >
-              This month
-            </Link>
-          </nav>
+          <AppNav />
         </div>
       </header>
       <div className="flex-1">{children}</div>
-      <footer className="print:hidden border-t border-foreground/5">
-        <div className="mx-auto w-full max-w-6xl px-4 py-4 text-xs text-muted-foreground">
-          Drawer Box Specialties
-        </div>
-      </footer>
     </div>
   );
 }

@@ -180,6 +180,26 @@ export function groupByDepartment<T extends { dept: string }>(
   return groups;
 }
 
+export function departmentProgress(
+  meeting: MeetingState,
+  employees: Employee[],
+) {
+  const roster = buildRoster(employees);
+  return employeesByDepartment(employees).map((group) => {
+    const signed = group.people.filter((person) => {
+      const row = roster.find((r) => r.id === person.id);
+      if (!row) return false;
+      return isSigned(rowState(meeting, row).sig);
+    }).length;
+    return {
+      department: group.department,
+      total: group.people.length,
+      signed,
+      left: group.people.length - signed,
+    };
+  });
+}
+
 export function makeupEmployees(
   meeting: MeetingState,
   roster = buildRoster(),
