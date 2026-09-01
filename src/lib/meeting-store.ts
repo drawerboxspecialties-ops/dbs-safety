@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { loadCrew, persistDefaultCrew } from "@/lib/crew-store";
+import { cloneEmployees, type Employee } from "@/lib/employees";
 import { readSheetQuery } from "@/lib/sheet-href";
 import type { TopicId } from "@/lib/topics";
 
@@ -24,6 +26,8 @@ export type MeetingState = {
   /** Department being caught this session. Empty string = all. */
   department: string;
   rows: SignRow[];
+  /** Crew frozen on this month’s sheet. Later add/remove does not rewrite this. */
+  roster: Employee[];
   savedAt?: string;
 };
 
@@ -65,6 +69,15 @@ export function emptyMeeting(): MeetingState {
     trainerTitle: "",
     department: "",
     rows: [],
+    roster: [],
+  };
+}
+
+function withRoster(state: MeetingState): MeetingState {
+  if (state.roster.length) return state;
+  return {
+    ...state,
+    roster: cloneEmployees(loadCrew()),
   };
 }
 
@@ -83,6 +96,7 @@ export function normalizeMeeting(
     ...raw,
     month: raw.month || monthKeyNow(),
     rows: Array.isArray(raw.rows) ? raw.rows : [],
+    roster: Array.isArray(raw.roster) ? cloneEmployees(raw.roster) : [],
   };
 }
 
@@ -153,14 +167,24 @@ export function loadMeeting(): MeetingState {
     const id = sheetId(current.month, current.topic);
     const sheets = loadSheets();
     if (sheets[id]) {
-      return normalizeMeeting({
-        ...sheets[id],
+      return withRoster(
+        normalizeMeeting({
+          ...sheets[id],
+          topic: current.topic,
+          month: current.month,
+        }),
+      );
+    }
+    const fresh = withRoster(
+      normalizeMeeting({
         topic: current.topic,
         month: current.month,
-      });
-    }
-    persistSheet(current);
-    return current;
+        department: current.department,
+        date: todayISO(),
+      }),
+    );
+    persistSheet(fresh);
+    return fresh;
   } catch {
     return emptyMeeting();
   }
@@ -171,7 +195,7 @@ export function saveMeeting(state: MeetingState) {
 }
 
 function persistSheet(state: MeetingState) {
-  const next = normalizeMeeting(state);
+  const next = withRoster(normalizeMeeting(state));
   saveMeeting(next);
   const sheets = loadSheets();
   sheets[sheetId(next.month, next.topic)] = next;
@@ -201,27 +225,31 @@ function openSheet(
   sourceMonth: string,
 ): MeetingState {
   const sheets = loadSheets();
-  sheets[sheetId(sourceMonth, prev.topic)] = normalizeMeeting({
-    ...prev,
-    month: sourceMonth,
-  });
+  sheets[sheetId(sourceMonth, prev.topic)] = withRoster(
+    normalizeMeeting({
+      ...prev,
+      month: sourceMonth,
+    }),
+  );
   const stored = sheets[sheetId(destMonth, topic)];
   const next: MeetingState = stored
-    ? normalizeMeeting({
-        ...stored,
-        topic,
-        month: destMonth,
-        department: prev.department,
-        date: todayISO(),
-      })
-    : normalizeMeeting({
-        topic,
-        month: destMonth,
-        trainer: prev.trainer,
-        trainerTitle: prev.trainerTitle,
-        department: prev.department,
-        date: todayISO(),
-      });
+    ? withRoster(
+        normalizeMeeting({
+          ...stored,
+          topic,
+          month: destMonth,
+          department: prev.department,
+          date: todayISO(),
+        }),
+      )
+    : withRoster(
+        normalizeMeeting({
+          topic,
+          month: destMonth,
+          department: prev.department,
+          date: todayISO(),
+        }),
+      );
   sheets[sheetId(destMonth, topic)] = next;
   writeSheets(sheets);
   saveMeeting(next);
@@ -290,12 +318,15 @@ export function useMeeting() {
   const saveProgress = useCallback(() => {
     let saved = emptyMeeting();
     setMeeting((prev) => {
-      saved = normalizeMeeting({
-        ...prev,
-        savedAt: new Date().toISOString(),
-        month: prev.month || monthKeyNow(),
-      });
+      saved = withRoster(
+        normalizeMeeting({
+          ...prev,
+          savedAt: new Date().toISOString(),
+          month: prev.month || monthKeyNow(),
+        }),
+      );
       persistSheetNow(saved);
+      persistDefaultCrew(saved.roster);
       return saved;
     });
     return saved;

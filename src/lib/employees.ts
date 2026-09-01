@@ -4,6 +4,14 @@ export type Employee = {
   department: string;
 };
 
+export function cloneEmployees(list: Employee[]): Employee[] {
+  return list.map((e) => ({
+    id: e.id,
+    name: e.name,
+    department: e.department,
+  }));
+}
+
 export function slugPart(value: string) {
   return value
     .toLowerCase()

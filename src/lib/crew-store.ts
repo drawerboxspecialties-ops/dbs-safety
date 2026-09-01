@@ -46,6 +46,16 @@ export function saveCrew(employees: Employee[]) {
   localStorage.setItem(KEY, JSON.stringify(employees));
 }
 
+export function persistDefaultCrew(employees: Employee[]) {
+  saveCrew(employees);
+  if (typeof window === "undefined") return;
+  fetch("/api/store", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ crew: employees }),
+  }).catch(() => undefined);
+}
+
 export function useCrew() {
   const [employees, setEmployees] = useState<Employee[]>(cloneSeed);
   const [ready, setReady] = useState(false);
@@ -77,11 +87,7 @@ export function useCrew() {
 
   const persist = useCallback((next: Employee[]) => {
     applyLocal(next);
-    fetch("/api/store", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ crew: next }),
-    }).catch(() => undefined);
+    persistDefaultCrew(next);
   }, [applyLocal]);
 
   const add = useCallback(

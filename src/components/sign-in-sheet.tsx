@@ -20,7 +20,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { REMOVE_PASSWORD, useCrew } from "@/lib/crew-store";
-import { departmentOptions, EMPLOYEES } from "@/lib/employees";
+import {
+  cloneEmployees,
+  departmentOptions,
+  EMPLOYEES,
+} from "@/lib/employees";
 import {
   EMPLOYER,
   TRAINER_CERT,
@@ -86,16 +90,18 @@ export function SignInSheet({
   } = useCrew();
   const shop = useShopStore();
   const topic = getTopic(meeting.topic, shop.store.topics);
+  const sheetCrew =
+    meeting.roster.length > 0 ? meeting.roster : employees;
   const groups = useMemo(() => {
-    const order = departmentOptions(employees);
+    const order = departmentOptions(sheetCrew);
     return order
       .map((department) => ({
         department,
-        people: employees.filter((e) => e.department === department),
+        people: sheetCrew.filter((e) => e.department === department),
       }))
       .filter((g) => g.people.length > 0)
       .filter((g) => !meeting.department || g.department === meeting.department);
-  }, [employees, meeting.department]);
+  }, [sheetCrew, meeting.department]);
   const [signing, setSigning] = useState<SignTarget | null>(null);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -136,11 +142,11 @@ export function SignInSheet({
     if (meeting.department) setNewDept(meeting.department);
   }, [meeting.department]);
 
-  const roster = useMemo(() => buildRoster(employees), [employees]);
-  const departments = departmentOptions(employees);
+  const roster = useMemo(() => buildRoster(sheetCrew), [sheetCrew]);
+  const departments = departmentOptions(sheetCrew);
   const visibleEmployees = meeting.department
-    ? employees.filter((e) => e.department === meeting.department)
-    : employees;
+    ? sheetCrew.filter((e) => e.department === meeting.department)
+    : sheetCrew;
 
   function rowState(person: RosterPerson): SignRow {
     return meetingRow(meeting, person);
@@ -170,10 +176,13 @@ export function SignInSheet({
   function addEmployee() {
     const person = add(newName, chosenDept());
     if (!person) return;
+    update({ roster: [...sheetCrew, person] });
     setNewName("");
     setCustomDept("");
     setAdding(false);
-    setListNote(`${person.name} added to the default list.`);
+    setListNote(
+      `${person.name} added to this month and the default list for later months.`,
+    );
   }
 
   function addFromBlank(person: RosterPerson) {
@@ -192,8 +201,10 @@ export function SignInSheet({
         sig: state.sig,
       });
     }
-    update({ rows: next });
-    setListNote(`${added.name} added to the default list.`);
+    update({ rows: next, roster: [...sheetCrew, added] });
+    setListNote(
+      `${added.name} added to this month and the default list for later months.`,
+    );
   }
 
   function removeEmployee(id: string, name: string) {
@@ -240,6 +251,9 @@ export function SignInSheet({
     );
     update({
       rows: nextRows,
+      roster: sheetCrew.map((e) =>
+        e.id === pendingMove.id ? { ...e, department } : e,
+      ),
       department:
         meeting.department && meeting.department !== department
           ? department
@@ -250,13 +264,15 @@ export function SignInSheet({
     setRemovePassword("");
     setRemoveError("");
     setListNote(
-      `${person.name} moved to ${department}. Save as default list to keep this.`,
+      `${person.name} moved to ${department} on this month and the default list for later months.`,
     );
   }
 
   function saveList() {
-    saveAsDefault(employees);
-    setListNote(`Default list saved — ${employees.length} employees.`);
+    saveAsDefault(sheetCrew);
+    setListNote(
+      `Default list for later months saved — ${sheetCrew.length} employees. Past months stay as they were.`,
+    );
   }
 
   function openEmailSheet() {
@@ -278,7 +294,7 @@ export function SignInSheet({
       const pdf = await buildSignInPdf({
         meeting,
         topic,
-        employees,
+        employees: sheetCrew,
         monthLabel,
       });
       const filename = sheetPdfFilename(topic, monthKey);
@@ -318,10 +334,11 @@ export function SignInSheet({
   function saveSheetProgress() {
     const saved = saveProgress();
     const n = signedCount(saved);
+    const monthLabel = shop.formatMonthLabel(saved.month || shop.monthKey);
     setListNote(
       n
-        ? `Saved ${topic.shortTitle} — ${n} signed. Same list when you come back.`
-        : `Saved the ${topic.shortTitle} sheet. Same list when people sign later.`,
+        ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. This month only.`
+        : `Saved the ${topic.shortTitle} sheet for ${monthLabel} only.`,
     );
   }
 
@@ -343,11 +360,19 @@ export function SignInSheet({
         rows: meeting.rows.filter(
           (r) => r.id !== pendingRemove.id && r.name !== pendingRemove.name,
         ),
+        roster: sheetCrew.filter(
+          (e) => e.id !== pendingRemove.id && e.name !== pendingRemove.name,
+        ),
       });
-      setListNote(`${pendingRemove.name} removed from the default list.`);
+      setListNote(
+        `${pendingRemove.name} removed from this month and the default list for later months. Past months stay as they were.`,
+      );
     } else {
       restoreOriginal();
-      setListNote(`Original list restored — ${EMPLOYEES.length} employees.`);
+      update({ roster: cloneEmployees(EMPLOYEES) });
+      setListNote(
+        `Original list restored on this month and as the default for later months. Past months stay as they were.`,
+      );
     }
     setPendingRemove(null);
     setRemovePassword("");
@@ -502,14 +527,14 @@ export function SignInSheet({
           <p className="text-[12pt] font-bold">
             {meeting.department
               ? `${deptSigned} of ${visibleEmployees.length} in ${meeting.department} signed · ${signed} on this ${topic.shortTitle} list`
-              : `${signed} signed on this ${topic.shortTitle} list · ${employees.length} employees`}
+              : `${signed} signed on this ${topic.shortTitle} list · ${sheetCrew.length} employees`}
           </p>
           <div className="print:hidden flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={() => setAdding(true)}>
               Add employee
             </Button>
             <Button type="button" variant="outline" onClick={saveList}>
-              Save as default list
+              Use list next month
             </Button>
             <Button type="button" variant="ghost" onClick={restoreList}>
               Restore original

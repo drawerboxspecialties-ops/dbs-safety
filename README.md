@@ -5,7 +5,7 @@ Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and door
 There is no set meeting day. Catch a department when you have time.
 
 1. **Safety Topic** — months start empty. Tap a month to open the talk on the **right**. Choose an existing talk or drop a new PDF — that talk stays locked on the month until you **Delete topic**.
-2. **Sign this sheet** — opens the roster in the same window, beside the months. Tap **Save progress** to keep the same list; come back and add the next crew. **Email PDF** attaches the current sheet to an email. **Packet** goes back to the talk.
+2. **Sign this sheet** — opens the roster in the same window. **Save progress** keeps signatures on **that month only**. Add or remove people and the new list is the default for later months; past months stay as they were. **Email PDF** attaches the current sheet. **Packet** goes back to the talk.
 3. **Who’s left** — glows unsigned names on the same sign-in sheet. No extra page.
 
 Each topic has its own running sheet for the month. Signatures stay on that list until the next month starts a clean sheet.
