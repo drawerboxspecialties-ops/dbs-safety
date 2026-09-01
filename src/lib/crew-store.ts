@@ -9,6 +9,8 @@ import {
 
 const KEY = "dbs-safety-crew";
 
+export const REMOVE_PASSWORD = "Dbs92867";
+
 function cloneSeed() {
   return EMPLOYEES.map((e) => ({ ...e }));
 }

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCrew } from "@/lib/crew-store";
+import { REMOVE_PASSWORD, useCrew } from "@/lib/crew-store";
 import { departmentOptions, EMPLOYEES } from "@/lib/employees";
 import {
   EMPLOYER,
@@ -61,6 +61,11 @@ export default function SignInPage() {
   const [newDept, setNewDept] = useState<string>(departmentOptions()[0]);
   const [customDept, setCustomDept] = useState("");
   const [listNote, setListNote] = useState("");
+  const [pendingRemove, setPendingRemove] = useState<
+    { kind: "one"; id: string; name: string } | { kind: "restore" } | null
+  >(null);
+  const [removePassword, setRemovePassword] = useState("");
+  const [removeError, setRemoveError] = useState("");
 
   const roster = useMemo(() => buildRoster(employees), [employees]);
   const departments = departmentOptions(employees);
@@ -120,12 +125,9 @@ export default function SignInPage() {
   }
 
   function removeEmployee(id: string, name: string) {
-    if (!window.confirm(`Remove ${name} from the default sign-in list?`)) return;
-    remove(id);
-    update({
-      rows: meeting.rows.filter((r) => r.id !== id && r.name !== name),
-    });
-    setListNote(`${name} removed from the default list.`);
+    setRemovePassword("");
+    setRemoveError("");
+    setPendingRemove({ kind: "one", id, name });
   }
 
   function saveList() {
@@ -134,17 +136,32 @@ export default function SignInPage() {
   }
 
   function restoreList() {
-    if (
-      !window.confirm(
-        "Restore the original payroll crew list? Added names will be removed.",
-      )
-    ) {
+    setRemovePassword("");
+    setRemoveError("");
+    setPendingRemove({ kind: "restore" });
+  }
+
+  function confirmProtectedRemove() {
+    if (removePassword !== REMOVE_PASSWORD) {
+      setRemoveError("Wrong password.");
       return;
     }
-    restoreOriginal();
-    setListNote(
-      `Original list restored — ${EMPLOYEES.length} employees.`,
-    );
+    if (!pendingRemove) return;
+    if (pendingRemove.kind === "one") {
+      remove(pendingRemove.id);
+      update({
+        rows: meeting.rows.filter(
+          (r) => r.id !== pendingRemove.id && r.name !== pendingRemove.name,
+        ),
+      });
+      setListNote(`${pendingRemove.name} removed from the default list.`);
+    } else {
+      restoreOriginal();
+      setListNote(`Original list restored — ${EMPLOYEES.length} employees.`);
+    }
+    setPendingRemove(null);
+    setRemovePassword("");
+    setRemoveError("");
   }
 
   const signed = meeting.rows.filter((r) => isSigned(r.sig)).length;
@@ -489,6 +506,68 @@ export default function SignInPage() {
               onClick={addEmployee}
             >
               Add to default list
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingRemove !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingRemove(null);
+            setRemovePassword("");
+            setRemoveError("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingRemove?.kind === "restore"
+                ? "Restore original list"
+                : "Remove employee"}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingRemove?.kind === "restore"
+                ? "Enter the password to restore the original crew list."
+                : `Enter the password to remove ${pendingRemove?.name ?? "this employee"}.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Label htmlFor="remove-password">Password</Label>
+            <Input
+              id="remove-password"
+              type="password"
+              value={removePassword}
+              onChange={(e) => {
+                setRemovePassword(e.target.value);
+                setRemoveError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") confirmProtectedRemove();
+              }}
+              className="h-11 text-base"
+              autoFocus
+            />
+            {removeError ? (
+              <p className="text-sm text-red-700">{removeError}</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setPendingRemove(null);
+                setRemovePassword("");
+                setRemoveError("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmProtectedRemove}>
+              {pendingRemove?.kind === "restore" ? "Restore" : "Remove"}
             </Button>
           </DialogFooter>
         </DialogContent>
