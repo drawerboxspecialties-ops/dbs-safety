@@ -244,7 +244,7 @@ export default function SignInPage() {
 
         <section className="mt-4 border-2 border-black p-3">
           <h3 className="text-[12pt] font-bold uppercase">
-            Trainer certification — 29 CFR 1910.132(f)(4)
+            Trainer certification
           </h3>
           <p className="mt-2 text-[12pt] leading-snug">
             I certify that each employee named above has received and understood

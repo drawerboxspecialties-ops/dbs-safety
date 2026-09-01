@@ -33,8 +33,7 @@ export default function HomePage() {
           </p>
           <CardTitle className="text-2xl">Safety Meeting App</CardTitle>
           <CardDescription className="text-white/80">
-            PPE or material handling talk, then a fillable attendance record
-            that meets 29 CFR 1910.132(f)(4).
+            PPE or material handling talk, then a fillable attendance record.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-3">
