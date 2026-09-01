@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Redo2, Undo2, X } from "lucide-react";
 
 export function SignaturePad({
   value,
@@ -13,8 +14,18 @@ export function SignaturePad({
   const valueRef = useRef(value);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
+  const history = useRef<string[]>(value ? [value] : []);
+  const index = useRef(value ? 0 : -1);
+  const skipSync = useRef(false);
+  const [canUndo, setCanUndo] = useState(Boolean(value));
+  const [canRedo, setCanRedo] = useState(false);
 
   valueRef.current = value;
+
+  function setFlags() {
+    setCanUndo(index.current >= 0);
+    setCanRedo(index.current < history.current.length - 1);
+  }
 
   function setupContext() {
     const canvas = canvasRef.current;
@@ -61,6 +72,20 @@ export function SignaturePad({
   }, []);
 
   useEffect(() => {
+    if (skipSync.current) {
+      skipSync.current = false;
+      paintStored();
+      return;
+    }
+    if (value && history.current.length === 0) {
+      history.current = [value];
+      index.current = 0;
+      setFlags();
+    }
+    if (!value && history.current.length === 0) {
+      index.current = -1;
+      setFlags();
+    }
     paintStored();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
@@ -91,6 +116,15 @@ export function SignaturePad({
     last.current = p;
   }
 
+  function commit(next: string) {
+    history.current = history.current.slice(0, index.current + 1);
+    history.current.push(next);
+    index.current = history.current.length - 1;
+    setFlags();
+    skipSync.current = true;
+    onChange(next);
+  }
+
   function onPointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
     drawing.current = false;
@@ -101,45 +135,93 @@ export function SignaturePad({
       /* already released */
     }
     const canvas = canvasRef.current;
-    if (canvas) onChange(canvas.toDataURL("image/png"));
+    if (canvas) commit(canvas.toDataURL("image/png"));
+  }
+
+  function applyAt(nextIndex: number) {
+    index.current = nextIndex;
+    const next = nextIndex < 0 ? "" : history.current[nextIndex];
+    setFlags();
+    skipSync.current = true;
+    onChange(next);
+  }
+
+  function undo(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (index.current < 0) return;
+    applyAt(index.current - 1);
+  }
+
+  function redo(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (index.current >= history.current.length - 1) return;
+    applyAt(index.current + 1);
   }
 
   function clear(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    onChange("");
+    if (!value && index.current < 0) return;
+    commit("");
   }
 
   return (
-    <div className="relative h-8 w-full min-w-[8rem]">
-      <canvas
-        ref={canvasRef}
-        className="h-8 w-full cursor-crosshair touch-none print:hidden"
-        style={{ touchAction: "none" }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      />
-      {value ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={value}
-          alt=""
-          className="hidden h-8 w-full object-contain object-left print:block"
+    <div className="flex items-center gap-0.5">
+      <div className="relative h-8 min-w-0 flex-1">
+        <canvas
+          ref={canvasRef}
+          className="h-8 w-full cursor-crosshair touch-none print:hidden"
+          style={{ touchAction: "none" }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
         />
-      ) : (
-        <div className="pointer-events-none absolute inset-x-1 bottom-1 hidden border-b border-black print:block" />
-      )}
-      {value ? (
+        {value ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={value}
+            alt=""
+            className="hidden h-8 w-full object-contain object-left print:block"
+          />
+        ) : (
+          <div className="pointer-events-none absolute inset-x-1 bottom-1 hidden border-b border-black print:block" />
+        )}
+      </div>
+      <div className="flex shrink-0 print:hidden">
         <button
           type="button"
-          onClick={clear}
-          className="absolute top-0 right-0 px-1 text-[10px] text-neutral-600 underline print:hidden"
+          title="Undo"
+          aria-label="Undo signature"
+          disabled={!canUndo}
+          onClick={undo}
+          className="rounded p-0.5 text-neutral-700 disabled:opacity-30"
         >
-          Clear
+          <Undo2 className="size-3.5" />
         </button>
-      ) : null}
+        <button
+          type="button"
+          title="Redo"
+          aria-label="Redo signature"
+          disabled={!canRedo}
+          onClick={redo}
+          className="rounded p-0.5 text-neutral-700 disabled:opacity-30"
+        >
+          <Redo2 className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          title="Clear"
+          aria-label="Clear signature"
+          disabled={!canUndo}
+          onClick={clear}
+          className="rounded p-0.5 text-neutral-700 disabled:opacity-30"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
