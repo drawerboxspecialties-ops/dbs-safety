@@ -28,7 +28,6 @@ export default function HomePage() {
   const { meeting, update, ready } = useMeeting();
   const shop = useShopStore();
   const catalog = shop.store.topics;
-  const [month, setMonth] = useState(shop.monthKey);
   const [year, setYear] = useState(() =>
     Number((meeting.month || shop.monthKey).slice(0, 4)),
   );
@@ -36,29 +35,24 @@ export default function HomePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState("");
-  const previewRef = useRef<HTMLDivElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [assignYear, setAssignYear] = useState(() =>
     new Date().getFullYear(),
   );
+  const [clearMonth, setClearMonth] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!ready) return;
     const nextMonth = meeting.month || shop.monthKey;
-    setMonth(nextMonth);
     setYear(Number(nextMonth.slice(0, 4)));
   }, [ready, meeting.month, shop.monthKey]);
 
   function showMonth(topicId: string, monthKey: string) {
     if (topicId) update({ topic: topicId, month: monthKey });
     else update({ month: monthKey });
-    setMonth(monthKey);
     setYear(Number(monthKey.slice(0, 4)));
     setExpanded(monthKey);
-    requestAnimationFrame(() => {
-      previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   }
 
   function expandMonth(topicId: string, monthKey: string) {
@@ -74,6 +68,14 @@ export default function HomePage() {
       schedule: { ...shop.store.schedule, [monthKey]: topicId },
     });
     showMonth(topicId, monthKey);
+  }
+
+  async function removeTopicFromMonth(monthKey: string) {
+    const schedule = { ...shop.store.schedule };
+    delete schedule[monthKey];
+    await shop.save({ schedule });
+    setClearMonth("");
+    showMonth("", monthKey);
   }
 
   function queueFile(file: File | undefined) {
@@ -106,17 +108,22 @@ export default function HomePage() {
     }
   }
 
+  const expandedTopicId = expanded ? shop.store.schedule[expanded] : "";
+  const expandedTopic = expandedTopicId
+    ? getTopic(expandedTopicId, catalog)
+    : null;
+
   if (!ready) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-10">
+      <main className="mx-auto w-full max-w-7xl px-4 py-4">
         <p className="text-sm text-muted-foreground">Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-10">
-      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+    <main className="mx-auto flex h-[calc(100dvh-3.75rem)] w-full max-w-7xl flex-col px-4 py-3">
+      <h1 className="shrink-0 text-xl font-semibold tracking-tight">
         Safety Topic
       </h1>
 
@@ -131,7 +138,7 @@ export default function HomePage() {
         }}
       />
 
-      <div className="mt-6">
+      <div className="mt-3 min-h-0 flex-1">
         <MonthCalendar
           year={year}
           now={shop.monthKey}
@@ -149,44 +156,44 @@ export default function HomePage() {
           onSelect={(key, topicId) => expandMonth(topicId, key)}
           preview={
             expanded ? (
-              <div
-                ref={previewRef}
-                className="h-full rounded-2xl border bg-white p-3 sm:p-4"
-              >
-                {shop.store.schedule[expanded] ? (
+              <div className="flex h-full min-h-0 flex-col rounded-2xl border bg-white p-3">
+                {expandedTopic ? (
                   <>
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <div>
+                    <div className="mb-3 flex shrink-0 flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
                           {shop.formatMonthLabel(expanded)}
                         </p>
-                        <h3 className="text-lg font-semibold">
-                          {
-                            getTopic(shop.store.schedule[expanded], catalog)
-                              .title
-                          }
+                        <h3 className="truncate text-lg font-semibold leading-tight">
+                          {expandedTopic.title}
                         </h3>
                       </div>
-                      <Link
-                        href={sheetHref(
-                          "/meetings/sign-in",
-                          shop.store.schedule[expanded],
-                          expanded,
-                        )}
-                        className={buttonVariants()}
-                      >
-                        Sign this sheet
-                      </Link>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => setClearMonth(expanded)}
+                        >
+                          Remove from month
+                        </Button>
+                        <Link
+                          href={sheetHref(
+                            "/meetings/sign-in",
+                            expandedTopicId,
+                            expanded,
+                          )}
+                          className={buttonVariants()}
+                        >
+                          Sign this sheet
+                        </Link>
+                      </div>
                     </div>
-                    {packetUrl(
-                      getTopic(shop.store.schedule[expanded], catalog).pdf,
-                    ) ? (
+                    {packetUrl(expandedTopic.pdf) ? (
                       <iframe
-                        title={`${getTopic(shop.store.schedule[expanded], catalog).title} PDF`}
-                        src={packetUrl(
-                          getTopic(shop.store.schedule[expanded], catalog).pdf,
-                        )}
-                        className="min-h-[70vh] w-full rounded-xl border bg-white"
+                        title={`${expandedTopic.title} PDF`}
+                        src={packetUrl(expandedTopic.pdf)}
+                        className="min-h-0 w-full flex-1 rounded-xl border bg-white"
                       />
                     ) : (
                       <p className="text-sm text-muted-foreground">
@@ -195,29 +202,37 @@ export default function HomePage() {
                     )}
                   </>
                 ) : (
-                  <div>
+                  <div className="min-h-0 overflow-y-auto">
                     <p className="text-sm text-muted-foreground">
                       {shop.formatMonthLabel(expanded)}
                     </p>
-                    <h3 className="text-lg font-semibold">Choose a talk</h3>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {catalog.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          disabled={busy}
-                          onClick={() =>
-                            void assignTopicToMonth(item.id, expanded)
-                          }
-                          className="rounded-xl border bg-muted/50 px-3 py-3 text-left hover:bg-muted"
-                        >
-                          <p className="font-medium">{item.title}</p>
-                        </button>
-                      ))}
-                    </div>
+                    <h3 className="text-lg font-semibold leading-tight">
+                      Choose a talk
+                    </h3>
+                    {catalog.length === 0 ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        No talks yet. Drop a PDF to add one.
+                      </p>
+                    ) : (
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {catalog.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            disabled={busy}
+                            onClick={() =>
+                              void assignTopicToMonth(item.id, expanded)
+                            }
+                            className="rounded-xl border bg-muted/50 px-3 py-2.5 text-left hover:bg-muted"
+                          >
+                            <p className="font-medium">{item.title}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <button
                       type="button"
-                      className="mt-3 text-sm text-cyan-800 underline"
+                      className="mt-3 text-sm font-medium text-cyan-800 underline"
                       onClick={() => fileRef.current?.click()}
                     >
                       Or drop a new PDF
@@ -248,17 +263,22 @@ export default function HomePage() {
                   queueFile(e.dataTransfer.files?.[0]);
                 }}
                 className={cn(
-                  "flex min-h-24 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-5 text-center transition",
+                  "flex min-h-14 w-full items-center justify-center rounded-2xl border-2 border-dashed px-4 py-2.5 text-center transition",
                   dragOver
                     ? "border-cyan-400 bg-cyan-50/80"
                     : "border-cyan-200/70 bg-white/50 hover:border-cyan-300",
                 )}
               >
-                <p className="font-medium">
-                  {busy ? "Saving PDF…" : "Drop a PDF here"}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Or tap to choose a file. Then pick the month it is for.
+                <p className="text-sm">
+                  <span className="font-medium">
+                    {busy ? "Saving PDF…" : "Drop a PDF here"}
+                  </span>
+                  {busy ? null : (
+                    <span className="text-muted-foreground">
+                      {" "}
+                      or tap to choose a file, then pick the month.
+                    </span>
+                  )}
                 </p>
               </button>
               {error ? (
@@ -313,7 +333,7 @@ export default function HomePage() {
                 disabled={busy}
                 onClick={() => void assignFileToMonth(key)}
                 className={cn(
-                  "rounded-xl border px-3 py-3 text-left text-sm transition",
+                  "rounded-xl border px-3 py-2.5 text-left text-sm transition",
                   key === shop.monthKey
                     ? "border-cyan-400/80 bg-cyan-50/80"
                     : "border-transparent bg-muted/60 hover:bg-muted",
@@ -334,6 +354,41 @@ export default function HomePage() {
               onClick={() => setPendingFile(null)}
             >
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={clearMonth !== ""}
+        onOpenChange={(open) => {
+          if (!open) setClearMonth("");
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Remove this talk from the month?</DialogTitle>
+            <DialogDescription>
+              {clearMonth
+                ? `${shop.formatMonthLabel(clearMonth)} will go back to empty. Signatures stay saved if you add the same talk later.`
+                : "This month will go back to empty."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setClearMonth("")}
+            >
+              Keep it
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void removeTopicFromMonth(clearMonth)}
+            >
+              Remove from month
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -57,14 +57,14 @@ export function MonthCalendar({
   onSelect: (month: MonthKey, topicId: TopicId) => void;
 }) {
   return (
-    <section className="glass-panel rounded-3xl p-5 sm:p-6">
-      {lead ? <div className="mb-5">{lead}</div> : null}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="glass-panel flex h-full min-h-0 flex-col rounded-3xl p-4">
+      {lead ? <div className="mb-3 shrink-0">{lead}</div> : null}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
             Year
           </p>
-          <h2 className="text-lg font-semibold">{year}</h2>
+          <h2 className="text-lg font-semibold leading-tight">{year}</h2>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -99,79 +99,82 @@ export function MonthCalendar({
       </div>
       <div
         className={cn(
-          "mt-4",
+          "mt-3 min-h-0 flex-1",
           preview
-            ? "grid items-start gap-3 sm:gap-4 grid-cols-[minmax(12.5rem,20rem)_minmax(0,1fr)]"
+            ? "grid items-stretch gap-3 grid-cols-[minmax(13.5rem,18rem)_minmax(0,1fr)]"
             : "",
         )}
       >
-      <div
-        className={cn(
-          "grid gap-2",
-          preview
-            ? "grid-cols-2"
-            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
-        )}
-      >
-        {yearMonths(year).map((key) => {
-          const topicId = schedule[key] || "";
-          const topic = topicId ? getTopic(topicId, topics) : null;
-          const saved =
-            ready && topicId ? progressForMonth(key, topicId) : null;
-          const signed = saved?.signed ?? 0;
-          const kind = monthKind(key, now, signed);
-          const active = selected === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              disabled={disabled}
-              onClick={() => onSelect(key, topicId)}
-              className={cn(
-                "min-h-[7.5rem] rounded-2xl border px-3 py-3 text-left transition",
-                active
-                  ? "border-cyan-400/80 bg-cyan-50/80 ring-1 ring-cyan-300/70"
-                  : topic && kind === "done"
-                    ? "border-transparent bg-emerald-50/80 hover:bg-emerald-50"
-                    : kind === "now"
-                      ? "border-transparent bg-white/80 ring-1 ring-cyan-200/70 hover:bg-white"
-                      : "glass-panel border-transparent hover:-translate-y-0.5",
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold">{formatMonthShort(key)}</p>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                    topic && kind === "done"
-                      ? "bg-emerald-100 text-emerald-900"
+        <div
+          className={cn(
+            "grid content-start gap-2",
+            preview
+              ? "grid-cols-2 overflow-y-auto pr-0.5"
+              : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+          )}
+        >
+          {yearMonths(year).map((key) => {
+            const topicId = schedule[key] || "";
+            const topic = topicId ? getTopic(topicId, topics) : null;
+            const saved =
+              ready && topicId ? progressForMonth(key, topicId) : null;
+            const signed = saved?.signed ?? 0;
+            const kind = monthKind(key, now, signed);
+            const active = selected === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(key, topicId)}
+                className={cn(
+                  "rounded-2xl border text-left transition",
+                  preview ? "min-h-[4.75rem] px-2.5 py-2" : "min-h-[6.75rem] px-3 py-3",
+                  active
+                    ? "border-cyan-400/80 bg-cyan-50/80 ring-1 ring-cyan-300/70"
+                    : topic && kind === "done"
+                      ? "border-transparent bg-emerald-50/80 hover:bg-emerald-50"
                       : kind === "now"
-                        ? "bg-cyan-100 text-cyan-950"
-                        : "bg-white/70 text-muted-foreground",
-                  )}
-                >
-                  {topic ? monthKindLabel(kind) : "Open"}
-                </span>
-              </div>
-              <p className="mt-2 text-sm font-medium leading-snug">
-                {topic ? topic.shortTitle : "Choose a talk"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {topic
-                  ? signed > 0
-                    ? `${signed} signed`
-                    : kind === "upcoming"
-                      ? "Not yet"
-                      : "No signatures"
-                  : "No topic yet"}
-              </p>
-            </button>
-          );
-        })}
-      </div>
-      {preview ? (
-        <div className="min-w-0 sticky top-20">{preview}</div>
-      ) : null}
+                        ? "border-transparent bg-white/80 ring-1 ring-cyan-200/70 hover:bg-white"
+                        : "glass-panel border-transparent hover:-translate-y-0.5",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-semibold">{formatMonthShort(key)}</p>
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+                      topic && kind === "done"
+                        ? "bg-emerald-100 text-emerald-900"
+                        : kind === "now"
+                          ? "bg-cyan-100 text-cyan-950"
+                          : "bg-white/70 text-muted-foreground",
+                    )}
+                  >
+                    {topic ? monthKindLabel(kind) : "Open"}
+                  </span>
+                </div>
+                <p className="mt-1.5 truncate text-sm font-medium leading-snug">
+                  {topic ? topic.shortTitle : "Choose a talk"}
+                </p>
+                {preview ? null : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {topic
+                      ? signed > 0
+                        ? `${signed} signed`
+                        : kind === "upcoming"
+                          ? "Not yet"
+                          : "No signatures"
+                      : "No topic yet"}
+                  </p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {preview ? (
+          <div className="min-h-0 min-w-0 overflow-hidden">{preview}</div>
+        ) : null}
       </div>
     </section>
   );

@@ -314,14 +314,14 @@ export default function SignInPage() {
 
   if (!ready || !crewReady) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-6">
+      <main className="mx-auto w-full max-w-7xl px-4 py-4">
         <p className="text-sm text-muted-foreground">Loading sign-in…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
+    <main className="mx-auto w-full max-w-7xl px-4 py-4 print:max-w-none print:px-0 print:py-0">
       <PageChrome title={meeting.department || topic.shortTitle}>
         <Link
           href={sheetHref("/meetings/packet", meeting.topic, meeting.month)}

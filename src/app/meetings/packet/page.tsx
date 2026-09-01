@@ -22,14 +22,14 @@ export default function PacketPage() {
 
   if (!ready) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-6">
+      <main className="mx-auto w-full max-w-7xl px-4 py-4">
         <p className="text-sm text-muted-foreground">Loading packet…</p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6">
+    <main className="mx-auto w-full max-w-7xl px-4 py-4">
       <PageChrome title={topic.title}>
         <Link href={signHref} className={buttonVariants()}>
           Sign this sheet

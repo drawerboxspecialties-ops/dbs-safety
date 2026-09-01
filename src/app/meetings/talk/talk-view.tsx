@@ -24,7 +24,7 @@ export function TalkView() {
   const packet = pdfUrl(topic.pdf);
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-6 print:max-w-none print:px-0 print:py-0">
+    <main className="mx-auto w-full max-w-7xl px-4 py-4 print:max-w-none print:px-0 print:py-0">
       <PageChrome title={topic.title}>
         {packet ? (
           <a
