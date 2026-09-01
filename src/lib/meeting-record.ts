@@ -1,7 +1,10 @@
 import { format, parseISO } from "date-fns";
+import { loadCrew } from "@/lib/crew-store";
 import {
   BLANK_ROWS,
+  EMPLOYEES,
   employeesByDepartment,
+  type Employee,
 } from "@/lib/employees";
 import type { MeetingState, SignRow } from "@/lib/meeting-store";
 import { getTopic, type TopicId } from "@/lib/topics";
@@ -13,11 +16,16 @@ export const TRAINER_CERT =
   "I certify that each employee who signed has received and understood the training on the subject listed.";
 
 export type RosterPerson = {
+  id: string;
   n: number;
   name: string;
   dept: string;
   extra: boolean;
 };
+
+function currentCrew(): Employee[] {
+  return typeof window === "undefined" ? EMPLOYEES : loadCrew();
+}
 
 export type AttendanceRow = {
   n: number;
@@ -55,13 +63,14 @@ export function formatMeetingDate(iso: string) {
   }
 }
 
-export function buildRoster(): RosterPerson[] {
+export function buildRoster(employees: Employee[] = currentCrew()): RosterPerson[] {
   const rows: RosterPerson[] = [];
   let n = 0;
-  for (const group of employeesByDepartment()) {
+  for (const group of employeesByDepartment(employees)) {
     for (const person of group.people) {
       n += 1;
       rows.push({
+        id: person.id,
         n,
         name: person.name,
         dept: person.department,
@@ -71,20 +80,33 @@ export function buildRoster(): RosterPerson[] {
   }
   for (let i = 0; i < BLANK_ROWS; i += 1) {
     n += 1;
-    rows.push({ n, name: "", dept: "", extra: true });
+    rows.push({
+      id: `blank-${i + 1}`,
+      n,
+      name: "",
+      dept: "",
+      extra: true,
+    });
   }
   return rows;
 }
 
-export function rowState(meeting: MeetingState, n: number): SignRow {
-  return (
-    meeting.rows.find((r) => r.n === String(n)) ?? {
-      n: String(n),
-      name: "",
-      dept: "",
-      sig: "",
-    }
-  );
+export function rowState(meeting: MeetingState, person: RosterPerson): SignRow {
+  const byId = meeting.rows.find((r) => r.id && r.id === person.id);
+  if (byId) return byId;
+  if (person.name) {
+    const byName = meeting.rows.find((r) => r.name === person.name);
+    if (byName) return { ...byName, id: person.id };
+  }
+  const byN = meeting.rows.find((r) => r.n === String(person.n) && !r.id);
+  if (byN) return { ...byN, id: person.id };
+  return {
+    id: person.id,
+    n: String(person.n),
+    name: person.extra ? "" : person.name,
+    dept: person.extra ? "" : person.dept,
+    sig: "",
+  };
 }
 
 export function attendanceName(person: RosterPerson, row: SignRow) {
@@ -101,7 +123,7 @@ export function trainedEmployees(
 ): AttendanceRow[] {
   return roster
     .map((person) => {
-      const row = rowState(meeting, person.n);
+      const row = rowState(meeting, person);
       return {
         n: person.n,
         name: attendanceName(person, row),
@@ -118,7 +140,7 @@ export function makeupEmployees(
 ): { name: string; dept: string }[] {
   return roster
     .map((person) => {
-      const row = rowState(meeting, person.n);
+      const row = rowState(meeting, person);
       return {
         name: attendanceName(person, row),
         dept: attendanceDept(person, row),
@@ -130,20 +152,27 @@ export function makeupEmployees(
     .map(({ name, dept }) => ({ name, dept }));
 }
 
-export function recordGaps(meeting: MeetingState): string[] {
+export function recordGaps(
+  meeting: MeetingState,
+  roster = buildRoster(),
+): string[] {
   const gaps: string[] = [];
   if (!meeting.date) gaps.push("Date of training");
   if (!meeting.topic) gaps.push("Subject");
   if (!meeting.trainer.trim()) gaps.push("Trainer name");
   if (!isSigned(meeting.trainerSig)) gaps.push("Trainer signature");
-  if (trainedEmployees(meeting).length === 0) {
+  if (trainedEmployees(meeting, roster).length === 0) {
     gaps.push("At least one employee signature");
   }
   return gaps;
 }
 
-export function snapshotMeeting(meeting: MeetingState): FiledMeeting {
+export function snapshotMeeting(
+  meeting: MeetingState,
+  employees?: Employee[],
+): FiledMeeting {
   const topic = getTopic(meeting.topic);
+  const roster = buildRoster(employees ?? currentCrew());
   return {
     id:
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -155,11 +184,11 @@ export function snapshotMeeting(meeting: MeetingState): FiledMeeting {
     subject: topic.title,
     trainer: meeting.trainer.trim(),
     trainerTitle: meeting.trainerTitle.trim(),
-    trained: trainedEmployees(meeting).map(({ name, dept }) => ({
+    trained: trainedEmployees(meeting, roster).map(({ name, dept }) => ({
       name,
       dept,
     })),
-    makeup: makeupEmployees(meeting),
+    makeup: makeupEmployees(meeting, roster),
     topicsCovered: topic.talkingPoints,
   };
 }

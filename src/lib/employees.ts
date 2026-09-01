@@ -1,7 +1,33 @@
 export type Employee = {
+  id: string;
   name: string;
   department: string;
 };
+
+export function slugPart(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function makeEmployeeId(
+  name: string,
+  department: string,
+  existing: { id: string }[] = [],
+) {
+  const base =
+    [slugPart(name), slugPart(department)].filter(Boolean).join("__") ||
+    `employee-${Date.now()}`;
+  if (!existing.some((e) => e.id === base)) return base;
+  let id = base;
+  let n = 2;
+  while (existing.some((e) => e.id === id)) {
+    id = `${base}-${n}`;
+    n += 1;
+  }
+  return id;
+}
 
 export const DEPT_ORDER = [
   "Rough Mill",
@@ -16,7 +42,7 @@ export const DEPT_ORDER = [
   "Manufacturing",
 ] as const;
 
-export const EMPLOYEES: Employee[] = [
+const SEED: { name: string; department: string }[] = [
   { name: "AGUILAR VILLANUEVA, MIGUEL", department: "Rough Mill" },
   { name: "LUCERO MENDEZ, MANUEL", department: "Rough Mill" },
   { name: "PATRICK, JACOB", department: "Rough Mill" },
@@ -62,11 +88,27 @@ export const EMPLOYEES: Employee[] = [
   { name: "RODRIGUEZ, CALIXTO", department: "Manufacturing" },
 ];
 
+export const EMPLOYEES: Employee[] = SEED.map((person) => ({
+  id: makeEmployeeId(person.name, person.department),
+  name: person.name,
+  department: person.department,
+}));
+
 export const BLANK_ROWS = 6;
 
-export function employeesByDepartment() {
-  return DEPT_ORDER.map((department) => ({
-    department,
-    people: EMPLOYEES.filter((e) => e.department === department),
-  })).filter((g) => g.people.length > 0);
+export function departmentOptions(employees: Employee[] = EMPLOYEES) {
+  const extra = employees
+    .map((e) => e.department)
+    .filter((d) => d && !(DEPT_ORDER as readonly string[]).includes(d));
+  return [...DEPT_ORDER, ...Array.from(new Set(extra))];
+}
+
+export function employeesByDepartment(employees: Employee[] = EMPLOYEES) {
+  const order = departmentOptions(employees);
+  return order
+    .map((department) => ({
+      department,
+      people: employees.filter((e) => e.department === department),
+    }))
+    .filter((g) => g.people.length > 0);
 }

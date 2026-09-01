@@ -36,4 +36,4 @@ python3 generate_safety_sheets.py
 python3 generate_signin_sheet.py
 ```
 
-Edit `employees.csv` if the crew list changes, then update `src/lib/employees.ts` to match.
+The sign-in sheet can add or remove employees and **Save as default list**. That list stays in this browser for the next meeting. **Restore original** brings back the payroll seed in `src/lib/employees.ts` (also in `employees.csv`).

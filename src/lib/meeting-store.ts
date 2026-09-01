@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { TopicId } from "@/lib/topics";
 
 export type SignRow = {
+  id?: string;
   n: string;
   name: string;
   dept: string;

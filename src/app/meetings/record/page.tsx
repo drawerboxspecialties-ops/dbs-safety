@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useCrew } from "@/lib/crew-store";
 import { useMeeting } from "@/lib/meeting-store";
 import {
   EMPLOYER,
   TRAINER_CERT,
   WORKPLACE,
+  buildRoster,
   formatMeetingDate,
   isSigned,
   loadFiledMeetings,
@@ -22,6 +24,7 @@ import { getTopic } from "@/lib/topics";
 
 export default function TrainingRecordPage() {
   const { meeting, ready } = useMeeting();
+  const { employees, ready: crewReady } = useCrew();
   const topic = getTopic(meeting.topic);
   const [filed, setFiled] = useState<FiledMeeting[]>([]);
   const [savedNote, setSavedNote] = useState("");
@@ -31,13 +34,20 @@ export default function TrainingRecordPage() {
     setFiled(loadFiledMeetings());
   }, []);
 
-  const trained = useMemo(() => trainedEmployees(meeting), [meeting]);
-  const makeup = useMemo(() => makeupEmployees(meeting), [meeting]);
-  const gaps = useMemo(() => recordGaps(meeting), [meeting]);
+  const roster = useMemo(() => buildRoster(employees), [employees]);
+  const trained = useMemo(
+    () => trainedEmployees(meeting, roster),
+    [meeting, roster],
+  );
+  const makeup = useMemo(
+    () => makeupEmployees(meeting, roster),
+    [meeting, roster],
+  );
+  const gaps = useMemo(() => recordGaps(meeting, roster), [meeting, roster]);
   const selected = view === "live" ? null : filed.find((r) => r.id === view);
 
   function fileRecord() {
-    const snap = snapshotMeeting(meeting);
+    const snap = snapshotMeeting(meeting, employees);
     const next = saveFiledMeeting(snap);
     setFiled(next);
     setSavedNote(
@@ -45,7 +55,7 @@ export default function TrainingRecordPage() {
     );
   }
 
-  if (!ready) {
+  if (!ready || !crewReady) {
     return (
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <p className="text-sm text-muted-foreground">Loading record…</p>
