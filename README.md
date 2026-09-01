@@ -4,7 +4,7 @@ Shop safety app for **Drawer Box Specialties** (drawer boxes, cabinets, and door
 
 There is no set meeting day. Catch a department when you have time.
 
-1. **Topics** — pick a packet or drop a PDF. Choose the month it belongs to.
+1. **Topics** — the year calendar shows each month’s talk: done, this month, or coming up. Pick a packet or drop a PDF if you need to change it.
 2. **Packet** — the PDF for that talk.
 3. **Sign** — that topic’s sign-in list for the month. Tap **Save progress** to keep the same list; come back and add the next crew.
 4. **Who’s left** — leftover names by department.

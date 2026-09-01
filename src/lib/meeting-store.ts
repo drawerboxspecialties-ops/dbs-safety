@@ -117,6 +117,15 @@ export function listSheetProgress(): SheetProgress[] {
   });
 }
 
+export function progressForMonth(
+  month: string,
+  topic?: TopicId,
+): SheetProgress | null {
+  const all = listSheetProgress().filter((row) => row.month === month);
+  if (topic) return all.find((row) => row.topic === topic) ?? null;
+  return [...all].sort((a, b) => b.signed - a.signed)[0] ?? null;
+}
+
 export function sheetProgress(
   topic: TopicId,
   month: string,

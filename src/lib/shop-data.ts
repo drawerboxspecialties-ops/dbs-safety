@@ -84,6 +84,20 @@ export function formatMonthLabel(key: MonthKey) {
   });
 }
 
+export function formatMonthName(key: MonthKey) {
+  const [year, month] = key.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+    month: "long",
+  });
+}
+
+export function formatMonthShort(key: MonthKey) {
+  const [year, month] = key.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+    month: "short",
+  });
+}
+
 export function yearMonths(year: number): MonthKey[] {
   return Array.from({ length: 12 }, (_, i) => {
     const m = String(i + 1).padStart(2, "0");

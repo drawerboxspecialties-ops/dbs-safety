@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { MonthCalendar } from "@/components/month-calendar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { sheetProgress, useMeeting } from "@/lib/meeting-store";
 import {
@@ -10,6 +11,7 @@ import {
   packetUrl,
   topicSourceLabel,
 } from "@/lib/packet";
+import { topicForMonth } from "@/lib/shop-data";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,9 @@ export default function HomePage() {
   const catalog = shop.store.topics;
   const [picked, setPicked] = useState(meeting.topic);
   const [month, setMonth] = useState(shop.monthKey);
+  const [year, setYear] = useState(() =>
+    Number((meeting.month || shop.monthKey).slice(0, 4)),
+  );
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,8 +40,10 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!ready) return;
+    const nextMonth = meeting.month || shop.monthKey;
     setPicked(meeting.topic);
-    setMonth(meeting.month || shop.monthKey);
+    setMonth(nextMonth);
+    setYear(Number(nextMonth.slice(0, 4)));
   }, [ready, meeting.topic, meeting.month, shop.monthKey]);
 
   async function applyAndOpen(topicId: string, monthKey: string, pdf?: string) {
@@ -57,8 +64,8 @@ export default function HomePage() {
       const created = await ingestPdf(file, catalog);
       await shop.save({ topics: [...catalog, created] });
       setPicked(created.id);
-      setMonth(shop.monthKey);
-      await applyAndOpen(created.id, shop.monthKey, created.pdf);
+      setMonth(month);
+      await applyAndOpen(created.id, month, created.pdf);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add PDF.");
     } finally {
@@ -80,57 +87,60 @@ export default function HomePage() {
         Choose the talk
       </h1>
       <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-        Pick a packet or drop a PDF. Choose the month. That topic keeps one
-        sign-in list — save progress and keep adding names.
+        Look at the year. Tap a month to see what was already signed or what’s
+        coming up. Then open that packet and keep the same sign-in list.
       </p>
 
-      <input
-        ref={fileRef}
-        type="file"
-        accept="application/pdf,.pdf"
-        className="hidden"
-        onChange={(e) => {
-          void takeFile(e.target.files?.[0]);
-          e.target.value = "";
-        }}
-      />
+      <div className="mt-6">
+        <MonthCalendar
+          year={year}
+          now={shop.monthKey}
+          selected={month}
+          schedule={shop.store.schedule}
+          topics={catalog}
+          ready={ready}
+          onYearChange={setYear}
+          onSelect={(key, topicId) => {
+            setMonth(key);
+            setPicked(topicId);
+          }}
+        />
+      </div>
 
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => fileRef.current?.click()}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          void takeFile(e.dataTransfer.files?.[0]);
-        }}
-        className={cn(
-          "glass-panel mt-6 flex min-h-36 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-8 text-center transition",
-          dragOver
-            ? "border-cyan-400 bg-cyan-50/80"
-            : "border-transparent hover:border-cyan-200",
-        )}
-      >
-        <p className="font-medium">
-          {busy ? "Saving PDF…" : "Drop a PDF here"}
+      <section className="mt-6 flex flex-wrap items-end justify-between gap-3">
+        <p className="max-w-xl text-sm text-muted-foreground">
+          {pickedProgress?.signed
+            ? `${pickedProgress.signed} already signed on ${topic.shortTitle} for ${shop.formatMonthLabel(month)}. Open the same list and keep adding.`
+            : month < shop.monthKey
+              ? `${topic.shortTitle} in ${shop.formatMonthLabel(month)} has no signatures yet.`
+              : month === shop.monthKey
+                ? `${topic.shortTitle} is this month. Open the packet, then the sign-in list.`
+                : `${topic.shortTitle} is planned for ${shop.formatMonthLabel(month)}.`}
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Or tap to choose a file. Title comes from the file name.
-        </p>
-      </button>
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="lg"
+            disabled={busy}
+            onClick={() => applyAndOpen(picked, month)}
+          >
+            {packetUrl(topic.pdf) ? "Open packet" : "Open sign-in"}
+          </Button>
+          <Link
+            href="/meetings/sign-in"
+            className={buttonVariants({ size: "lg", variant: "outline" })}
+            onClick={() => update({ topic: picked, month })}
+          >
+            Skip to sign-in
+          </Link>
+        </div>
+      </section>
 
       <section className="mt-8">
         <h2 className="text-lg font-semibold">Topics</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Tap a topic to assign it to {shop.formatMonthLabel(month)}.
+        </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {catalog.map((item) => {
             const active = picked === item.id;
@@ -164,7 +174,11 @@ export default function HomePage() {
                   </p>
                 ) : (
                   <p className="mt-2 text-sm text-muted-foreground">
-                    No signatures yet
+                    {shop.store.schedule[month] === item.id ||
+                    (!shop.store.schedule[month] &&
+                      topicForMonth(month) === item.id)
+                      ? `Planned for ${shop.formatMonthLabel(month)}`
+                      : "No signatures this month"}
                   </p>
                 )}
               </button>
@@ -173,51 +187,50 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="glass-panel mt-8 rounded-3xl p-5 sm:p-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Month for this topic
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={(e) => {
+          void takeFile(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => fileRef.current?.click()}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          void takeFile(e.dataTransfer.files?.[0]);
+        }}
+        className={cn(
+          "glass-panel mt-8 flex min-h-28 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-8 text-center transition",
+          dragOver
+            ? "border-cyan-400 bg-cyan-50/80"
+            : "border-transparent hover:border-cyan-200",
+        )}
+      >
+        <p className="font-medium">
+          {busy ? "Saving PDF…" : "Drop a PDF to add a topic"}
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {shop.months.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setMonth(key)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-sm transition",
-                month === key
-                  ? "border-cyan-400/80 bg-cyan-50/80 text-cyan-950 ring-1 ring-cyan-300/70"
-                  : "border-transparent bg-white/60 hover:bg-white",
-              )}
-            >
-              {shop.formatMonthLabel(key)}
-              {key === shop.monthKey ? " · now" : ""}
-            </button>
-          ))}
-        </div>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {pickedProgress?.signed
-            ? `${pickedProgress.signed} already signed on ${topic.shortTitle} for ${shop.formatMonthLabel(month)}. Open the same list and keep adding.`
-            : `${topic.shortTitle} → ${shop.formatMonthLabel(month)}. Next: the PDF, then that topic’s sign-in list.`}
+        <p className="mt-1 text-sm text-muted-foreground">
+          Title comes from the file name. It lands on the selected month.
         </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="lg"
-            disabled={busy}
-            onClick={() => applyAndOpen(picked, month)}
-          >
-            {packetUrl(topic.pdf) ? "Open packet" : "Open sign-in"}
-          </Button>
-          <Link
-            href="/meetings/sign-in"
-            className={buttonVariants({ size: "lg", variant: "outline" })}
-            onClick={() => update({ topic: picked, month })}
-          >
-            Skip to sign-in
-          </Link>
-        </div>
-      </section>
+      </button>
+      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
     </main>
   );
 }
