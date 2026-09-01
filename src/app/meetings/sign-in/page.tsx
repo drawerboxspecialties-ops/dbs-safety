@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "@/components/date-picker";
 import { PageChrome } from "@/components/page-chrome";
@@ -33,7 +34,7 @@ import {
   useMeeting,
   type SignRow,
 } from "@/lib/meeting-store";
-import { sheetHref } from "@/lib/sheet-href";
+import { readSheetQuery, sheetHref } from "@/lib/sheet-href";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ type SignTarget =
 const OTHER = "__other";
 
 export default function SignInPage() {
+  const router = useRouter();
   const { meeting, update, saveProgress, ready } = useMeeting();
   const {
     employees,
@@ -94,11 +96,16 @@ export default function SignInPage() {
   const [moveCustom, setMoveCustom] = useState("");
   const [removePassword, setRemovePassword] = useState("");
   const [removeError, setRemoveError] = useState("");
+  const [showLeft, setShowLeft] = useState(false);
 
   useEffect(() => {
     if (!ready) return;
     const today = todayISO();
     if (meeting.date !== today) update({ date: today });
+    if (readSheetQuery().left) {
+      setShowLeft(true);
+      if (meeting.department) update({ department: "" });
+    }
   }, [ready]);
 
   useEffect(() => {
@@ -316,12 +323,26 @@ export default function SignInPage() {
         >
           Packet
         </Link>
-        <Link
-          href={sheetHref("/meetings/record", meeting.topic, meeting.month)}
-          className={buttonVariants({ variant: "outline" })}
+        <Button
+          type="button"
+          variant={showLeft ? "default" : "outline"}
+          onClick={() => {
+            const next = !showLeft;
+            setShowLeft(next);
+            if (next) update({ department: "" });
+            router.replace(
+              sheetHref(
+                "/meetings/sign-in",
+                meeting.topic,
+                meeting.month,
+                next ? { left: "1" } : undefined,
+              ),
+              { scroll: false },
+            );
+          }}
         >
           Who&apos;s left
-        </Link>
+        </Button>
         <Button type="button" onClick={saveSheetProgress}>
           Save progress
         </Button>
@@ -407,10 +428,10 @@ export default function SignInPage() {
           </div>
         </div>
         <p className="print:hidden mb-1 text-sm text-muted-foreground">
-          {topic.shortTitle} keeps one list for this month. Signatures stay.
-          Save progress, then catch the next crew on the same sheet. Tap a
-          name. Move or remove needs the shop password.
-          {meeting.savedAt
+          {showLeft
+            ? "Glowing names still need this talk. Signed names stay dim. Tap Who’s left again to turn it off."
+            : `${topic.shortTitle} keeps one list for this month. Signatures stay. Save progress, then catch the next crew on the same sheet.`}
+          {!showLeft && meeting.savedAt
             ? ` Last saved ${formatMeetingDate(meeting.savedAt.slice(0, 10))}.`
             : ""}
         </p>
@@ -439,6 +460,7 @@ export default function SignInPage() {
                     (r) => !r.extra && r.dept === group.department,
                   )}
                   rowState={rowState}
+                  showLeft={showLeft}
                   onOpen={(person) => setSigning({ kind: "employee", person })}
                   onMove={startMove}
                   onRemove={removeEmployee}
@@ -862,6 +884,7 @@ function GroupRows({
   count,
   rows,
   rowState,
+  showLeft,
   onOpen,
   onMove,
   onRemove,
@@ -870,10 +893,12 @@ function GroupRows({
   count: number;
   rows: RosterPerson[];
   rowState: (person: RosterPerson) => SignRow;
+  showLeft: boolean;
   onOpen: (person: RosterPerson) => void;
   onMove: (person: RosterPerson) => void;
   onRemove: (id: string, name: string) => void;
 }) {
+  const left = rows.filter((r) => !isSigned(rowState(r).sig)).length;
   return (
     <>
       <tr className="bg-neutral-200">
@@ -881,13 +906,24 @@ function GroupRows({
           colSpan={5}
           className="border-b border-black px-2 py-0.5 text-[11pt] font-bold"
         >
-          {department} — {count} employees
+          {department} —{" "}
+          {showLeft ? `${left} left` : `${count} employees`}
         </td>
       </tr>
       {rows.map((r, i) => {
         const state = rowState(r);
+        const unsigned = !isSigned(state.sig);
         return (
-          <tr key={r.id} className={i % 2 ? "bg-neutral-100" : "bg-white"}>
+          <tr
+            key={r.id}
+            className={cn(
+              i % 2 ? "bg-neutral-100" : "bg-white",
+              showLeft &&
+                unsigned &&
+                "bg-amber-100 shadow-[inset_0_0_0_2px_#f59e0b,0_0_18px_rgba(245,158,11,0.45)]",
+              showLeft && !unsigned && "opacity-35",
+            )}
+          >
             <td className="border-b border-black px-2 py-0 text-[10pt] leading-tight">
               {r.n}
             </td>

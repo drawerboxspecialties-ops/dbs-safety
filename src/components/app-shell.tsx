@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { AppNav } from "@/components/app-nav";
 
@@ -12,7 +13,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </p>
             <p className="text-base font-semibold">DBS Safety</p>
           </Link>
-          <AppNav />
+          <Suspense fallback={<nav className="h-8" />}>
+            <AppNav />
+          </Suspense>
         </div>
       </header>
       <div className="flex-1">{children}</div>

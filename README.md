@@ -7,7 +7,7 @@ There is no set meeting day. Catch a department when you have time.
 1. **Year** — tap a month to open that packet. Drop a PDF and pick the month it belongs to.
 2. **Packet** — the PDF for that talk.
 3. **Sign** — that topic’s sign-in list for the month. Tap **Save progress** to keep the same list; come back and add the next crew.
-4. **Who’s left** — leftover names by department.
+4. **Who’s left** — glows unsigned names on the same sign-in sheet. No extra page.
 
 Each topic has its own running sheet for the month. Signatures stay on that list until the next month starts a clean sheet.
 

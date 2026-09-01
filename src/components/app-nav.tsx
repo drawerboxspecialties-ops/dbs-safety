@@ -1,31 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { OPS_HUB_URL } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
-const links = [
-  { href: "/", label: "Topics", match: (path: string) => path === "/" },
-  {
-    href: "/meetings/packet",
-    label: "Packet",
-    match: (path: string) => path.startsWith("/meetings/packet"),
-  },
-  {
-    href: "/meetings/sign-in",
-    label: "Sign",
-    match: (path: string) => path.startsWith("/meetings/sign-in"),
-  },
-  {
-    href: "/meetings/record",
-    label: "Who's left",
-    match: (path: string) => path.startsWith("/meetings/record"),
-  },
-];
-
 export function AppNav() {
   const path = usePathname();
+  const search = useSearchParams();
+  const showingLeft = search.get("left") === "1";
+  const links = [
+    { href: "/", label: "Topics", active: path === "/" },
+    {
+      href: "/meetings/packet",
+      label: "Packet",
+      active: path.startsWith("/meetings/packet"),
+    },
+    {
+      href: "/meetings/sign-in",
+      label: "Sign",
+      active: path.startsWith("/meetings/sign-in") && !showingLeft,
+    },
+    {
+      href: "/meetings/sign-in?left=1",
+      label: "Who's left",
+      active:
+        showingLeft ||
+        path.startsWith("/meetings/record"),
+    },
+  ];
 
   return (
     <nav className="flex flex-wrap items-center gap-1 text-sm">
@@ -36,7 +39,7 @@ export function AppNav() {
         Ops Hub
       </a>
       {links.map((link) => {
-        const active = link.match(path);
+        const active = link.active;
         return (
           <Link
             key={link.href}
