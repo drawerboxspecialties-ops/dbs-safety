@@ -1,16 +1,15 @@
-// Paste this object into VERCEL_APPS in
-// drawerboxspecialties-ops/ops-dashboard index.html
+// Paste this object as the first item inside VERCEL_APPS in
+// https://github.com/drawerboxspecialties-ops/ops-dashboard/edit/main/index.html
+//
+// After GitHub Pages rebuilds, DBS Safety appears on
+// https://drawerboxspecialties-ops.github.io/ops-dashboard/
 {
     name: 'dbs-safety',
     title: 'DBS Safety',
-    description: 'Shop safety meetings: PPE and material handling talks, sign-in, and training record.',
-    url: 'https://drawerboxspecialties-ops.github.io/ops-dashboard/safety/',
-    host: 'Pages',
-    cta: 'Open',
+    description: 'Safety meetings, sign-in, and training record.',
+    url: 'http://127.0.0.1:43151',
+    host: 'Local',
+    cta: 'Open local',
     alongsidePages: true,
-    extraLinks: [
-        { label: 'Sign-in', url: 'https://drawerboxspecialties-ops.github.io/ops-dashboard/safety/meetings/sign-in/' },
-        { label: 'Talk', url: 'https://drawerboxspecialties-ops.github.io/ops-dashboard/safety/meetings/' }
-    ],
     updated_at: '2026-09-01T00:00:00.000Z'
-}
+},
