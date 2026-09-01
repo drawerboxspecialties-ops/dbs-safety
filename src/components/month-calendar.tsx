@@ -64,62 +64,69 @@ export function MonthCalendar({
 }) {
   return (
     <section className="glass-panel flex h-full min-h-0 flex-col rounded-2xl p-3 print:bg-white print:shadow-none">
-      <div
-        className={cn(
-          "flex shrink-0 flex-wrap items-center gap-2",
-          printFocus && "print:hidden",
-        )}
-      >
-        {title ? (
-          <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        ) : null}
-        {lead ? <div className="min-w-[12rem] flex-1">{lead}</div> : null}
-        <div className="ml-auto flex items-center gap-1">
-          <p className="mr-1 text-sm font-semibold tabular-nums">{year}</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Previous year"
-            disabled={disabled}
-            onClick={() => onYearChange(year - 1)}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={disabled}
-            onClick={() => onYearChange(Number(now.slice(0, 4)))}
-          >
-            This year
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Next year"
-            disabled={disabled}
-            onClick={() => onYearChange(year + 1)}
-          >
-            <ChevronRight />
-          </Button>
+      {title || lead ? (
+        <div
+          className={cn(
+            "mb-3 flex shrink-0 flex-wrap items-center gap-2",
+            printFocus && "print:hidden",
+          )}
+        >
+          {title ? (
+            <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+          ) : null}
+          {lead ? <div className="min-w-[12rem] flex-1">{lead}</div> : null}
         </div>
-      </div>
+      ) : null}
       <div
         className={cn(
-          "mt-3 min-h-0 flex-1",
+          "min-h-0 flex-1",
           preview &&
             "grid items-stretch gap-3 grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)]",
         )}
       >
         <div
           className={cn(
-            "grid content-start gap-2",
+            "flex min-h-0 flex-col",
+            printFocus && "print:hidden",
+          )}
+        >
+          <div className="mb-2 flex shrink-0 items-center gap-1">
+            <p className="mr-1 text-sm font-semibold tabular-nums">{year}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Previous year"
+              disabled={disabled}
+              onClick={() => onYearChange(year - 1)}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={disabled}
+              onClick={() => onYearChange(Number(now.slice(0, 4)))}
+            >
+              This year
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Next year"
+              disabled={disabled}
+              onClick={() => onYearChange(year + 1)}
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+        <div
+          className={cn(
+            "grid min-h-0 content-start gap-2",
             preview
               ? "grid-cols-2 overflow-y-auto pr-0.5"
               : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
-            printFocus && "print:hidden",
           )}
         >
           {yearMonths(year).map((key) => {
@@ -198,6 +205,7 @@ export function MonthCalendar({
               </div>
             );
           })}
+        </div>
         </div>
         {preview ? (
           <div className="min-h-0 min-w-0 overflow-hidden">{preview}</div>
