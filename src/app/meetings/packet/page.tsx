@@ -32,14 +32,6 @@ export default function PacketPage() {
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6">
       <PageChrome title={topic.title}>
-        {topic.talkingPoints.length > 0 ? (
-          <Link
-            href={`/meetings/talk?topic=${topic.id}`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Talk notes
-          </Link>
-        ) : null}
         <Link href={signHref} className={buttonVariants()}>
           Sign this sheet
         </Link>
