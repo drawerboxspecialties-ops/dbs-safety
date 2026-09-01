@@ -39,6 +39,7 @@ export function MonthCalendar({
   schedule,
   topics,
   ready,
+  disabled,
   onYearChange,
   onSelect,
 }: {
@@ -48,6 +49,7 @@ export function MonthCalendar({
   schedule: Record<MonthKey, TopicId>;
   topics: Topic[];
   ready: boolean;
+  disabled?: boolean;
   onYearChange: (year: number) => void;
   onSelect: (month: MonthKey, topicId: TopicId) => void;
 }) {
@@ -66,6 +68,7 @@ export function MonthCalendar({
             variant="outline"
             size="icon"
             aria-label="Previous year"
+            disabled={disabled}
             onClick={() => onYearChange(year - 1)}
           >
             <ChevronLeft />
@@ -73,6 +76,7 @@ export function MonthCalendar({
           <Button
             type="button"
             variant="ghost"
+            disabled={disabled}
             onClick={() => onYearChange(Number(now.slice(0, 4)))}
           >
             This year
@@ -82,6 +86,7 @@ export function MonthCalendar({
             variant="outline"
             size="icon"
             aria-label="Next year"
+            disabled={disabled}
             onClick={() => onYearChange(year + 1)}
           >
             <ChevronRight />
@@ -89,8 +94,7 @@ export function MonthCalendar({
         </div>
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-        Months only — no dates. Tap a month to see what was signed or what’s
-        planned.
+        Months only — no dates. Tap a month to open that packet.
       </p>
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -105,6 +109,7 @@ export function MonthCalendar({
             <button
               key={key}
               type="button"
+              disabled={disabled}
               onClick={() => onSelect(key, topicId)}
               className={cn(
                 "min-h-[7.5rem] rounded-2xl border px-3 py-3 text-left transition",
@@ -150,8 +155,7 @@ export function MonthCalendar({
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        {formatMonthName(selected)} is selected. Open that month’s packet or
-        keep adding names on the same sign-in list.
+        {formatMonthName(selected)} is the last month you opened.
       </p>
     </section>
   );
