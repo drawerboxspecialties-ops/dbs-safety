@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PageChrome } from "@/components/page-chrome";
 import { buttonVariants } from "@/components/ui/button";
 import { useMeeting } from "@/lib/meeting-store";
-import { packetUrl, topicSourceLabel } from "@/lib/packet";
+import { packetUrl } from "@/lib/packet";
 import { sheetHref } from "@/lib/sheet-href";
 import { getTopic } from "@/lib/topics";
 import { useShopStore } from "@/lib/use-shop-store";
@@ -14,7 +14,6 @@ export default function PacketPage() {
   const shop = useShopStore();
   const topic = getTopic(meeting.topic, shop.store.topics);
   const href = packetUrl(topic.pdf);
-  const monthLabel = shop.formatMonthLabel(meeting.month || shop.monthKey);
   const signHref = sheetHref(
     "/meetings/sign-in",
     meeting.topic,
@@ -36,12 +35,6 @@ export default function PacketPage() {
           Sign this sheet
         </Link>
       </PageChrome>
-
-      <p className="mb-4 text-sm text-muted-foreground">
-        {topicSourceLabel(topic.source)} · {monthLabel}. Give the talk from the
-        packet, then open this topic’s sign-in list. Save progress and keep
-        adding the next crew.
-      </p>
 
       {href ? (
         <iframe
