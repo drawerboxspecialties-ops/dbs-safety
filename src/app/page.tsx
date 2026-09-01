@@ -117,41 +117,7 @@ export default function HomePage() {
         }}
       />
 
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => fileRef.current?.click()}
-        onDragEnter={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          queueFile(e.dataTransfer.files?.[0]);
-        }}
-        className={cn(
-          "glass-panel mt-6 flex min-h-28 w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-8 text-center transition",
-          dragOver
-            ? "border-cyan-400 bg-cyan-50/80"
-            : "border-transparent hover:border-cyan-200",
-        )}
-      >
-        <p className="font-medium">
-          {busy ? "Saving PDF…" : "Drop a PDF here"}
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Or tap to choose a file. Then pick the month of the year it is for.
-        </p>
-      </button>
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
-
-      <div className="mt-8">
+      <div className="mt-6">
         <MonthCalendar
           year={year}
           now={shop.monthKey}
@@ -164,6 +130,45 @@ export default function HomePage() {
           onSelect={(key, topicId) => {
             void applyAndOpen(topicId, key);
           }}
+          lead={
+            <div>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => fileRef.current?.click()}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  queueFile(e.dataTransfer.files?.[0]);
+                }}
+                className={cn(
+                  "flex min-h-24 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-5 text-center transition",
+                  dragOver
+                    ? "border-cyan-400 bg-cyan-50/80"
+                    : "border-cyan-200/70 bg-white/50 hover:border-cyan-300",
+                )}
+              >
+                <p className="font-medium">
+                  {busy ? "Saving PDF…" : "Drop a PDF here"}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Or tap to choose a file. Then pick the month it is for.
+                </p>
+              </button>
+              {error ? (
+                <p className="mt-2 text-sm text-red-700">{error}</p>
+              ) : null}
+            </div>
+          }
         />
       </div>
 

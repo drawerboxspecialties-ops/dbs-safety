@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,7 @@ export function MonthCalendar({
   topics,
   ready,
   disabled,
+  lead,
   onYearChange,
   onSelect,
 }: {
@@ -50,11 +52,13 @@ export function MonthCalendar({
   topics: Topic[];
   ready: boolean;
   disabled?: boolean;
+  lead?: ReactNode;
   onYearChange: (year: number) => void;
   onSelect: (month: MonthKey, topicId: TopicId) => void;
 }) {
   return (
     <section className="glass-panel rounded-3xl p-5 sm:p-6">
+      {lead ? <div className="mb-5">{lead}</div> : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
