@@ -197,13 +197,13 @@
     overflow: hidden;
     vertical-align: middle;
   }
-  /* Compact rows so the full roster fits on 2 letter pages */
+  /* Slightly roomier rows while still fitting on 2 letter pages */
   .osha-sheet tbody td {
-    padding-top: 0.1rem !important;
-    padding-bottom: 0.1rem !important;
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
     min-height: 0;
     font-size: 10pt !important;
-    line-height: 1.15 !important;
+    line-height: 1.2 !important;
   }
   .osha-sheet thead th {
     font-weight: 700 !important;
@@ -220,7 +220,7 @@
     text-align: center !important;
   }
   .osha-sheet td img {
-    max-height: 16px !important;
+    max-height: 18px !important;
     width: auto !important;
     max-width: 100% !important;
     object-fit: contain;
