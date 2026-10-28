@@ -421,6 +421,10 @@ export function SignatureImage({
   const href = clean?.src === src ? clean.href : src;
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={href} alt={alt} className={cn("bg-white", className)} />
+    <img
+      src={href}
+      alt={alt}
+      className={cn("bg-transparent mix-blend-multiply", className)}
+    />
   );
 }

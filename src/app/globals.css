@@ -194,11 +194,13 @@
     vertical-align: middle;
   }
   .osha-sheet td img {
-    max-height: 22px !important;
+    max-height: 18px !important;
     width: auto !important;
     max-width: 100% !important;
     object-fit: contain;
     object-position: left center;
     display: block;
+    background: transparent !important;
+    mix-blend-mode: multiply;
   }
 }

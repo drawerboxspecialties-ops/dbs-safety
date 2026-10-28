@@ -16,7 +16,7 @@ export function flattenBlackInk(image: ImageData) {
       data[i] = 255;
       data[i + 1] = 255;
       data[i + 2] = 255;
-      data[i + 3] = 255;
+      data[i + 3] = 0;
     } else {
       const ink = Math.max(0, Math.min(34, max));
       data[i] = ink;
@@ -26,6 +26,16 @@ export function flattenBlackInk(image: ImageData) {
     }
   }
   return true;
+}
+
+/** Turn near-white paper pixels transparent so row lines show through. */
+export function punchWhitePaper(image: ImageData) {
+  const data = image.data;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i] > 242 && data[i + 1] > 242 && data[i + 2] > 242) {
+      data[i + 3] = 0;
+    }
+  }
 }
 
 function loadImage(src: string) {
@@ -48,13 +58,13 @@ export async function normalizeSignature(dataUrl: string) {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return dataUrl;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0);
     const image = ctx.getImageData(0, 0, width, height);
     flattenBlackInk(image);
+    punchWhitePaper(image);
     ctx.putImageData(image, 0, 0);
     return canvas.toDataURL("image/png");
   } catch {
@@ -63,5 +73,15 @@ export async function normalizeSignature(dataUrl: string) {
 }
 
 export function exportCanvasSignature(canvas: HTMLCanvasElement) {
-  return canvas.toDataURL("image/png");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return canvas.toDataURL("image/png");
+  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  punchWhitePaper(image);
+  const out = document.createElement("canvas");
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const octx = out.getContext("2d", { alpha: true });
+  if (!octx) return canvas.toDataURL("image/png");
+  octx.putImageData(image, 0, 0);
+  return out.toDataURL("image/png");
 }

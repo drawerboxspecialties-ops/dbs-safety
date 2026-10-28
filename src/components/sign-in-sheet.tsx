@@ -1192,10 +1192,10 @@ function SigPreview({
         )}
       </button>
       {isSigned(sig) ? (
-        <div className="hidden h-7 max-h-7 overflow-hidden print:block">
+        <div className="hidden h-6 max-h-6 overflow-hidden py-0.5 print:block">
           <SignatureImage
             src={sig}
-            className="h-7 max-h-7 w-full object-contain object-left"
+            className="h-5 max-h-5 w-full object-contain object-left"
           />
         </div>
       ) : null}
