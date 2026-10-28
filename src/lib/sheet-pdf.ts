@@ -184,14 +184,18 @@ export async function buildSignInPdf(opts: {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     const textY = y + 2;
-    doc.text(String(person.n), cols.n + 2, textY);
+    const nMid = (dividers[0] + dividers[1]) / 2;
+    const deptMid = (dividers[2] + dividers[3]) / 2;
+    doc.text(String(person.n), nMid, textY, { align: "center" });
     doc.text((name || "").slice(0, 42), cols.name, textY);
     // Only print a department when the guest row has a name or typed dept
     // (avoid filling blank handwriting rows with a session department filter).
     const printDept = person.extra
       ? row.dept || (name ? dept : "")
       : dept;
-    doc.text((printDept || "").slice(0, 22), cols.dept, textY);
+    if (printDept) {
+      doc.text(printDept.slice(0, 22), deptMid, textY, { align: "center" });
+    }
     if (isSigned(row.sig)) {
       try {
         await addSignatureImage(doc, row.sig, cols.sig, rowTop + 4, 140, 14);

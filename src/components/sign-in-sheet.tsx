@@ -732,7 +732,7 @@ export function SignInSheet({
                       key={r.id}
                       className={i % 2 ? "bg-neutral-100" : "bg-white"}
                     >
-                      <td className="border border-black px-2 py-0 text-[10pt] leading-tight">
+                      <td className="border border-black px-2 py-0 text-center text-[10pt] leading-tight">
                         {r.n}
                       </td>
                       <td className="border border-black px-2 py-0">
@@ -748,9 +748,9 @@ export function SignInSheet({
                           }
                         />
                       </td>
-                      <td className="border border-black px-2 py-0">
+                      <td className="border border-black px-2 py-0 text-center">
                         <input
-                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none print:placeholder:text-transparent"
+                          className="w-full border-0 bg-transparent text-center text-[12pt] leading-tight outline-none print:placeholder:text-transparent"
                           placeholder="Department"
                           value={state.dept}
                           onChange={(e) =>
@@ -1265,7 +1265,7 @@ const GroupRows = memo(function GroupRows({
               showLeft && !unsigned && "opacity-35 print:opacity-100",
             )}
           >
-            <td className="border border-black px-2 py-0 text-[10pt] leading-tight">
+            <td className="border border-black px-2 py-0 text-center text-[10pt] leading-tight">
               {r.n}
             </td>
             <td className="border border-black px-2 py-0 text-[12pt] leading-tight">
@@ -1278,7 +1278,7 @@ const GroupRows = memo(function GroupRows({
                 onBlur={() => onCommitRename(r)}
               />
             </td>
-            <td className="border border-black px-2 py-0 text-[12pt] leading-tight">
+            <td className="border border-black px-2 py-0 text-center text-[12pt] leading-tight">
               {r.dept}
             </td>
             <td className="border border-black px-1 py-0 align-middle overflow-hidden">

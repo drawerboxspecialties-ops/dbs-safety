@@ -201,6 +201,13 @@
     font-weight: 700 !important;
     text-align: center !important;
   }
+  .osha-sheet tbody td:nth-child(1),
+  .osha-sheet tbody td:nth-child(3) {
+    text-align: center !important;
+  }
+  .osha-sheet tbody td:nth-child(3) input {
+    text-align: center !important;
+  }
   .osha-sheet td img {
     max-height: 18px !important;
     width: auto !important;
