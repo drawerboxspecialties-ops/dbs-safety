@@ -23,11 +23,18 @@ export function DatePicker({
       <Popover>
         <PopoverTrigger
           className="inline-flex h-9 min-w-0 flex-1 items-center justify-start rounded-lg border border-border bg-background px-3 text-left text-sm font-normal hover:bg-muted"
+          aria-label={selected ? "Change date" : "Choose date"}
         >
-          <CalendarIcon className="mr-2 size-4 shrink-0" />
-          <span className="truncate">
-            {selected ? format(selected, "MMMM d, yyyy") : "No date"}
-          </span>
+          {selected ? (
+            <>
+              <CalendarIcon className="mr-2 size-4 shrink-0" />
+              <span className="truncate">
+                {format(selected, "MMMM d, yyyy")}
+              </span>
+            </>
+          ) : (
+            <span className="truncate">&nbsp;</span>
+          )}
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
