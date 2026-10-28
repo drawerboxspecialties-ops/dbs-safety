@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PageChrome } from "@/components/page-chrome";
 import { PageFrame } from "@/components/page-frame";
+import { PdfFrame } from "@/components/pdf-frame";
 import { SignInSheet } from "@/components/sign-in-sheet";
 import { Button } from "@/components/ui/button";
 import { useMeeting } from "@/lib/meeting-store";
@@ -47,9 +48,9 @@ export default function PacketPage() {
       </PageChrome>
 
       {href ? (
-        <iframe
+        <PdfFrame
+          pdf={topic.pdf}
           title={`${topic.title} PDF`}
-          src={href}
           className="min-h-0 w-full flex-1 rounded-2xl border bg-white"
         />
       ) : (

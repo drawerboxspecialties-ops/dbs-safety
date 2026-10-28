@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { withBase } from "@/lib/base-path";
+import { saveTopicFileBlob } from "@/lib/topic-files";
 import { topicFromIntake, topicPdfHref, type Topic } from "@/lib/topics";
 
 const IMAGE_TYPES = new Set([
@@ -17,7 +18,8 @@ export function packetUrl(pdf: string) {
     href.startsWith("http") ||
     href.startsWith("/api/") ||
     href.startsWith("data:") ||
-    href.startsWith("blob:")
+    href.startsWith("blob:") ||
+    href.startsWith("idb:")
   ) {
     return href;
   }
@@ -92,8 +94,8 @@ export async function normalizeTopicUpload(file: File): Promise<File> {
 
 export async function ingestPdf(file: File, existing: Topic[]): Promise<Topic> {
   const ready = await normalizeTopicUpload(file);
-  if (ready.size > 15 * 1024 * 1024) {
-    throw new Error("File must be under 15 MB.");
+  if (ready.size > 25 * 1024 * 1024) {
+    throw new Error("File must be under 25 MB.");
   }
   let pdf = "";
   let fileName = ready.name;
@@ -110,12 +112,16 @@ export async function ingestPdf(file: File, existing: Topic[]): Promise<Topic> {
     pdf = "";
   }
   if (!pdf) {
-    if (ready.size > 4.5 * 1024 * 1024) {
-      throw new Error(
-        "Could not save that file on this site (too large for browser storage). Try a smaller PDF/image, or use the shop computer.",
-      );
+    try {
+      pdf = await saveTopicFileBlob(ready, ready.name);
+    } catch {
+      if (ready.size > 4.5 * 1024 * 1024) {
+        throw new Error(
+          "Could not save that file on this device. Try a smaller PDF or image.",
+        );
+      }
+      pdf = await readDataUrl(ready);
     }
-    pdf = await readDataUrl(ready);
   }
   return topicFromIntake({
     title: titleFromPdfName(file.name),

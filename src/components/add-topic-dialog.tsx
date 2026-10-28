@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { normalizeTopicUpload } from "@/lib/packet";
+import { saveTopicFileBlob } from "@/lib/topic-files";
 import {
   topicFromIntake,
   type Topic,
@@ -62,20 +63,15 @@ export function AddTopicDialog({
           const data = await res.json();
           pdf = data.url;
           fileName = data.fileName;
-        } else if (ready.size <= 4.5 * 1024 * 1024) {
-          pdf = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ""));
-            reader.onerror = () => reject(new Error("Could not read that file."));
-            reader.readAsDataURL(ready);
-          });
-          fileName = ready.name;
         } else {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(
-            data.error ||
-              "Could not upload that file. Try a smaller PDF or image.",
-          );
+          try {
+            pdf = await saveTopicFileBlob(ready, ready.name);
+            fileName = ready.name;
+          } catch {
+            throw new Error(
+              "Could not save that file on this device. Try a smaller PDF or image.",
+            );
+          }
         }
       }
       const topic = topicFromIntake({

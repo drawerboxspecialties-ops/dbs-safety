@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useMeeting } from "@/lib/meeting-store";
+import { PdfFrame } from "@/components/pdf-frame";
 import { ingestPdf, packetUrl } from "@/lib/packet";
 import {
   formatMonthName,
@@ -239,14 +240,14 @@ export default function HomePage() {
                       </div>
                     </div>
                     {packetUrl(expandedTopic.pdf) ? (
-                      <iframe
+                      <PdfFrame
+                        pdf={expandedTopic.pdf}
                         title={`${expandedTopic.title} PDF`}
-                        src={packetUrl(expandedTopic.pdf)}
                         className="min-h-0 w-full flex-1 rounded-xl border bg-white"
                       />
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        No PDF on this talk.
+                        No PDF on this talk. Drop a PDF or image above to add one.
                       </p>
                     )}
                   </>

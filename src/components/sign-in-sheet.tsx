@@ -1260,9 +1260,10 @@ const GroupRows = memo(function GroupRows({
             </td>
             <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
               <input
-                className="w-full border-0 bg-transparent text-[12pt] font-medium leading-tight outline-none print:font-normal"
+                className="w-full rounded border border-transparent bg-transparent px-1 text-[12pt] font-medium leading-tight outline-none hover:border-neutral-300 focus:border-cyan-500 focus:bg-white print:border-0 print:px-0 print:font-normal"
                 value={state.name || r.name}
-                aria-label={`Name for ${r.name}`}
+                aria-label={`Edit name for ${r.name}`}
+                title="Click to edit name"
                 onChange={(e) => onRename(r, e.target.value)}
                 onBlur={() => onCommitRename(r)}
               />
