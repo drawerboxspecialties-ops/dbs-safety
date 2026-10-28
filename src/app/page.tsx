@@ -162,7 +162,7 @@ export default function HomePage() {
       <input
         ref={fileRef}
         type="file"
-        accept="application/pdf,.pdf"
+        accept="application/pdf,.pdf,image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
         className="hidden"
         onChange={(e) => {
           queueFile(e.target.files?.[0]);
@@ -294,7 +294,7 @@ export default function HomePage() {
                       className="mt-3 text-sm font-medium text-cyan-800 underline"
                       onClick={() => fileRef.current?.click()}
                     >
-                      Or drop a new PDF
+                      Or drop a new PDF or image
                     </button>
                   </div>
                 )}
@@ -330,7 +330,7 @@ export default function HomePage() {
               >
                 <p>
                   <span className="font-medium">
-                    {busy ? "Saving PDF…" : "Drop a PDF here"}
+                    {busy ? "Saving…" : "Drop a PDF or image here"}
                   </span>
                   {busy ? null : (
                     <span className="text-muted-foreground">

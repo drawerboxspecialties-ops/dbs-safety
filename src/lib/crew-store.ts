@@ -130,6 +130,21 @@ export function useCrew() {
     [employees, applyLocal],
   );
 
+  const rename = useCallback(
+    (id: string, name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return null;
+      const current = employees.find((e) => e.id === id);
+      if (!current) return null;
+      if (current.name === trimmed) return current;
+      applyLocal(
+        employees.map((e) => (e.id === id ? { ...e, name: trimmed } : e)),
+      );
+      return { ...current, name: trimmed };
+    },
+    [employees, applyLocal],
+  );
+
   const restoreOriginal = useCallback(() => {
     persist(cloneSeed());
   }, [persist]);
@@ -140,6 +155,7 @@ export function useCrew() {
     add,
     remove,
     move,
+    rename,
     saveAsDefault: persist,
     restoreOriginal,
   };

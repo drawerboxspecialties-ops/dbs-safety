@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { normalizeTopicUpload } from "@/lib/packet";
 import {
   topicFromIntake,
   type Topic,
@@ -53,13 +54,29 @@ export function AddTopicDialog({
       let pdf = "";
       let fileName = "";
       if (file) {
+        const ready = await normalizeTopicUpload(file);
         const body = new FormData();
-        body.append("file", file);
+        body.append("file", ready);
         const res = await fetch("/api/files", { method: "POST", body });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Could not upload PDF.");
-        pdf = data.url;
-        fileName = data.fileName;
+        if (res.ok) {
+          const data = await res.json();
+          pdf = data.url;
+          fileName = data.fileName;
+        } else if (ready.size <= 4.5 * 1024 * 1024) {
+          pdf = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(new Error("Could not read that file."));
+            reader.readAsDataURL(ready);
+          });
+          fileName = ready.name;
+        } else {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(
+            data.error ||
+              "Could not upload that file. Try a smaller PDF or image.",
+          );
+        }
       }
       const topic = topicFromIntake({
         title,
@@ -90,7 +107,7 @@ export function AddTopicDialog({
         <DialogHeader>
           <DialogTitle>Add topic</DialogTitle>
           <DialogDescription>
-            Title, where it came from, and the PDF if you have one.
+            Title, where it came from, and a PDF or image if you have one.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -117,11 +134,11 @@ export function AddTopicDialog({
             </select>
           </div>
           <div className="grid gap-1">
-            <Label htmlFor="topic-pdf">PDF</Label>
+            <Label htmlFor="topic-pdf">PDF or image</Label>
             <Input
               id="topic-pdf"
               type="file"
-              accept="application/pdf,.pdf"
+              accept="application/pdf,.pdf,image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
           </div>

@@ -37,7 +37,6 @@ import {
 import {
   meetingSubject,
   signedCount,
-  todayISO,
   useMeeting,
   type SignRow,
 } from "@/lib/meeting-store";
@@ -102,6 +101,7 @@ export function SignInSheet({
     add,
     remove,
     move,
+    rename,
     saveAsDefault,
     restoreOriginal,
   } = useCrew();
@@ -148,8 +148,6 @@ export function SignInSheet({
 
   useEffect(() => {
     if (!ready) return;
-    const today = todayISO();
-    if (meeting.date !== today) update({ date: today });
     if (readSheetQuery().left) {
       setShowLeft(true);
       if (meeting.department) update({ department: "" });
@@ -245,6 +243,39 @@ export function SignInSheet({
     setMoveCustom("");
     setRemovePassword("");
     setRemoveError("");
+  }
+
+  function renamePerson(person: RosterPerson, name: string) {
+    const current = rowState(person);
+    const nextRows = [...meeting.rows];
+    const updated = {
+      ...current,
+      id: person.id,
+      n: String(person.n),
+      name,
+    };
+    const i = nextRows.findIndex(
+      (r) => (r.id && r.id === person.id) || r.n === String(person.n),
+    );
+    if (i >= 0) nextRows[i] = updated;
+    else nextRows.push(updated);
+    const trimmed = name.trim();
+    update({
+      rows: nextRows,
+      roster:
+        person.extra || !trimmed
+          ? sheetCrew
+          : sheetCrew.map((e) =>
+              e.id === person.id ? { ...e, name: trimmed } : e,
+            ),
+    });
+  }
+
+  function commitRename(person: RosterPerson) {
+    if (person.extra) return;
+    const trimmed = (rowState(person).name || person.name).trim();
+    if (!trimmed) return;
+    rename(person.id, trimmed);
   }
 
   function chosenMoveDept() {
@@ -578,7 +609,7 @@ export function SignInSheet({
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="grid gap-1">
-            <Label className="text-[10pt] font-bold">Date of this session</Label>
+            <Label className="text-[10pt] font-bold">Date</Label>
             <DatePicker
               value={meeting.date}
               onChange={(date) => update({ date })}
@@ -676,6 +707,8 @@ export function SignInSheet({
                   rowState={rowState}
                   showLeft={showLeft}
                   onOpen={(person) => openSign({ kind: "employee", person })}
+                  onRename={renamePerson}
+                  onCommitRename={commitRename}
                   onMove={startMove}
                   onRemove={removeEmployee}
                 />
@@ -1155,7 +1188,7 @@ function SigPreview({
             className="h-7 max-h-7 w-full object-contain object-left"
           />
         ) : (
-          <span className="text-xs text-muted-foreground">Tap name to sign</span>
+          <span className="text-xs text-muted-foreground">Tap to sign</span>
         )}
       </button>
       {isSigned(sig) ? (
@@ -1177,6 +1210,8 @@ const GroupRows = memo(function GroupRows({
   rowState,
   showLeft,
   onOpen,
+  onRename,
+  onCommitRename,
   onMove,
   onRemove,
 }: {
@@ -1186,6 +1221,8 @@ const GroupRows = memo(function GroupRows({
   rowState: (person: RosterPerson) => SignRow;
   showLeft: boolean;
   onOpen: (person: RosterPerson) => void;
+  onRename: (person: RosterPerson, name: string) => void;
+  onCommitRename: (person: RosterPerson) => void;
   onMove: (person: RosterPerson) => void;
   onRemove: (id: string, name: string) => void;
 }) {
@@ -1222,13 +1259,13 @@ const GroupRows = memo(function GroupRows({
               {r.n}
             </td>
             <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
-              <button
-                type="button"
-                onClick={() => onOpen(r)}
-                className="text-left font-medium text-cyan-900 underline decoration-dotted print:text-black print:no-underline print:font-normal"
-              >
-                {r.name}
-              </button>
+              <input
+                className="w-full border-0 bg-transparent text-[12pt] font-medium leading-tight outline-none print:font-normal"
+                value={state.name || r.name}
+                aria-label={`Name for ${r.name}`}
+                onChange={(e) => onRename(r, e.target.value)}
+                onBlur={() => onCommitRename(r)}
+              />
             </td>
             <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
               {r.dept}

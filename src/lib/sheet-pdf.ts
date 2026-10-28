@@ -101,7 +101,7 @@ export async function buildSignInPdf(opts: {
   y += 22;
 
   const meta = [
-    ["Date of this session", formatMeetingDate(meeting.date) || meeting.date],
+    ["Date", formatMeetingDate(meeting.date) || meeting.date || ""],
     ["Safety Topic", meetingSubject(meeting, topic.title)],
     ["Trainer / certifying person", meeting.trainer || ""],
     ["Month", monthLabel],
