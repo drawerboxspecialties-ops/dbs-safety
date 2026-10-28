@@ -122,7 +122,7 @@ export async function buildSignInPdf(opts: {
     dept: left + 250,
     sig: left + 390,
   };
-  const rowH = 22;
+  const rowH = 24;
 
   function headerRow() {
     ensure(20);
@@ -168,7 +168,7 @@ export async function buildSignInPdf(opts: {
     doc.text((dept || "").slice(0, 22), cols.dept, y);
     if (isSigned(row.sig)) {
       try {
-        await addSignatureImage(doc, row.sig, cols.sig, y - 12, 140, 18);
+        await addSignatureImage(doc, row.sig, cols.sig, y - 9, 140, 14);
       } catch {
         doc.text("Signed", cols.sig, y);
       }

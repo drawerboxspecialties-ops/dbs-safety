@@ -715,7 +715,7 @@ export function SignInSheet({
                           }
                         />
                       </td>
-                      <td className="border-b border-black px-1 py-0">
+                      <td className="border-b border-black px-1 py-0 align-middle overflow-hidden">
                         <SigPreview
                           sig={state.sig}
                           onOpen={() =>
@@ -772,14 +772,14 @@ export function SignInSheet({
                   </span>
                 )}
               </button>
-              {isSigned(meeting.trainerSig) ? (
-                <SignatureImage
-                  src={meeting.trainerSig}
-                  className="hidden h-8 w-full object-contain object-left print:block"
-                />
-              ) : (
-                <div className="hidden border-b border-black print:block" />
-              )}
+                {isSigned(meeting.trainerSig) ? (
+                <div className="hidden h-8 max-h-8 overflow-hidden print:block">
+                  <SignatureImage
+                    src={meeting.trainerSig}
+                    className="h-8 max-h-8 w-full object-contain object-left"
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="grid gap-1">
               <Label className="text-[10pt] font-bold">Title</Label>
@@ -1146,26 +1146,26 @@ function SigPreview({
       <button
         type="button"
         onClick={onOpen}
-        className="flex h-8 w-full items-center print:hidden"
+        className="flex h-8 w-full items-center overflow-hidden print:hidden"
       >
         {isSigned(sig) ? (
           <SignatureImage
             src={sig}
             alt="Signature"
-            className="h-8 w-full object-contain object-left"
+            className="h-7 max-h-7 w-full object-contain object-left"
           />
         ) : (
           <span className="text-xs text-muted-foreground">Tap name to sign</span>
         )}
       </button>
       {isSigned(sig) ? (
-        <SignatureImage
-          src={sig}
-          className="hidden h-8 w-full object-contain object-left print:block"
-        />
-      ) : (
-        <div className="mx-1 hidden border-b border-black print:block" />
-      )}
+        <div className="hidden h-7 max-h-7 overflow-hidden print:block">
+          <SignatureImage
+            src={sig}
+            className="h-7 max-h-7 w-full object-contain object-left"
+          />
+        </div>
+      ) : null}
     </>
   );
 }
@@ -1233,7 +1233,7 @@ const GroupRows = memo(function GroupRows({
             <td className="border-b border-black px-2 py-0 text-[12pt] leading-tight">
               {r.dept}
             </td>
-            <td className="border-b border-black px-1 py-0">
+            <td className="border-b border-black px-1 py-0 align-middle overflow-hidden">
               <SigPreview sig={state.sig} onOpen={() => onOpen(r)} />
             </td>
             <td className="print:hidden border-b border-black px-1 py-0">

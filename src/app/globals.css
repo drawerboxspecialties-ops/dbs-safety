@@ -189,4 +189,16 @@
     width: 100% !important;
     contain: none !important;
   }
+  .osha-sheet td {
+    overflow: hidden;
+    vertical-align: middle;
+  }
+  .osha-sheet td img {
+    max-height: 22px !important;
+    width: auto !important;
+    max-width: 100% !important;
+    object-fit: contain;
+    object-position: left center;
+    display: block;
+  }
 }
