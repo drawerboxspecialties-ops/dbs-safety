@@ -10,7 +10,10 @@ import {
   isSigned,
   rowState,
 } from "@/lib/meeting-record";
-import type { MeetingState } from "@/lib/meeting-store";
+import {
+  meetingSubject,
+  type MeetingState,
+} from "@/lib/meeting-store";
 import { formatMonthName } from "@/lib/shop-data";
 import { normalizeSignature } from "@/lib/signature-image";
 import type { Topic } from "@/lib/topics";
@@ -99,7 +102,7 @@ export async function buildSignInPdf(opts: {
 
   const meta = [
     ["Date of this session", formatMeetingDate(meeting.date) || meeting.date],
-    ["Subject of certification", topic.title],
+    ["Safety Topic", meetingSubject(meeting, topic.title)],
     ["Trainer / certifying person", meeting.trainer || ""],
     ["Month", monthLabel],
   ];

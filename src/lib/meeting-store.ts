@@ -20,6 +20,8 @@ export type MeetingState = {
   topic: TopicId;
   /** Month this topic’s running sheet belongs to. */
   month: string;
+  /** Safety topic / subject shown on the sign-in sheet. Empty = use catalog title. */
+  subject: string;
   trainer: string;
   trainerSig: string;
   trainerTitle: string;
@@ -64,6 +66,7 @@ export function emptyMeeting(): MeetingState {
     date: todayISO(),
     topic: "ppe",
     month: monthKeyNow(),
+    subject: "",
     trainer: "",
     trainerSig: "",
     trainerTitle: "",
@@ -95,9 +98,19 @@ export function normalizeMeeting(
     ...base,
     ...raw,
     month: raw.month || monthKeyNow(),
+    subject: typeof raw.subject === "string" ? raw.subject : "",
     rows: Array.isArray(raw.rows) ? raw.rows : [],
     roster: Array.isArray(raw.roster) ? cloneEmployees(raw.roster) : [],
   };
+}
+
+/** Typed safety topic on the sheet, or the catalog title if left blank. */
+export function meetingSubject(
+  meeting: Pick<MeetingState, "subject">,
+  fallbackTitle: string,
+) {
+  const typed = meeting.subject?.trim();
+  return typed || fallbackTitle;
 }
 
 function loadSheets(): Record<string, MeetingState> {

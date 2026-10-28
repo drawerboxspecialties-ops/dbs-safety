@@ -35,6 +35,7 @@ import {
   type RosterPerson,
 } from "@/lib/meeting-record";
 import {
+  meetingSubject,
   signedCount,
   todayISO,
   useMeeting,
@@ -320,7 +321,7 @@ export function SignInSheet({
       });
       const filename = sheetPdfFilename(topic, monthKey);
       const body = [
-        `Attached is the DBS Safety sign-in sheet for ${topic.title}.`,
+        `Attached is the DBS Safety sign-in sheet for ${meetingSubject(meeting, topic.title)}.`,
         `Month: ${monthLabel}`,
         meeting.department ? `Department: ${meeting.department}` : "",
         meeting.date ? `Session date: ${formatMeetingDate(meeting.date)}` : "",
@@ -584,12 +585,11 @@ export function SignInSheet({
             />
           </div>
           <div className="grid gap-1">
-            <Label className="text-[10pt] font-bold">
-              Subject of certification
-            </Label>
+            <Label className="text-[10pt] font-bold">Safety Topic</Label>
             <Input
-              value={topic.title}
-              readOnly
+              value={meeting.subject}
+              onChange={(e) => update({ subject: e.target.value })}
+              placeholder={topic.title}
               className="h-9 text-sm"
             />
           </div>

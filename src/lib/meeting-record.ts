@@ -248,7 +248,7 @@ export function snapshotMeeting(
     filedAt: new Date().toISOString(),
     date: meeting.date,
     topic: meeting.topic,
-    subject: topic.title,
+    subject: meeting.subject?.trim() || topic.title,
     trainer: meeting.trainer.trim(),
     trainerTitle: meeting.trainerTitle.trim(),
     trained: trainedEmployees(meeting, roster).map(
