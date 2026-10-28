@@ -24,6 +24,8 @@ import {
   cloneEmployees,
   departmentOptions,
   EMPLOYEES,
+  makeEmployeeId,
+  type Employee,
 } from "@/lib/employees";
 import {
   EMPLOYER,
@@ -98,7 +100,6 @@ export function SignInSheet({
   const {
     employees,
     ready: crewReady,
-    add,
     remove,
     move,
     rename,
@@ -194,36 +195,115 @@ export function SignInSheet({
   }
 
   function addEmployee() {
-    const person = add(newName, chosenDept());
-    if (!person) return;
-    update({ roster: [...sheetCrew, person] });
+    const name = newName.trim();
+    const dept = chosenDept();
+    if (!name || !dept) {
+      setListNote("Enter an employee name and department before adding.");
+      return;
+    }
+    const result: { person?: Employee; roster?: Employee[] } = {};
+    update(
+      (prev) => {
+        const base = prev.roster.length > 0 ? prev.roster : sheetCrew;
+        if (
+          base.some(
+            (e) =>
+              e.name.toLowerCase() === name.toLowerCase() &&
+              e.department.toLowerCase() === dept.toLowerCase(),
+          )
+        ) {
+          return {};
+        }
+        const person: Employee = {
+          id: makeEmployeeId(name, dept, base),
+          name,
+          department: dept,
+        };
+        const roster = [...base, person];
+        result.person = person;
+        result.roster = roster;
+        return {
+          roster,
+          department:
+            prev.department && prev.department !== person.department
+              ? person.department
+              : prev.department,
+        };
+      },
+      { immediate: true },
+    );
+    if (!result.person || !result.roster) {
+      setListNote(`${name} is already on this month’s list.`);
+      return;
+    }
+    saveAsDefault(result.roster);
     setNewName("");
     setCustomDept("");
     setAdding(false);
     setListNote(
-      `${person.name} added to this month and the default list for later months.`,
+      `${result.person.name} added to this month and the default list for later months.`,
     );
   }
 
   function addFromBlank(person: RosterPerson) {
     const state = rowState(person);
-    const added = add(state.name || person.name, state.dept || person.dept);
-    if (!added) return;
-    const next = meeting.rows.filter(
-      (r) => r.id !== person.id && r.n !== String(person.n),
-    );
-    if (state.sig || state.name) {
-      next.push({
-        id: added.id,
-        n: "",
-        name: added.name,
-        dept: added.department,
-        sig: state.sig,
-      });
+    const name = (state.name || person.name).trim();
+    const dept = (state.dept || person.dept || meeting.department).trim();
+    if (!name || !dept) {
+      setListNote("Enter a name and department before adding to the list.");
+      return;
     }
-    update({ rows: next, roster: [...sheetCrew, added] });
+    const result: { person?: Employee; roster?: Employee[] } = {};
+    update(
+      (prev) => {
+        const base = prev.roster.length > 0 ? prev.roster : sheetCrew;
+        if (
+          base.some(
+            (e) =>
+              e.name.toLowerCase() === name.toLowerCase() &&
+              e.department.toLowerCase() === dept.toLowerCase(),
+          )
+        ) {
+          return {};
+        }
+        const nextPerson: Employee = {
+          id: makeEmployeeId(name, dept, base),
+          name,
+          department: dept,
+        };
+        const roster = [...base, nextPerson];
+        result.person = nextPerson;
+        result.roster = roster;
+        const rows = prev.rows.filter(
+          (r) => r.id !== person.id && r.n !== String(person.n),
+        );
+        if (state.sig || name) {
+          rows.push({
+            id: nextPerson.id,
+            n: "",
+            name: nextPerson.name,
+            dept: nextPerson.department,
+            sig: state.sig,
+          });
+        }
+        return {
+          rows,
+          roster,
+          department:
+            prev.department && prev.department !== nextPerson.department
+              ? nextPerson.department
+              : prev.department,
+        };
+      },
+      { immediate: true },
+    );
+    if (!result.person || !result.roster) {
+      setListNote(`${name} is already on this month’s list.`);
+      return;
+    }
+    saveAsDefault(result.roster);
     setListNote(
-      `${added.name} added to this month and the default list for later months.`,
+      `${result.person.name} added to this month and the default list for later months.`,
     );
   }
 
@@ -788,7 +868,7 @@ export function SignInSheet({
           </table>
         </div>
 
-        <section className="mt-4 border-2 border-black p-3">
+        <section className="trainer-cert mt-4 border-2 border-black p-3">
           <h3 className="text-[12pt] font-bold uppercase">
             Trainer certification
           </h3>
@@ -1202,10 +1282,10 @@ function SigPreview({
         )}
       </button>
       {isSigned(sig) ? (
-        <div className="hidden h-7 max-h-7 overflow-hidden py-0.5 print:block">
+        <div className="hidden h-5 max-h-5 overflow-hidden print:block">
           <SignatureImage
             src={sig}
-            className="h-6 max-h-6 w-full object-contain object-left"
+            className="h-4 max-h-4 w-full object-contain object-left"
           />
         </div>
       ) : null}
@@ -1239,13 +1319,13 @@ const GroupRows = memo(function GroupRows({
   const left = rows.filter((r) => !isSigned(rowState(r).sig)).length;
   return (
     <>
-      <tr className="bg-neutral-200">
+      <tr className="bg-neutral-200 print:hidden">
         <td
           colSpan={5}
           className="border border-black px-2 py-0.5 text-[11pt] font-bold"
         >
           {department}
-          <span className="print:hidden">
+          <span>
             {" "}
             — {showLeft ? `${left} left` : `${count} employees`}
           </span>

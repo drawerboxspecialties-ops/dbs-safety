@@ -122,7 +122,7 @@ export async function buildSignInPdf(opts: {
     dept: left + 250,
     sig: left + 390,
   };
-  const rowH = 28;
+  const rowH = 20;
 
   function headerRow() {
     ensure(20);
@@ -155,21 +155,10 @@ export async function buildSignInPdf(opts: {
   }
 
   headerRow();
-  let lastDept = "";
   for (const person of roster) {
     const row = rowState(meeting, person);
     const name = attendanceName(person, row);
     const dept = attendanceDept(person, row) || person.dept;
-    if (!person.extra && dept && dept !== lastDept) {
-      ensure(18);
-      doc.setFillColor(230, 230, 230);
-      doc.rect(left, y - 10, width, 14, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text(dept, left + 4, y);
-      y += 16;
-      lastDept = dept;
-    }
     // Keep empty guest rows so the printed sheet has space to handwrite.
     ensure(rowH);
     const rowTop = y - 10;
@@ -198,7 +187,7 @@ export async function buildSignInPdf(opts: {
     }
     if (isSigned(row.sig)) {
       try {
-        await addSignatureImage(doc, row.sig, cols.sig, rowTop + 5, 140, 16);
+        await addSignatureImage(doc, row.sig, cols.sig, rowTop + 3, 140, 12);
       } catch {
         doc.text("Signed", cols.sig, textY);
       }

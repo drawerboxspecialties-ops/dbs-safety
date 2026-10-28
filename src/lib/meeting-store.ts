@@ -309,27 +309,41 @@ export function useMeeting(lock?: { topic?: TopicId; month?: string }) {
       .catch(() => undefined);
   }, [lock?.topic, lock?.month]);
 
-  const update = useCallback((patch: Partial<MeetingState>) => {
-    setMeeting((prev) => {
-      const destTopic = patch.topic ?? prev.topic;
-      const destMonth = patch.month ?? prev.month ?? monthKeyNow();
-      const sourceMonth = prev.month || monthKeyNow();
-      if (destTopic !== prev.topic || destMonth !== sourceMonth) {
-        const switched = openSheet(prev, destTopic, destMonth, sourceMonth);
+  const update = useCallback(
+    (
+      patch:
+        | Partial<MeetingState>
+        | ((prev: MeetingState) => Partial<MeetingState>),
+      opts?: { immediate?: boolean },
+    ) => {
+      setMeeting((prev) => {
+        const resolved = typeof patch === "function" ? patch(prev) : patch;
+        const destTopic = resolved.topic ?? prev.topic;
+        const destMonth = resolved.month ?? prev.month ?? monthKeyNow();
+        const sourceMonth = prev.month || monthKeyNow();
+        if (destTopic !== prev.topic || destMonth !== sourceMonth) {
+          const switched = openSheet(prev, destTopic, destMonth, sourceMonth);
+          const next = normalizeMeeting({
+            ...switched,
+            ...resolved,
+            topic: destTopic,
+            month: destMonth,
+          });
+          persistSheetNow(next);
+          return next;
+        }
         const next = normalizeMeeting({
-          ...switched,
-          ...patch,
-          topic: destTopic,
+          ...prev,
+          ...resolved,
           month: destMonth,
         });
-        persistSheetNow(next);
+        if (opts?.immediate) persistSheetNow(next);
+        else persistSheetSoon(next);
         return next;
-      }
-      const next = normalizeMeeting({ ...prev, ...patch, month: destMonth });
-      persistSheetSoon(next);
-      return next;
-    });
-  }, []);
+      });
+    },
+    [],
+  );
 
   const saveProgress = useCallback(() => {
     let saved = emptyMeeting();

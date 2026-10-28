@@ -56,6 +56,28 @@ export function persistDefaultCrew(employees: Employee[]) {
   }).catch(() => undefined);
 }
 
+/** Merge remote into local by id; local edits win on conflict. */
+function mergeCrew(local: Employee[], remote: Employee[]): Employee[] {
+  const byId = new Map<string, Employee>();
+  for (const person of remote) byId.set(person.id, { ...person });
+  for (const person of local) byId.set(person.id, { ...person });
+  const source = local.length >= remote.length ? local : remote;
+  const seen = new Set<string>();
+  const ordered: Employee[] = [];
+  for (const person of source) {
+    const next = byId.get(person.id);
+    if (!next || seen.has(next.id)) continue;
+    seen.add(next.id);
+    ordered.push(next);
+  }
+  for (const person of byId.values()) {
+    if (seen.has(person.id)) continue;
+    seen.add(person.id);
+    ordered.push(person);
+  }
+  return ordered;
+}
+
 export function useCrew() {
   const [employees, setEmployees] = useState<Employee[]>(cloneSeed);
   const [ready, setReady] = useState(false);
@@ -64,12 +86,17 @@ export function useCrew() {
     let cancelled = false;
     const local = loadCrew();
     setEmployees(local);
+    const hadLocal = Boolean(window.localStorage.getItem(KEY));
     fetch("/api/store")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data?.crew?.length) return;
-        setEmployees(data.crew);
-        saveCrew(data.crew);
+        const remote = normalize(data.crew);
+        if (!remote) return;
+        // Never let a stale remote wipe local adds — merge instead.
+        const next = hadLocal ? mergeCrew(loadCrew(), remote) : remote;
+        setEmployees(next);
+        saveCrew(next);
       })
       .catch(() => undefined)
       .finally(() => {
@@ -80,69 +107,75 @@ export function useCrew() {
     };
   }, []);
 
-  const applyLocal = useCallback((next: Employee[]) => {
+  const persist = useCallback((next: Employee[]) => {
     setEmployees(next);
-    saveCrew(next);
+    persistDefaultCrew(next);
   }, []);
 
-  const persist = useCallback((next: Employee[]) => {
-    applyLocal(next);
-    persistDefaultCrew(next);
-  }, [applyLocal]);
-
-  const add = useCallback(
-    (name: string, department: string) => {
-      const trimmedName = name.trim();
-      const trimmedDept = department.trim();
-      if (!trimmedName) return null;
-      const person: Employee = {
-        id: makeEmployeeId(trimmedName, trimmedDept, employees),
-        name: trimmedName,
-        department: trimmedDept,
-      };
-      persist([...employees, person]);
-      return person;
-    },
-    [employees, persist],
-  );
+  const add = useCallback((name: string, department: string) => {
+    const trimmedName = name.trim();
+    const trimmedDept = department.trim();
+    if (!trimmedName) return null;
+    const prev = loadCrew();
+    if (
+      prev.some(
+        (e) =>
+          e.name.toLowerCase() === trimmedName.toLowerCase() &&
+          e.department.toLowerCase() === trimmedDept.toLowerCase(),
+      )
+    ) {
+      return (
+        prev.find(
+          (e) =>
+            e.name.toLowerCase() === trimmedName.toLowerCase() &&
+            e.department.toLowerCase() === trimmedDept.toLowerCase(),
+        ) ?? null
+      );
+    }
+    const person: Employee = {
+      id: makeEmployeeId(trimmedName, trimmedDept, prev),
+      name: trimmedName,
+      department: trimmedDept,
+    };
+    persist([...prev, person]);
+    return person;
+  }, [persist]);
 
   const remove = useCallback(
     (id: string) => {
-      persist(employees.filter((e) => e.id !== id));
+      persist(loadCrew().filter((e) => e.id !== id));
     },
-    [employees, persist],
+    [persist],
   );
 
   const move = useCallback(
     (id: string, department: string) => {
       const trimmed = department.trim();
       if (!trimmed) return null;
-      const current = employees.find((e) => e.id === id);
+      const prev = loadCrew();
+      const current = prev.find((e) => e.id === id);
       if (!current) return null;
       if (current.department === trimmed) return current;
-      applyLocal(
-        employees.map((e) =>
-          e.id === id ? { ...e, department: trimmed } : e,
-        ),
-      );
-      return { ...current, department: trimmed };
+      const moved: Employee = { ...current, department: trimmed };
+      persist(prev.map((e) => (e.id === id ? moved : e)));
+      return moved;
     },
-    [employees, applyLocal],
+    [persist],
   );
 
   const rename = useCallback(
     (id: string, name: string) => {
       const trimmed = name.trim();
       if (!trimmed) return null;
-      const current = employees.find((e) => e.id === id);
+      const prev = loadCrew();
+      const current = prev.find((e) => e.id === id);
       if (!current) return null;
       if (current.name === trimmed) return current;
-      applyLocal(
-        employees.map((e) => (e.id === id ? { ...e, name: trimmed } : e)),
-      );
-      return { ...current, name: trimmed };
+      const renamed: Employee = { ...current, name: trimmed };
+      persist(prev.map((e) => (e.id === id ? renamed : e)));
+      return renamed;
     },
-    [employees, applyLocal],
+    [persist],
   );
 
   const restoreOriginal = useCallback(() => {

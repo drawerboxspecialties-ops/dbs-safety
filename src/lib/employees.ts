@@ -102,7 +102,8 @@ export const EMPLOYEES: Employee[] = SEED.map((person) => ({
   department: person.department,
 }));
 
-export const BLANK_ROWS = 6;
+/** Guest handwriting lines kept short so the sheet stays on 2 printed pages. */
+export const BLANK_ROWS = 4;
 
 export function departmentOptions(employees: Employee[] = EMPLOYEES) {
   const extra = employees

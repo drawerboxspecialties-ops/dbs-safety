@@ -161,7 +161,7 @@
 @media print {
   @page {
     size: letter;
-    margin: 0.5in;
+    margin: 0.35in;
   }
   html,
   body,
@@ -182,7 +182,7 @@
     height: auto !important;
     overflow: visible !important;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 12pt;
+    font-size: 10pt;
     color: #000;
   }
   .osha-sheet table {
@@ -197,14 +197,20 @@
     overflow: hidden;
     vertical-align: middle;
   }
+  /* Compact rows so the full roster fits on 2 letter pages */
   .osha-sheet tbody td {
-    padding-top: 0.35rem !important;
-    padding-bottom: 0.35rem !important;
-    min-height: 1.75rem;
+    padding-top: 0.1rem !important;
+    padding-bottom: 0.1rem !important;
+    min-height: 0;
+    font-size: 10pt !important;
+    line-height: 1.15 !important;
   }
   .osha-sheet thead th {
     font-weight: 700 !important;
     text-align: center !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    font-size: 9pt !important;
   }
   .osha-sheet tbody td:nth-child(1),
   .osha-sheet tbody td:nth-child(3) {
@@ -214,7 +220,7 @@
     text-align: center !important;
   }
   .osha-sheet td img {
-    max-height: 22px !important;
+    max-height: 16px !important;
     width: auto !important;
     max-width: 100% !important;
     object-fit: contain;
@@ -222,6 +228,15 @@
     display: block;
     background: transparent !important;
     mix-blend-mode: multiply;
+  }
+  .osha-sheet .trainer-cert {
+    margin-top: 0.4rem !important;
+    padding: 0.4rem !important;
+  }
+  .osha-sheet .trainer-cert p {
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
+    margin-top: 0.25rem !important;
   }
   /* Leave blank guest rows empty so people can handwrite on paper */
   .osha-sheet input::placeholder {
