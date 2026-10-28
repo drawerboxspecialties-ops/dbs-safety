@@ -155,8 +155,7 @@ export async function buildSignInPdf(opts: {
       y += 16;
       lastDept = dept;
     }
-    if (person.extra && !name && !isSigned(row.sig)) continue;
-
+    // Keep empty guest rows so the printed sheet has space to handwrite.
     ensure(rowH);
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.4);
@@ -165,7 +164,12 @@ export async function buildSignInPdf(opts: {
     doc.setFontSize(9);
     doc.text(String(person.n), cols.n, y);
     doc.text((name || "").slice(0, 42), cols.name, y);
-    doc.text((dept || "").slice(0, 22), cols.dept, y);
+    // Only print a department when the guest row has a name or typed dept
+    // (avoid filling blank handwriting rows with a session department filter).
+    const printDept = person.extra
+      ? row.dept || (name ? dept : "")
+      : dept;
+    doc.text((printDept || "").slice(0, 22), cols.dept, y);
     if (isSigned(row.sig)) {
       try {
         await addSignatureImage(doc, row.sig, cols.sig, y - 9, 140, 14);

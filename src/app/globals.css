@@ -203,4 +203,9 @@
     background: transparent !important;
     mix-blend-mode: multiply;
   }
+  /* Leave blank guest rows empty so people can handwrite on paper */
+  .osha-sheet input::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
 }

@@ -727,7 +727,7 @@ export function SignInSheet({
                       </td>
                       <td className="border-b border-black px-2 py-0">
                         <input
-                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none"
+                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none print:placeholder:text-transparent"
                           placeholder="Employee name"
                           value={state.name}
                           onChange={(e) =>
@@ -740,9 +740,9 @@ export function SignInSheet({
                       </td>
                       <td className="border-b border-black px-2 py-0">
                         <input
-                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none"
+                          className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none print:placeholder:text-transparent"
                           placeholder="Department"
-                          value={state.dept || meeting.department}
+                          value={state.dept}
                           onChange={(e) =>
                             patchRow(r, { dept: e.target.value })
                           }
