@@ -473,11 +473,14 @@ export function SignInSheet({
   }
 
   async function saveSheetProgress() {
-    const saved = saveProgress();
+    const crew = cloneEmployees(sheetCrew);
+    // Save progress always freezes the current employee list onto this
+    // month and the default crew for later months.
+    saveAsDefault(crew);
+    const saved = saveProgress(crew);
     const n = signedCount(saved);
     const monthKey = saved.month || shop.monthKey;
     const monthLabel = shop.formatMonthLabel(monthKey);
-    const crew = saved.roster.length ? saved.roster : sheetCrew;
     const names = archivePdfNames(topic, monthKey);
     setSaveBusy(true);
     try {
@@ -512,8 +515,8 @@ export function SignInSheet({
         keepLocalCopies(sheet, talk, names);
         setListNote(
           n
-            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. PDFs downloaded.`
-            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. PDFs downloaded.`,
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed, ${crew.length} on employee list. PDFs downloaded.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel} — ${crew.length} on employee list. PDFs downloaded.`,
         );
         return;
       }
@@ -528,8 +531,8 @@ export function SignInSheet({
           : `Uploaded to Google Drive → ${uploaded.folder}`;
         setListNote(
           n
-            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`
-            : `Saved the ${topic.shortTitle} sheet for ${monthLabel}. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`,
+            ? `Saved ${topic.shortTitle} for ${monthLabel} — ${n} signed, ${crew.length} on employee list. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`
+            : `Saved the ${topic.shortTitle} sheet for ${monthLabel} — ${crew.length} on employee list. ${dest}${uploaded.email ? ` (${uploaded.email})` : ""}.`,
         );
       } catch (err) {
         keepLocalCopies(sheet, talk, names);

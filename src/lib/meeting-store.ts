@@ -345,17 +345,23 @@ export function useMeeting(lock?: { topic?: TopicId; month?: string }) {
     [],
   );
 
-  const saveProgress = useCallback(() => {
+  const saveProgress = useCallback((crew?: Employee[]) => {
     let saved = emptyMeeting();
     setMeeting((prev) => {
-      saved = withRoster(
-        normalizeMeeting({
-          ...prev,
-          savedAt: new Date().toISOString(),
-          month: prev.month || monthKeyNow(),
-        }),
-      );
+      const roster =
+        crew && crew.length > 0
+          ? cloneEmployees(crew)
+          : prev.roster.length > 0
+            ? cloneEmployees(prev.roster)
+            : cloneEmployees(loadCrew());
+      saved = normalizeMeeting({
+        ...prev,
+        roster,
+        savedAt: new Date().toISOString(),
+        month: prev.month || monthKeyNow(),
+      });
       persistSheetNow(saved);
+      // Always write the employee list as the default for later months.
       persistDefaultCrew(saved.roster);
       return saved;
     });
