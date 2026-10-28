@@ -197,6 +197,10 @@
     overflow: hidden;
     vertical-align: middle;
   }
+  .osha-sheet thead th {
+    font-weight: 700 !important;
+    text-align: center !important;
+  }
   .osha-sheet td img {
     max-height: 18px !important;
     width: auto !important;

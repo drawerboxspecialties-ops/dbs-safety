@@ -126,16 +126,31 @@ export async function buildSignInPdf(opts: {
 
   function headerRow() {
     ensure(20);
+    const headerTop = y - 11;
+    const headerH = 16;
+    const dividers = [left, cols.name - 4, cols.dept - 4, cols.sig - 4, right];
     doc.setFillColor(0, 0, 0);
-    doc.rect(left, y - 11, width, 16, "F");
+    doc.rect(left, headerTop, width, headerH, "F");
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.4);
+    for (const x of dividers.slice(1, -1)) {
+      doc.line(x, headerTop, x, headerTop + headerH);
+    }
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text("No.", cols.n, y);
-    doc.text("Employee name", cols.name, y);
-    doc.text("Department", cols.dept, y);
-    doc.text("Employee signature", cols.sig, y);
+    const labels = [
+      "No.",
+      "Employee name",
+      "Department",
+      "Employee signature",
+    ];
+    for (let i = 0; i < labels.length; i++) {
+      const mid = (dividers[i] + dividers[i + 1]) / 2;
+      doc.text(labels[i], mid, y, { align: "center" });
+    }
     doc.setTextColor(0, 0, 0);
+    doc.setDrawColor(0, 0, 0);
     y += 12;
   }
 

@@ -688,19 +688,19 @@ export function SignInSheet({
           <table className="w-full border-collapse border border-black text-left text-[12pt] [contain:content] print:[contain:none]">
             <thead>
               <tr className="bg-black text-[10pt] text-white">
-                <th className="w-10 border border-black px-2 py-1 font-bold">
+                <th className="w-10 border border-black px-2 py-1 text-center font-bold">
                   No.
                 </th>
-                <th className="border border-black px-2 py-1 font-bold">
+                <th className="border border-black px-2 py-1 text-center font-bold">
                   Employee name
                 </th>
-                <th className="w-40 border border-black px-2 py-1 font-bold">
+                <th className="w-40 border border-black px-2 py-1 text-center font-bold">
                   Department
                 </th>
-                <th className="w-56 border border-black px-2 py-1 font-bold">
+                <th className="w-56 border border-black px-2 py-1 text-center font-bold">
                   Employee signature
                 </th>
-                <th className="print:hidden w-24 border border-black px-2 py-1 font-bold">
+                <th className="print:hidden w-24 border border-black px-2 py-1 text-center font-bold">
                   List
                 </th>
               </tr>
