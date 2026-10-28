@@ -157,24 +157,31 @@ export async function buildSignInPdf(opts: {
     }
     // Keep empty guest rows so the printed sheet has space to handwrite.
     ensure(rowH);
+    const rowTop = y - 10;
+    const rowBottom = rowTop + rowH;
+    const dividers = [left, cols.name - 4, cols.dept - 4, cols.sig - 4, right];
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.4);
-    doc.line(left, y + 8, right, y + 8);
+    doc.rect(left, rowTop, width, rowH);
+    for (const x of dividers.slice(1, -1)) {
+      doc.line(x, rowTop, x, rowBottom);
+    }
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(String(person.n), cols.n, y);
-    doc.text((name || "").slice(0, 42), cols.name, y);
+    const textY = y + 2;
+    doc.text(String(person.n), cols.n + 2, textY);
+    doc.text((name || "").slice(0, 42), cols.name, textY);
     // Only print a department when the guest row has a name or typed dept
     // (avoid filling blank handwriting rows with a session department filter).
     const printDept = person.extra
       ? row.dept || (name ? dept : "")
       : dept;
-    doc.text((printDept || "").slice(0, 22), cols.dept, y);
+    doc.text((printDept || "").slice(0, 22), cols.dept, textY);
     if (isSigned(row.sig)) {
       try {
-        await addSignatureImage(doc, row.sig, cols.sig, y - 9, 140, 14);
+        await addSignatureImage(doc, row.sig, cols.sig, rowTop + 4, 140, 14);
       } catch {
-        doc.text("Signed", cols.sig, y);
+        doc.text("Signed", cols.sig, textY);
       }
     }
     y += rowH;

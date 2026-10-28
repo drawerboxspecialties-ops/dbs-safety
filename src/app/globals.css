@@ -188,8 +188,12 @@
   .osha-sheet table {
     width: 100% !important;
     contain: none !important;
+    border-collapse: collapse !important;
+    border: 1px solid #000 !important;
   }
+  .osha-sheet th,
   .osha-sheet td {
+    border: 1px solid #000 !important;
     overflow: hidden;
     vertical-align: middle;
   }
