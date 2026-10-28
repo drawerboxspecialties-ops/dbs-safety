@@ -197,6 +197,11 @@
     overflow: hidden;
     vertical-align: middle;
   }
+  .osha-sheet tbody td {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    min-height: 1.75rem;
+  }
   .osha-sheet thead th {
     font-weight: 700 !important;
     text-align: center !important;
@@ -209,7 +214,7 @@
     text-align: center !important;
   }
   .osha-sheet td img {
-    max-height: 18px !important;
+    max-height: 22px !important;
     width: auto !important;
     max-width: 100% !important;
     object-fit: contain;

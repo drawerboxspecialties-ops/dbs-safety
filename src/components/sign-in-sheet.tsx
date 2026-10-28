@@ -732,10 +732,10 @@ export function SignInSheet({
                       key={r.id}
                       className={i % 2 ? "bg-neutral-100" : "bg-white"}
                     >
-                      <td className="border border-black px-2 py-0 text-center text-[10pt] leading-tight">
+                      <td className="border border-black px-2 py-1.5 text-center text-[10pt] leading-tight">
                         {r.n}
                       </td>
-                      <td className="border border-black px-2 py-0">
+                      <td className="border border-black px-2 py-1.5">
                         <input
                           className="w-full border-0 bg-transparent text-[12pt] leading-tight outline-none print:placeholder:text-transparent"
                           placeholder="Employee name"
@@ -748,7 +748,7 @@ export function SignInSheet({
                           }
                         />
                       </td>
-                      <td className="border border-black px-2 py-0 text-center">
+                      <td className="border border-black px-2 py-1.5 text-center">
                         <input
                           className="w-full border-0 bg-transparent text-center text-[12pt] leading-tight outline-none print:placeholder:text-transparent"
                           placeholder="Department"
@@ -758,7 +758,7 @@ export function SignInSheet({
                           }
                         />
                       </td>
-                      <td className="border border-black px-1 py-0 align-middle overflow-hidden">
+                      <td className="border border-black px-1 py-1.5 align-middle overflow-hidden">
                         <SigPreview
                           sig={state.sig}
                           onOpen={() =>
@@ -766,7 +766,7 @@ export function SignInSheet({
                           }
                         />
                       </td>
-                      <td className="print:hidden border border-black px-1 py-0">
+                      <td className="print:hidden border border-black px-1 py-1.5">
                         {state.name.trim() ? (
                           <button
                             type="button"
@@ -1189,23 +1189,23 @@ function SigPreview({
       <button
         type="button"
         onClick={onOpen}
-        className="flex h-8 w-full items-center overflow-hidden print:hidden"
+        className="flex h-10 w-full items-center overflow-hidden print:hidden"
       >
         {isSigned(sig) ? (
           <SignatureImage
             src={sig}
             alt="Signature"
-            className="h-7 max-h-7 w-full object-contain object-left"
+            className="h-8 max-h-8 w-full object-contain object-left"
           />
         ) : (
           <span className="text-xs text-muted-foreground">Tap to sign</span>
         )}
       </button>
       {isSigned(sig) ? (
-        <div className="hidden h-6 max-h-6 overflow-hidden py-0.5 print:block">
+        <div className="hidden h-7 max-h-7 overflow-hidden py-0.5 print:block">
           <SignatureImage
             src={sig}
-            className="h-5 max-h-5 w-full object-contain object-left"
+            className="h-6 max-h-6 w-full object-contain object-left"
           />
         </div>
       ) : null}
@@ -1265,10 +1265,10 @@ const GroupRows = memo(function GroupRows({
               showLeft && !unsigned && "opacity-35 print:opacity-100",
             )}
           >
-            <td className="border border-black px-2 py-0 text-center text-[10pt] leading-tight">
+            <td className="border border-black px-2 py-1.5 text-center text-[10pt] leading-tight">
               {r.n}
             </td>
-            <td className="border border-black px-2 py-0 text-[12pt] leading-tight">
+            <td className="border border-black px-2 py-1.5 text-[12pt] leading-tight">
               <input
                 className="w-full rounded border border-transparent bg-transparent px-1 text-[12pt] font-medium leading-tight outline-none hover:border-neutral-300 focus:border-cyan-500 focus:bg-white print:border-0 print:px-0 print:font-normal"
                 value={state.name || r.name}
@@ -1278,13 +1278,13 @@ const GroupRows = memo(function GroupRows({
                 onBlur={() => onCommitRename(r)}
               />
             </td>
-            <td className="border border-black px-2 py-0 text-center text-[12pt] leading-tight">
+            <td className="border border-black px-2 py-1.5 text-center text-[12pt] leading-tight">
               {r.dept}
             </td>
-            <td className="border border-black px-1 py-0 align-middle overflow-hidden">
+            <td className="border border-black px-1 py-1.5 align-middle overflow-hidden">
               <SigPreview sig={state.sig} onOpen={() => onOpen(r)} />
             </td>
-            <td className="print:hidden border border-black px-1 py-0">
+            <td className="print:hidden border border-black px-1 py-1.5">
               <div className="flex flex-col items-start gap-0.5">
                 <button
                   type="button"
